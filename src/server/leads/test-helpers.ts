@@ -2,6 +2,7 @@ import type { CapitalBracket, LeadStage } from "@/generated/prisma/enums";
 import type { TenantPrismaClient } from "@/lib/prisma-tenant";
 import type { AuditEvent, AuditLogger } from "@/server/audit/audit-log";
 import type { LeadDeps } from "@/server/leads/deps";
+import type { PipelineDeps } from "@/server/pipeline/deps";
 
 /**
  * In-memory fakes for the lead use cases.
@@ -82,6 +83,15 @@ export interface LossReasonRow {
   label: string;
 }
 
+export interface PipelineStageConfigRow {
+  id: string;
+  organizationId: string;
+  stage: LeadStage;
+  isVisible: boolean;
+  sortOrder: number;
+  colorToken: string | null;
+}
+
 /** Shared, cross-tenant store. Build per-tenant clients against the same store. */
 export class LeadStore {
   leads: LeadRow[] = [];
@@ -90,6 +100,7 @@ export class LeadStore {
   stageHistory: StageHistoryRow[] = [];
   leadSources: LeadSourceRow[] = [];
   lossReasons: LossReasonRow[] = [];
+  stageConfigs: PipelineStageConfigRow[] = [];
   private seq = 0;
 
   nextId(prefix: string): string {
@@ -178,12 +189,55 @@ export class LeadStore {
     return row;
   }
 
+  addStageConfig(
+    partial: Partial<PipelineStageConfigRow> & Pick<PipelineStageConfigRow, "organizationId" | "stage" | "sortOrder">,
+  ): PipelineStageConfigRow {
+    const row: PipelineStageConfigRow = {
+      id: partial.id ?? this.nextId("cfg"),
+      organizationId: partial.organizationId,
+      stage: partial.stage,
+      isVisible: partial.isVisible ?? true,
+      sortOrder: partial.sortOrder,
+      colorToken: partial.colorToken ?? null,
+    };
+    this.stageConfigs.push(row);
+    return row;
+  }
+
+  /** Seed the canonical 9 stage configs (all visible) for a tenant. */
+  seedStageConfigs(organizationId: string): PipelineStageConfigRow[] {
+    return PIPELINE_STAGE_ORDER.map((stage, index) =>
+      this.addStageConfig({ organizationId, stage, sortOrder: index }),
+    );
+  }
+
   lead(index = 0): LeadRow {
     const row = this.leads[index];
     if (!row) throw new Error(`no lead at index ${index}`);
     return row;
   }
+
+  stageConfig(organizationId: string, stage: LeadStage): PipelineStageConfigRow {
+    const row = this.stageConfigs.find(
+      (c) => c.organizationId === organizationId && c.stage === stage,
+    );
+    if (!row) throw new Error(`no stage config for ${stage}`);
+    return row;
+  }
 }
+
+/** Canonical default order (mirrors src/server/leads/stage.ts STAGE_ORDER). */
+const PIPELINE_STAGE_ORDER = [
+  "TO_HANDLE",
+  "TAKEN",
+  "CALL_SCHEDULED",
+  "WAITING_DOCS",
+  "PRESENTATION_CALL",
+  "WAITING_DECISION",
+  "WAITING_PAYMENT",
+  "WON",
+  "LOST",
+] as unknown as LeadStage[];
 
 type Where = Record<string, unknown>;
 
@@ -207,7 +261,15 @@ export function tenantClientFor(store: LeadStore, organizationId: string): Tenan
 
   const leadMatchesWhere = (lead: LeadRow, where: Where): boolean => {
     if (where.id !== undefined && lead.id !== where.id) return false;
-    if (where.stage !== undefined && lead.stage !== where.stage) return false;
+    if (where.stage !== undefined) {
+      const cond = where.stage;
+      if (typeof cond === "object" && cond !== null && "in" in cond) {
+        const allowed = (cond as { in: LeadStage[] }).in;
+        if (!allowed.includes(lead.stage)) return false;
+      } else if (lead.stage !== cond) {
+        return false;
+      }
+    }
     if (where.sourceId !== undefined && lead.sourceId !== where.sourceId) return false;
     if (where.createdAt && typeof where.createdAt === "object") {
       const range = where.createdAt as { gte?: Date; lt?: Date };
@@ -431,9 +493,60 @@ export function tenantClientFor(store: LeadStore, organizationId: string): Tenan
           .filter((r) => r.organizationId === organizationId)
           .map((r) => ({ id: r.id, label: r.label })),
     },
-    // Inline transaction: run the callback against this same fake client.
-    $transaction: async <T>(fn: (tx: TenantPrismaClient) => Promise<T>): Promise<T> =>
-      fn(client as unknown as TenantPrismaClient),
+    pipelineStageConfig: {
+      findUnique: async ({ where, select }: { where: Where; select?: Where }) => {
+        // Supports both `{ id }` and the compound `{ organizationId_stage }` key.
+        const compound = where.organizationId_stage as { stage: LeadStage } | undefined;
+        const row = store.stageConfigs.find(
+          (c) =>
+            c.organizationId === organizationId &&
+            (where.id !== undefined
+              ? c.id === where.id
+              : compound !== undefined && c.stage === compound.stage),
+        );
+        if (!row) return null;
+        return projectStageConfig(row, select);
+      },
+      findMany: async ({ orderBy, select }: { orderBy?: Where; select?: Where } = {}) => {
+        let rows = store.stageConfigs.filter((c) => c.organizationId === organizationId);
+        if (orderBy && "sortOrder" in orderBy) {
+          const dir = (orderBy as { sortOrder: "asc" | "desc" }).sortOrder;
+          rows = [...rows].sort((a, b) =>
+            dir === "asc" ? a.sortOrder - b.sortOrder : b.sortOrder - a.sortOrder,
+          );
+        }
+        return rows.map((r) => projectStageConfig(r, select));
+      },
+      update: async ({ where, data }: { where: Where; data: Where }) => {
+        const compound = where.organizationId_stage as { stage: LeadStage } | undefined;
+        const row = store.stageConfigs.find(
+          (c) =>
+            c.organizationId === organizationId &&
+            (where.id !== undefined
+              ? c.id === where.id
+              : compound !== undefined && c.stage === compound.stage),
+        );
+        if (!row) throw makeP2025();
+        if ("isVisible" in data) row.isVisible = data.isVisible as boolean;
+        if ("sortOrder" in data) row.sortOrder = data.sortOrder as number;
+        if ("colorToken" in data) row.colorToken = (data.colorToken as string | null) ?? null;
+        return { id: row.id };
+      },
+    },
+    // Transaction: supports BOTH the callback form (run against this same fake
+    // client) and the array/batch form (await the prepared promises in order).
+    $transaction: (async (
+      arg: ((tx: TenantPrismaClient) => Promise<unknown>) | Promise<unknown>[],
+    ): Promise<unknown> => {
+      if (typeof arg === "function") {
+        return arg(client as unknown as TenantPrismaClient);
+      }
+      const results = [];
+      for (const op of arg) {
+        results.push(await op);
+      }
+      return results;
+    }) as unknown as TenantPrismaClient["$transaction"],
   };
 
   return client as unknown as TenantPrismaClient;
@@ -456,6 +569,21 @@ function applyLeadUpdate(row: LeadRow, data: Where): void {
     if (op.connect) row.sourceId = op.connect.id;
     if (op.disconnect) row.sourceId = null;
   }
+}
+
+/** Project a stage-config row to the requested `select` (or the full row). */
+function projectStageConfig(
+  row: PipelineStageConfigRow,
+  select?: Where,
+): Record<string, unknown> {
+  if (!select) {
+    return { ...row };
+  }
+  const out: Record<string, unknown> = {};
+  for (const key of Object.keys(select)) {
+    if (select[key]) out[key] = (row as unknown as Record<string, unknown>)[key];
+  }
+  return out;
 }
 
 /** A Prisma-shaped P2025 ("record not found") for `update`/`delete` misses. */
@@ -484,5 +612,25 @@ export function buildFakeLeadDeps(
     actor: { organizationId, userId },
     now: () => new Date("2026-06-18T12:00:00.000Z"),
     ...overrides,
+  };
+}
+
+/**
+ * Build PipelineDeps bound to a tenant, backed by the shared store. The `audits`
+ * sink is returned so tests can assert the audit trail.
+ */
+export function buildFakePipelineDeps(
+  store: LeadStore,
+  organizationId: string,
+  userId: string,
+): { deps: PipelineDeps; audits: AuditEvent[] } {
+  const audits: AuditEvent[] = [];
+  return {
+    deps: {
+      prisma: tenantClientFor(store, organizationId),
+      audit: collectingAudit(audits),
+      actor: { organizationId, userId },
+    },
+    audits,
   };
 }

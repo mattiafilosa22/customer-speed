@@ -436,5 +436,83 @@
         "form": "Inserisci almeno un valore."
       }
     }
+  },
+  "pipeline": {
+    "title": "Pipeline Kanban",
+    "hint": "Trascina le card per spostare i lead tra gli stage, oppure usa il menu \"Sposta in…\".",
+    "configureCta": "Configura stage",
+    "boardLabel": "Board kanban della pipeline",
+    "empty": {
+      "title": "Nessuno stage visibile",
+      "description": "Nessuno stage della pipeline è attualmente visibile. Configura gli stage per vedere la board."
+    },
+    "period": {
+      "year": "Anno",
+      "month": "Mese",
+      "allYear": "Tutto l'anno",
+      "months": {
+        "jan": "Gennaio",
+        "feb": "Febbraio",
+        "mar": "Marzo",
+        "apr": "Aprile",
+        "may": "Maggio",
+        "jun": "Giugno",
+        "jul": "Luglio",
+        "aug": "Agosto",
+        "sep": "Settembre",
+        "oct": "Ottobre",
+        "nov": "Novembre",
+        "dec": "Dicembre"
+      }
+    },
+    "column": {
+      "label": "{stage}, {count} lead",
+      "empty": "Nessun lead",
+      "more": "+{count} altri"
+    },
+    "card": {
+      "label": "Lead {name}, stage {stage}",
+      "dragHandle": "Trascina il lead {name} per spostarlo di stage"
+    },
+    "moveMenu": {
+      "label": "Sposta in un altro stage",
+      "placeholder": "Sposta in…"
+    },
+    "lossReason": {
+      "title": "Motivo della perdita",
+      "label": "Perché il lead è stato perso?",
+      "placeholder": "Seleziona un motivo"
+    },
+    "announce": {
+      "moved": "{name} spostato in {stage}.",
+      "failed": "Impossibile spostare {name}: {reason}",
+      "regionLabel": "Aggiornamenti della pipeline"
+    },
+    "errors": {
+      "invalid": "Dati non validi.",
+      "notFound": "Elemento non trovato.",
+      "unauthorized": "Non hai i permessi per questa operazione.",
+      "generic": "Si è verificato un errore. Riprova.",
+      "lossReasonRequired": "Seleziona un motivo della perdita.",
+      "config": {
+        "terminalHide": "Gli stage Vinta e Persa non possono essere nascosti.",
+        "hideWithLeads": "Non puoi nascondere uno stage che contiene lead. Spostali prima in un altro stage.",
+        "terminalNotLast": "Gli stage Vinta e Persa devono restare alla fine della pipeline."
+      }
+    }
+  },
+  "pipelineConfig": {
+    "title": "Configurazione pipeline",
+    "description": "Mostra o nascondi gli stage, riordinali e personalizza i colori. Gli stage Vinta e Persa restano sempre visibili e in fondo.",
+    "back": "← Torna alla pipeline",
+    "listLabel": "Stage della pipeline",
+    "leadCount": "{count, plural, =0 {Nessun lead} one {# lead} other {# lead}}",
+    "moveUp": "Sposta {stage} in alto",
+    "moveDown": "Sposta {stage} in basso",
+    "visibilityLabel": "Mostra lo stage {stage} nella pipeline",
+    "terminalLocked": "Gli stage terminali non possono essere nascosti",
+    "colorLegend": "Colore dello stage {stage}",
+    "colorOption": "Colore {token}",
+    "terminalNote": "Gli stage Vinta e Persa sono terminali: non possono essere nascosti e restano in fondo."
   }
 }

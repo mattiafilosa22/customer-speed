@@ -436,5 +436,83 @@
         "form": "Enter at least one value."
       }
     }
+  },
+  "pipeline": {
+    "title": "Pipeline Kanban",
+    "hint": "Drag the cards to move leads between stages, or use the \"Move to…\" menu.",
+    "configureCta": "Configure stages",
+    "boardLabel": "Pipeline kanban board",
+    "empty": {
+      "title": "No visible stage",
+      "description": "No pipeline stage is currently visible. Configure the stages to see the board."
+    },
+    "period": {
+      "year": "Year",
+      "month": "Month",
+      "allYear": "Whole year",
+      "months": {
+        "jan": "January",
+        "feb": "February",
+        "mar": "March",
+        "apr": "April",
+        "may": "May",
+        "jun": "June",
+        "jul": "July",
+        "aug": "August",
+        "sep": "September",
+        "oct": "October",
+        "nov": "November",
+        "dec": "December"
+      }
+    },
+    "column": {
+      "label": "{stage}, {count} leads",
+      "empty": "No leads",
+      "more": "+{count} more"
+    },
+    "card": {
+      "label": "Lead {name}, stage {stage}",
+      "dragHandle": "Drag lead {name} to move it to another stage"
+    },
+    "moveMenu": {
+      "label": "Move to another stage",
+      "placeholder": "Move to…"
+    },
+    "lossReason": {
+      "title": "Loss reason",
+      "label": "Why was the lead lost?",
+      "placeholder": "Select a reason"
+    },
+    "announce": {
+      "moved": "{name} moved to {stage}.",
+      "failed": "Could not move {name}: {reason}",
+      "regionLabel": "Pipeline updates"
+    },
+    "errors": {
+      "invalid": "Invalid data.",
+      "notFound": "Item not found.",
+      "unauthorized": "You do not have permission for this action.",
+      "generic": "Something went wrong. Please try again.",
+      "lossReasonRequired": "Select a loss reason.",
+      "config": {
+        "terminalHide": "The Won and Lost stages cannot be hidden.",
+        "hideWithLeads": "You cannot hide a stage that contains leads. Move them to another stage first.",
+        "terminalNotLast": "The Won and Lost stages must stay at the end of the pipeline."
+      }
+    }
+  },
+  "pipelineConfig": {
+    "title": "Pipeline configuration",
+    "description": "Show or hide stages, reorder them and customize their colours. The Won and Lost stages stay visible and at the end.",
+    "back": "← Back to pipeline",
+    "listLabel": "Pipeline stages",
+    "leadCount": "{count, plural, =0 {No leads} one {# lead} other {# leads}}",
+    "moveUp": "Move {stage} up",
+    "moveDown": "Move {stage} down",
+    "visibilityLabel": "Show the {stage} stage in the pipeline",
+    "terminalLocked": "Terminal stages cannot be hidden",
+    "colorLegend": "Colour of the {stage} stage",
+    "colorOption": "Colour {token}",
+    "terminalNote": "The Won and Lost stages are terminal: they cannot be hidden and stay at the end."
   }
 }
