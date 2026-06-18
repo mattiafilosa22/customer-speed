@@ -1,0 +1,416 @@
+// CustomerSpeed — Prisma schema
+//
+// Modello dati multi-tenant (single-DB, isolamento per riga).
+// Fonte di verità: docs/03-modello-dati.md. Standard DB: docs/00 §3.
+//
+// Principi applicati:
+//  - Ogni entità di dominio ha `organizationId` (FK a Organization) + back-relation.
+//    Questo è il prerequisito per l'iniezione automatica del filtro tenant
+//    (vedi src/lib/prisma-tenant.ts) e per un'eventuale RLS PostgreSQL.
+//  - Indici composti SEMPRE prefissati da `organizationId`, modellati sui
+//    pattern di query reali (filtri liste, ordinamenti, KPI aggregati).
+//  - Importi monetari in Decimal(12,2), mai float. Testi lunghi in @db.Text.
+//  - Constraint reali a livello DB: @@unique, FK con onDelete esplicito.
+//  - Soft delete su Lead (deletedAt) per audit/GDPR; erasure reale = procedura
+//    dedicata (vedi docs/06).
+
+generator client {
+  provider        = "prisma-client"
+  output          = "../src/generated/prisma"
+  moduleFormat    = "esm"
+  previewFeatures = []
+}
+
+datasource db {
+  provider = "postgresql"
+  // In Prisma 7 la connection URL vive in prisma.config.ts (CLI/Migrate)
+  // e nell'adapter passato a PrismaClient (runtime). Vedi src/lib/prisma.ts.
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Enum
+// Le label IT/EN vivono nel layer i18n (src/i18n), NON nel DB.
+// ─────────────────────────────────────────────────────────────────────────────
+
+enum Role {
+  superAdmin
+  proUser
+  baseUser
+}
+
+enum LeadStage {
+  TO_HANDLE // Da gestire
+  TAKEN // Preso in carico
+  CALL_SCHEDULED // Call schedulata
+  WAITING_DOCS // Attesa documenti
+  PRESENTATION_CALL // Call presentazione
+  WAITING_DECISION // Attesa decisione
+  WAITING_PAYMENT // Attesa pagamento
+  WON // Vinta (terminale)
+  LOST // Persa (terminale)
+}
+
+enum CapitalBracket {
+  B_0_50K // 0–50k
+  B_50_100K // 50–100k
+  B_100_250K // 100–250k
+  B_250_500K // 250–500k
+  B_500K_1M // 500k–1 mln
+  B_OVER_1M // > 1 mln
+}
+
+enum AppointmentStatus {
+  PENDING // In attesa
+  DONE // Fatto
+  CANCELED // Annullato
+}
+
+enum CalendarProviderType {
+  GOOGLE
+  CALENDLY
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Tenant root
+// ─────────────────────────────────────────────────────────────────────────────
+
+model Organization {
+  id           String  @id @default(cuid())
+  name         String
+  slug         String  @unique // routing per sottodominio futuro
+  customDomain String? @unique // dominio custom futuro
+
+  // Personalizzazione white-label (applicata via CSS custom properties).
+  appName      String // nome piattaforma mostrato
+  theme        Json // design tokens (vedi docs/05)
+  featureFlags Json   @default("{}") // { calendarIntegrations:false, invoices:true, ... }
+
+  // Back-relations: ogni entità di dominio è raggiungibile dal tenant.
+  users               User[]
+  leads               Lead[]
+  stageConfigs        PipelineStageConfig[]
+  lossReasons         LossReason[]
+  leadSources         LeadSource[]
+  notes               Note[]
+  stageHistories      StageHistory[]
+  appointments        Appointment[]
+  invoices            Invoice[]
+  externalRefs        ExternalCrmRef[]
+  calendarConnections CalendarConnection[]
+  consents            Consent[]
+  auditLogs           AuditLog[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Identità
+// ─────────────────────────────────────────────────────────────────────────────
+
+model User {
+  id             String       @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  email         String
+  emailVerified DateTime?
+  passwordHash  String? // null se solo OAuth — MAI esposto al client (select mirato)
+  name          String
+  role          Role      @default(baseUser)
+  isActive      Boolean   @default(true)
+
+  ownedLeads          Lead[]               @relation("LeadOwner")
+  calendarConnections CalendarConnection[]
+  consents            Consent[]
+
+  lastLoginAt DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@unique([organizationId, email]) // email unica per tenant
+  // Liste utenti del tenant filtrate per ruolo/stato (Settings → utenti).
+  @@index([organizationId, role])
+  @@index([organizationId, isActive])
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Dominio: Lead e cronologia
+// ─────────────────────────────────────────────────────────────────────────────
+
+model Lead {
+  id             String       @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  ownerId String?
+  owner   User?   @relation("LeadOwner", fields: [ownerId], references: [id], onDelete: SetNull)
+
+  firstName String
+  lastName  String
+  email     String?
+  phone     String?
+
+  stage          LeadStage       @default(TO_HANDLE)
+  stageChangedAt DateTime        @default(now()) // per il calcolo "giorni nello stage"
+  capitalBracket CapitalBracket?
+
+  // Provenienza / sorgente (lista configurabile per tenant).
+  sourceId String?
+  source   LeadSource? @relation(fields: [sourceId], references: [id], onDelete: SetNull)
+
+  adminNotes String? @db.Text // "Note admin" — testo lungo
+
+  // Dati per lead persi.
+  lossReasonId String?
+  lossReason   LossReason? @relation(fields: [lossReasonId], references: [id], onDelete: SetNull)
+
+  // Soft delete (audit/GDPR). Filtro di default iniettato dall'extension.
+  deletedAt DateTime?
+
+  notes        Note[]
+  appointments Appointment[]
+  invoices     Invoice[]
+  externalRefs ExternalCrmRef[]
+  stageHistory StageHistory[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Kanban/pipeline: colonne per stage del tenant.
+  @@index([organizationId, stage])
+  // "Giorni nello stage" e ordinamenti pipeline per anzianità.
+  @@index([organizationId, stageChangedAt])
+  // Liste lead ordinate per data creazione (default lista) + paginazione.
+  @@index([organizationId, createdAt])
+  // Filtro "i miei lead" / per consulente.
+  @@index([organizationId, ownerId])
+  // Filtro per provenienza (KPI per sorgente, Settings).
+  @@index([organizationId, sourceId])
+  // Esclusione soft-deleted in modo efficiente nelle liste attive.
+  @@index([organizationId, deletedAt])
+}
+
+model StageHistory {
+  id             String       @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  leadId String
+  lead   Lead   @relation(fields: [leadId], references: [id], onDelete: Cascade)
+
+  fromStage   LeadStage?
+  toStage     LeadStage
+  changedById String? // attore del cambio (User.id); FK soft per audit
+  changedAt   DateTime   @default(now())
+
+  // Timeline del singolo lead (dettaglio) ordinata nel tempo.
+  @@index([leadId, changedAt])
+  // KPI/funnel cross-lead per periodo (es. conversioni nel mese).
+  @@index([organizationId, changedAt])
+}
+
+model Note {
+  id             String       @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  leadId String
+  lead   Lead   @relation(fields: [leadId], references: [id], onDelete: Cascade)
+
+  authorId String? // User.id; SetNull-by-design (nessuna FK hard per conservare la nota)
+  body     String  @db.Text
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Note di un lead, ordinate (più recenti prima) nel dettaglio.
+  @@index([leadId, createdAt])
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Dominio: Appuntamenti, Fatture, Aggiornamento dati
+// ─────────────────────────────────────────────────────────────────────────────
+
+model Appointment {
+  id             String       @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  leadId String?
+  lead   Lead?   @relation(fields: [leadId], references: [id], onDelete: SetNull)
+
+  ownerId String? // User.id del proprietario dell'appuntamento
+
+  startAt DateTime // data + ora (UTC)
+  reason  String // "Motivo"
+  status  AppointmentStatus @default(PENDING)
+
+  // Sync con provider esterni.
+  provider        CalendarProviderType?
+  externalEventId String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Agenda del tenant ordinata per data (vista calendario/lista).
+  @@index([organizationId, startAt])
+  // Filtro agenda per stato (es. solo PENDING) ordinato per data.
+  @@index([organizationId, status, startAt])
+  // Appuntamenti di un lead nel dettaglio.
+  @@index([leadId])
+  // Idempotenza/lookup sync provider esterno.
+  @@index([organizationId, provider, externalEventId])
+}
+
+model Invoice {
+  id             String       @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  leadId String
+  lead   Lead   @relation(fields: [leadId], references: [id], onDelete: Cascade)
+
+  number      String?
+  grossAmount Decimal  @db.Decimal(12, 2)
+  netAmount   Decimal  @db.Decimal(12, 2) // alimenta KPI "Fatturato netto"
+  issuedAt    DateTime
+  createdAt   DateTime @default(now())
+
+  // KPI fatturato per periodo (aggregate/sum lato DB).
+  @@index([organizationId, issuedAt])
+  // Fatture di un lead nel dettaglio.
+  @@index([leadId])
+}
+
+model ExternalCrmRef {
+  id             String       @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  leadId String
+  lead   Lead   @relation(fields: [leadId], references: [id], onDelete: Cascade)
+
+  altName   String?
+  altEmail  String?
+  source    String?
+  createdAt DateTime @default(now())
+
+  // Riferimenti esterni di un lead nel dettaglio.
+  @@index([leadId])
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Liste configurabili per tenant (white-label, NON enum)
+// ─────────────────────────────────────────────────────────────────────────────
+
+model LossReason {
+  id             String       @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  label String // es. "Non ha più risposto"
+  leads Lead[]
+
+  @@unique([organizationId, label]) // motivo unico per tenant
+}
+
+model LeadSource {
+  id             String       @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  label     String // es. "Funnel", "Instagram", "Referenza", "Google"
+  isActive  Boolean @default(true)
+  sortOrder Int     @default(0)
+  leads     Lead[]
+
+  @@unique([organizationId, label]) // sorgente unica per tenant
+  // Elenco sorgenti del tenant ordinato (Settings + select del form lead).
+  @@index([organizationId, sortOrder])
+}
+
+model PipelineStageConfig {
+  id             String       @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  stage      LeadStage
+  isVisible  Boolean   @default(true) // per nascondere stage
+  sortOrder  Int
+  colorToken String? // override colore stage
+
+  @@unique([organizationId, stage]) // una config per stage per tenant
+  // Ordinamento colonne kanban del tenant.
+  @@index([organizationId, sortOrder])
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Integrazioni calendario
+// ─────────────────────────────────────────────────────────────────────────────
+
+model CalendarConnection {
+  id             String       @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  provider CalendarProviderType
+
+  // Token cifrati a riposo (vedi docs/06). MAI esposti al client.
+  accessToken  String    @db.Text
+  refreshToken String?   @db.Text
+  expiresAt    DateTime?
+  scope        String?
+
+  createdAt DateTime @default(now())
+
+  @@unique([userId, provider]) // una connessione per provider per utente
+  // Connessioni di un utente.
+  @@index([organizationId, userId])
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// GDPR / Sicurezza
+// ─────────────────────────────────────────────────────────────────────────────
+
+model Consent {
+  id             String       @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  userId String?
+  user   User?   @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  type      String // "cookie_analytics", "privacy_policy_v1", ...
+  granted   Boolean
+  version   String
+  ip        String?
+  userAgent String?
+  createdAt DateTime @default(now())
+
+  // Storico consensi di un utente per tipo.
+  @@index([organizationId, userId, type])
+}
+
+model AuditLog {
+  id             String        @id @default(cuid())
+  organizationId String?
+  organization   Organization? @relation(fields: [organizationId], references: [id], onDelete: SetNull)
+
+  actorId  String?
+  action   String // "lead.update", "auth.login", ...
+  entity   String?
+  entityId String?
+  meta     Json?
+  ip       String?
+
+  createdAt DateTime @default(now())
+
+  // Audit trail del tenant ordinato nel tempo.
+  @@index([organizationId, createdAt])
+  // Cronologia di una specifica entità.
+  @@index([organizationId, entity, entityId])
+}
