@@ -1,0 +1,44 @@
+/**
+ * Typed domain errors with HTTP status, so Route Handlers and Server Actions can
+ * map them to correct status codes without inspecting messages.
+ *
+ * Messages here are developer-facing/log-facing. User-facing copy is localized
+ * and intentionally NON-revealing (no user enumeration) at the boundary.
+ */
+
+export class UnauthorizedError extends Error {
+  readonly status = 401 as const;
+  constructor(message = "Unauthorized") {
+    super(message);
+    this.name = "UnauthorizedError";
+  }
+}
+
+/** Input failed validation (Zod). Carries field issues for the form layer. */
+export class ValidationError extends Error {
+  readonly status = 400 as const;
+  readonly issues: Readonly<Record<string, string[]>>;
+  constructor(issues: Record<string, string[]>, message = "Validation failed") {
+    super(message);
+    this.name = "ValidationError";
+    this.issues = issues;
+  }
+}
+
+export class ConflictError extends Error {
+  readonly status = 409 as const;
+  constructor(message = "Conflict") {
+    super(message);
+    this.name = "ConflictError";
+  }
+}
+
+export class RateLimitedError extends Error {
+  readonly status = 429 as const;
+  readonly retryAfterSeconds: number;
+  constructor(retryAfterSeconds: number, message = "Too many requests") {
+    super(message);
+    this.name = "RateLimitedError";
+    this.retryAfterSeconds = retryAfterSeconds;
+  }
+}

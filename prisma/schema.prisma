@@ -120,9 +120,15 @@ model User {
   role          Role      @default(baseUser)
   isActive      Boolean   @default(true)
 
-  ownedLeads          Lead[]               @relation("LeadOwner")
-  calendarConnections CalendarConnection[]
-  consents            Consent[]
+  // Bumped on password change / forced logout: i JWT con sessionVersion diverso
+  // dal valore corrente vengono rifiutati (invalida le altre sessioni).
+  sessionVersion Int @default(0)
+
+  ownedLeads             Lead[]                   @relation("LeadOwner")
+  calendarConnections    CalendarConnection[]
+  consents               Consent[]
+  emailVerificationTokens EmailVerificationToken[]
+  passwordResetTokens    PasswordResetToken[]
 
   lastLoginAt DateTime?
   createdAt   DateTime  @default(now())
@@ -413,4 +419,43 @@ model AuditLog {
   @@index([organizationId, createdAt])
   // Cronologia di una specifica entità.
   @@index([organizationId, entity, entityId])
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Token a tempo (verifica email, reset password)
+//
+// Modellati come tabelle dedicate (non NextAuth `VerificationToken` standard)
+// perché:
+//  - usiamo strategia di sessione JWT (nessun adapter DB Auth.js),
+//  - vogliamo HASH del token (mai il valore in chiaro a riposo) + scadenza,
+//    consumo single-use (`consumedAt`) e tracciabilità per utente.
+// Il valore grezzo viene inviato via email; nel DB sta solo `tokenHash` (SHA-256).
+// ─────────────────────────────────────────────────────────────────────────────
+
+model EmailVerificationToken {
+  id        String @id @default(cuid())
+  userId    String
+  user      User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tokenHash String @unique // SHA-256 del token grezzo (mai il valore in chiaro)
+
+  expiresAt  DateTime
+  consumedAt DateTime?
+  createdAt  DateTime  @default(now())
+
+  @@index([userId])
+  @@index([expiresAt])
+}
+
+model PasswordResetToken {
+  id        String @id @default(cuid())
+  userId    String
+  user      User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tokenHash String @unique // SHA-256 del token grezzo (mai il valore in chiaro)
+
+  expiresAt  DateTime
+  consumedAt DateTime?
+  createdAt  DateTime  @default(now())
+
+  @@index([userId])
+  @@index([expiresAt])
 }
