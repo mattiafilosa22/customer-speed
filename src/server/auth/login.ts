@@ -1,4 +1,5 @@
 import { RateLimitedError, UnauthorizedError } from "@/lib/errors";
+import { isRecaptchaAccepted } from "@/lib/recaptcha";
 import { type AuthDeps, clockNow, parseInput } from "@/server/auth/deps";
 import { loginSchema } from "@/server/auth/schemas";
 
@@ -31,8 +32,11 @@ export async function login(deps: AuthDeps, input: unknown): Promise<LoginResult
     throw new RateLimitedError(Math.max(byIp.retryAfterSeconds, byAccount.retryAfterSeconds));
   }
 
+  // reCAPTCHA: reject "failed" AND "low-score" (bot-like). Only "ok"/"skipped"
+  // pass — "skipped" happens solely when keys are unset in dev (docs/06 §6.2).
+  // The failure key is the SAME generic UnauthorizedError → no enumeration.
   const captcha = await deps.verifyRecaptcha(data.recaptchaToken, {});
-  if (captcha.outcome === "failed") {
+  if (!isRecaptchaAccepted(captcha.outcome)) {
     throw new UnauthorizedError("Invalid credentials");
   }
 

@@ -3,8 +3,12 @@ import { expect, test } from "@playwright/test";
 /**
  * E2E: login flow against the seeded Fabio tenant (docs/08). Critical path per
  * CLAUDE.md. Credentials come from env (the seed passwords) so no secret is
- * committed. The tenant is resolved from `DEFAULT_ORG_SLUG=fabio`, so the form
- * needs only email + password.
+ * committed.
+ *
+ * Tenant resolution: the default tenant is now the NEUTRAL platform tenant
+ * (`DEFAULT_ORG_SLUG=customerspeed`), so a CUSTOMER tenant like Fabio is reached
+ * with an explicit slug — `/login?org=fabio`. This mirrors the future subdomain
+ * routing seam (host → slug) without changing the form.
  */
 
 import type { Page } from "@playwright/test";
@@ -42,7 +46,8 @@ test.describe("login", () => {
   test("logs in with the seeded Fabio credentials and lands on the dashboard", async ({ page }) => {
     test.skip(PASSWORD.length === 0, "Set E2E_FABIO_PASSWORD / SEED_FABIO_PASSWORD to run.");
 
-    await page.goto("/login");
+    // Fabio is a customer tenant → reach it with the explicit slug.
+    await page.goto("/login?org=fabio");
     await dismissCookieBanner(page);
     await page.getByLabel(/email/i).fill(EMAIL);
     await page.getByLabel(/password/i).fill(PASSWORD);
@@ -65,8 +70,8 @@ test.describe("guards", () => {
   test("redirects a non-superAdmin away from the admin area", async ({ page }) => {
     test.skip(PASSWORD.length === 0, "Set E2E_FABIO_PASSWORD / SEED_FABIO_PASSWORD to run.");
 
-    // Log in as Fabio (proUser), then try to reach /admin.
-    await page.goto("/login");
+    // Log in as Fabio (proUser, customer tenant slug), then try to reach /admin.
+    await page.goto("/login?org=fabio");
     await dismissCookieBanner(page);
     await page.getByLabel(/email/i).fill(EMAIL);
     await page.getByLabel(/password/i).fill(PASSWORD);

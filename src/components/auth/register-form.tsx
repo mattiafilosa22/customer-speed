@@ -20,6 +20,10 @@ const initialState: ActionState = { status: "idle" };
  * `registerAction`. On success it shows a "check your email" confirmation. The
  * consents link to the public legal pages and are recorded as proof of consent
  * server-side (docs/06 §6.5, docs/09 §9.3).
+ *
+ * NOTE (Fase 1): public self-registration is DISABLED — the public `/register`
+ * page returns 404. This component is retained for the upcoming INVITATION-based
+ * onboarding flow (and is exercised by tests), not wired to a public route.
  */
 export function RegisterForm() {
   const t = useTranslations();

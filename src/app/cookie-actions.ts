@@ -26,9 +26,12 @@ import { getSessionUser } from "@/server/auth/guards";
  *  2. CLIENT MIRROR: a first-party cookie carrying the same choice, read to
  *     decide whether to re-prompt (necessary cookie, no consent required).
  *
- * `organizationId` is the default tenant: on the single domain the public-site
- * consent belongs to the reseller/default tenant. The boolean is sanitized
- * server-side; "necessary" is always granted.
+ * `organizationId` MUST match the `userId`'s tenant to avoid a cross-tenant mix:
+ *   - AUTHENTICATED visitor → the user's OWN tenant (`getSessionUser().organizationId`),
+ *     so the `Consent.userId` FK and `Consent.organizationId` always agree.
+ *   - ANONYMOUS visitor (no session) → the neutral PLATFORM tenant
+ *     (`DEFAULT_ORG_SLUG`), which owns the public site; `userId` is null.
+ * The boolean is sanitized server-side; "necessary" is always granted.
  *
  * No throw on the audit write failing the user flow — the cookie still gets set
  * so the user is not stuck — but errors are logged for diagnosis.
@@ -59,7 +62,12 @@ export async function saveCookieConsentAction(analyticsAllowed: boolean): Promis
   try {
     const meta = await getRequestMeta();
     const user = await getSessionUser();
-    const organizationId = await resolveDefaultOrgId();
+    // Coherence rule: an authenticated user's consent belongs to THEIR tenant
+    // (the userId FK and organizationId must agree); an anonymous visitor's
+    // consent belongs to the neutral platform tenant. Never mix the two.
+    const organizationId = user
+      ? user.organizationId
+      : await resolvePlatformOrgId();
     if (organizationId) {
       await prisma.consent.createMany({
         data: [
@@ -89,8 +97,8 @@ export async function saveCookieConsentAction(analyticsAllowed: boolean): Promis
   }
 }
 
-/** Resolve the default tenant id for public-site consent; null if unresolved. */
-async function resolveDefaultOrgId(): Promise<string | null> {
+/** Resolve the neutral platform tenant id for anonymous consent; null if unresolved. */
+async function resolvePlatformOrgId(): Promise<string | null> {
   const org = await prisma.organization.findUnique({
     where: { slug: env.DEFAULT_ORG_SLUG },
     select: { id: true },

@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 
-import { verifyRecaptcha } from "@/lib/recaptcha";
+import { isRecaptchaAccepted, verifyRecaptcha } from "@/lib/recaptcha";
 
 const silentLogger = { warn: vi.fn(), error: vi.fn() };
 
@@ -64,5 +64,14 @@ describe("verifyRecaptcha", () => {
       logger: silentLogger,
     });
     expect(result.outcome).toBe("failed");
+  });
+});
+
+describe("isRecaptchaAccepted", () => {
+  it("accepts only ok and skipped; rejects failed and low-score", () => {
+    expect(isRecaptchaAccepted("ok")).toBe(true);
+    expect(isRecaptchaAccepted("skipped")).toBe(true);
+    expect(isRecaptchaAccepted("failed")).toBe(false);
+    expect(isRecaptchaAccepted("low-score")).toBe(false);
   });
 });

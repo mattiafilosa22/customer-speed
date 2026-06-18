@@ -1,4 +1,5 @@
 import { ConflictError, RateLimitedError } from "@/lib/errors";
+import { isRecaptchaAccepted } from "@/lib/recaptcha";
 import { EMAIL_VERIFICATION_TTL_MS, generateRawToken, hashToken } from "@/lib/tokens";
 import { type AuthDeps, clockNow, parseInput } from "@/server/auth/deps";
 import { registerSchema } from "@/server/auth/schemas";
@@ -36,8 +37,10 @@ export async function register(
     throw new RateLimitedError(limit.retryAfterSeconds);
   }
 
+  // reCAPTCHA: reject "failed" AND "low-score"; only "ok"/"skipped" pass
+  // ("skipped" = keys unset in dev). Generic ConflictError → non-revealing.
   const captcha = await deps.verifyRecaptcha(data.recaptchaToken, {});
-  if (captcha.outcome === "failed") {
+  if (!isRecaptchaAccepted(captcha.outcome)) {
     throw new ConflictError("Captcha verification failed");
   }
 
