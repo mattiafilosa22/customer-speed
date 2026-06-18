@@ -29,3 +29,27 @@ export async function listLossReasons(deps: LeadDeps): Promise<ReferenceItem[]> 
     orderBy: { label: "asc" },
   });
 }
+
+/**
+ * Upper bound on the number of leads offered in a picker `<select>` (e.g. the
+ * appointment form's "lead collegato"). Single-consultant tenants (Fabio) have
+ * few leads; a generous cap keeps the select usable while guaranteeing the query
+ * is never unbounded (docs/00 §3 — paginate/limit growing tables).
+ */
+const LEAD_OPTIONS_LIMIT = 500;
+
+/**
+ * Lead options for a picker select (id + full name), newest first, capped. Used
+ * by the appointment form to link an appointment to a lead. Soft-deleted leads
+ * are excluded by the tenant client; tenant-scoped via `[organizationId,
+ * createdAt]`.
+ */
+export async function listLeadOptions(
+  deps: LeadDeps,
+): Promise<ReadonlyArray<{ id: string; firstName: string; lastName: string }>> {
+  return deps.prisma.lead.findMany({
+    select: { id: true, firstName: true, lastName: true },
+    orderBy: { createdAt: "desc" },
+    take: LEAD_OPTIONS_LIMIT,
+  });
+}

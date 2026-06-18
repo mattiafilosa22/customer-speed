@@ -583,5 +583,97 @@
         "form": "Controlla i dati inseriti."
       }
     }
+  },
+  "appointments": {
+    "title": "Appuntamenti",
+    "count": "{count, plural, =0 {Nessun appuntamento} one {# appuntamento} other {# appuntamenti}}",
+    "dayFilter": "Giorno: {date}",
+    "clearDayFilter": "Mostra tutti",
+    "filters": {
+      "label": "Filtra appuntamenti per stato",
+      "all": "Tutti",
+      "todo": "Da fare",
+      "done": "Fatti"
+    },
+    "table": {
+      "date": "Data e ora",
+      "reason": "Motivo",
+      "lead": "Lead",
+      "status": "Stato",
+      "actions": "Azioni"
+    },
+    "row": {
+      "markDone": "✓ Fatto",
+      "reopen": "Riapri",
+      "cancel": "Annulla",
+      "edit": "Modifica",
+      "delete": "Elimina"
+    },
+    "new": {
+      "cta": "Nuovo appuntamento",
+      "title": "Nuovo appuntamento",
+      "description": "Inserisci data, ora e motivo. Puoi collegare l'appuntamento a un lead."
+    },
+    "edit": {
+      "title": "Modifica appuntamento",
+      "description": "Aggiorna data, ora, motivo o lead collegato."
+    },
+    "form": {
+      "startAt": "Data e ora",
+      "reason": "Motivo",
+      "lead": "Lead collegato",
+      "noLead": "Nessun lead",
+      "submit": "Salva appuntamento",
+      "saving": "Salvataggio…"
+    },
+    "delete": {
+      "confirmTitle": "Eliminare l'appuntamento?",
+      "confirmBody": "L'operazione non è reversibile.",
+      "confirm": "Elimina",
+      "cancel": "Annulla",
+      "success": "Appuntamento eliminato."
+    },
+    "empty": {
+      "title": "Nessun appuntamento",
+      "description": "Crea il tuo primo appuntamento con \"Nuovo appuntamento\"."
+    },
+    "pagination": {
+      "previous": "Precedente",
+      "next": "Successivo",
+      "page": "Pagina {page} di {total}"
+    },
+    "calendar": {
+      "title": "Mini-calendario",
+      "previousMonth": "Mese precedente",
+      "nextMonth": "Mese successivo",
+      "today": "Oggi",
+      "todayLabel": "oggi",
+      "hasAppointments": "ci sono appuntamenti"
+    },
+    "lead": {
+      "title": "Appuntamenti",
+      "add": "+ Aggiungi appuntamento",
+      "empty": "Nessun appuntamento per questo lead."
+    },
+    "create": {
+      "success": "Appuntamento creato."
+    },
+    "update": {
+      "success": "Appuntamento aggiornato."
+    },
+    "status": {
+      "success": "Stato aggiornato."
+    },
+    "errors": {
+      "unauthorized": "Non hai i permessi per questa operazione.",
+      "notFound": "Appuntamento non trovato.",
+      "generic": "Si è verificato un errore. Riprova.",
+      "fields": {
+        "startAt": "Inserisci una data e ora valide.",
+        "reason": "Inserisci un motivo.",
+        "leadId": "Lead non valido.",
+        "form": "Controlla i dati inseriti."
+      }
+    }
   }
 }

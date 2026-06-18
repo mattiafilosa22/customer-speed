@@ -16,6 +16,7 @@ export { createExternalRef, deleteExternalRef } from "@/server/leads/external-re
 export {
   listLeadSources,
   listLossReasons,
+  listLeadOptions,
   type ReferenceItem,
 } from "@/server/leads/reference-data";
 
