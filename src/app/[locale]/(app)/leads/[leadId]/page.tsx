@@ -41,6 +41,11 @@ export default async function LeadDetailPage({
   const tl = await getTranslations("leads");
 
   const ctx = await requireTenantContext();
+  // Server-authoritative read guard (robust to future per-tenant permission
+  // overrides); 404 avoids revealing the lead area cross-role.
+  if (!can(ctx.role, "lead.view")) {
+    notFound();
+  }
   const deps = buildLeadDeps(ctx);
 
   // getLead throws NotFoundError for cross-tenant/deleted/missing ids → render
