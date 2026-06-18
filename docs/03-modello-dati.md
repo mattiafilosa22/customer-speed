@@ -9,6 +9,7 @@ Organization 1───* User
 Organization 1───* Lead
 Organization 1───* PipelineStageConfig
 Organization 1───* LossReason
+Organization 1───* LeadSource
 User         1───* Lead          (ownerId, opzionale)
 Lead         1───* Note
 Lead         1───* Appointment
@@ -126,6 +127,10 @@ model Lead {
   stageChangedAt  DateTime  @default(now())   // per il calcolo "giorni"
   capitalBracket  CapitalBracket?
 
+  // provenienza / sorgente del lead (lista configurabile per tenant)
+  sourceId        String?
+  source          LeadSource? @relation(fields: [sourceId], references: [id])
+
   adminNotes      String?   @db.Text          // "Note admin" testo lungo
 
   // dati per lead persi
@@ -220,6 +225,16 @@ model LossReason {
   @@unique([organizationId, label])
 }
 
+model LeadSource {                            // "Provenienza" — configurabile per tenant
+  id             String  @id @default(cuid())
+  organizationId String
+  label          String                       // es. "Funnel", "Instagram", "Referenza", "Google"
+  isActive       Boolean @default(true)
+  sortOrder      Int     @default(0)
+  leads          Lead[]
+  @@unique([organizationId, label])
+}
+
 model PipelineStageConfig {
   id             String    @id @default(cuid())
   organizationId String
@@ -277,4 +292,5 @@ model AuditLog {                               // GDPR / sicurezza
 - **Conv. rate**: vedi formula in `02-specifiche-funzionali.md` §2.2.
 - **Soft delete**: valutare un campo `deletedAt` su `Lead` invece di hard delete, per audit e GDPR (e per il diritto alla cancellazione gestire una vera erasure su richiesta — vedi `06`).
 - **Isolamento**: nessuna query senza `organizationId` salvo contesto `superAdmin`. Forzare via Prisma extension/middleware.
-- **Seed**: creare un `superAdmin`, un tenant demo e il tenant **Fabio** (proUser) con i lead di esempio degli screenshot e `featureFlags.calendar = false`.
+- **Provenienza**: `LeadSource` è una lista per tenant (come `LossReason`), gestibile da Settings. Seed di default per ogni nuovo tenant: **Funnel, Instagram, Referenza, Google**. Mantenere il riferimento via FK (`sourceId`) invece di un enum, così ogni cliente personalizza le proprie sorgenti senza migrazioni.
+- **Seed**: creare un `superAdmin`, un tenant demo e il tenant **Fabio** (proUser) con i lead di esempio degli screenshot, le sorgenti di default (Funnel/Instagram/Referenza/Google) e `featureFlags.calendar = false`.
