@@ -31,12 +31,18 @@ const envSchema = z.object({
   // Public base URL of the app (used to build verification/reset links in emails).
   APP_URL: z.string().url().default("http://localhost:3000"),
 
-  // ── Tenant resolution (single-domain default) ────────────────────────
-  // Until per-subdomain/custom-domain routing lands, the login/register/forgot
-  // forms resolve the tenant from this default Organization `slug`. The seeded
-  // proUser tenant ("Fabio") uses slug "fabio". When subdomain routing arrives,
-  // the slug will be derived from the host and this becomes the fallback only.
-  DEFAULT_ORG_SLUG: z.string().min(1).default("fabio"),
+  // ── Tenant resolution (PLATFORM default tenant) ──────────────────────
+  // This is the NEUTRAL platform tenant — NOT a customer tenant. It owns the
+  // public/marketing branding, the anonymous (visitor) cookie consents, and is
+  // the default login tenant for the superAdmin. The seed provisions it as
+  // slug "customerspeed" (where the superAdmin lives).
+  //
+  // IMPORTANT: it must never default to a real customer tenant (e.g. "fabio"),
+  // otherwise public consent / branding / default login would leak into a
+  // client's tenant. Customer tenants (Fabio) are reached via an explicit slug
+  // (`/login?org=fabio`) or, in the future, per-subdomain/custom-domain routing
+  // (the slug will then be derived from the host and this becomes the fallback).
+  DEFAULT_ORG_SLUG: z.string().min(1).default("customerspeed"),
 
   // ── reCAPTCHA (optional in dev; verification no-ops with a warning) ───
   // When both keys are absent the server-side verifier returns "skipped" so dev
@@ -98,7 +104,7 @@ export const env: Env =
         NEXTAUTH_SECRET: "test-secret-test-secret-test-secret-32",
         NEXTAUTH_URL: "http://localhost:3000",
         APP_URL: "http://localhost:3000",
-        DEFAULT_ORG_SLUG: "fabio",
+        DEFAULT_ORG_SLUG: "customerspeed",
         RECAPTCHA_MIN_SCORE: 0.5,
         EMAIL_FROM: "CustomerSpeed <no-reply@example.com>",
       } as Env)

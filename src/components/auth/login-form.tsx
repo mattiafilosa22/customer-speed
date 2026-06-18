@@ -66,16 +66,13 @@ export function LoginForm({ organizationSlug }: { organizationSlug?: string }) {
         {t("auth.login.submit")}
       </SubmitButton>
 
+      {/* Public self-registration is disabled in Fase 1 (tenants are provisioned
+          by the superAdmin / reseller, users via invitation) — so no "register"
+          link is shown. See src/app/[locale]/(auth)/register/page.tsx. */}
       <div className="flex flex-col gap-1 text-center font-body text-[13px]">
         <Link href="/forgot-password" className="text-accent hover:underline">
           {t("auth.login.forgotLink")}
         </Link>
-        <span className="text-muted">
-          {t("auth.login.noAccount")}{" "}
-          <Link href="/register" className="text-accent hover:underline">
-            {t("auth.login.registerLink")}
-          </Link>
-        </span>
       </div>
     </form>
   );

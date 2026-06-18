@@ -77,6 +77,31 @@ const WHERE_OPERATIONS: ReadonlySet<string> = new Set<Prisma.PrismaAction>([
   "upsert",
 ]);
 
+/**
+ * `findUnique`/`findUniqueOrThrow` accept ONLY unique selectors in `where`, so
+ * injecting a non-unique `organizationId` into them is a runtime error
+ * ("Unknown argument `organizationId`"). Because the tenant filter is exactly
+ * "match this id AND this org", the semantically-equivalent and valid form is
+ * `findFirst`/`findFirstOrThrow`. We therefore REWRITE the operation when we
+ * inject the tenant where-clause. The result is identical (a unique id can
+ * match at most one row) but the query is accepted by Prisma.
+ */
+const FIND_UNIQUE_REWRITE: Readonly<Record<string, Prisma.PrismaAction>> = {
+  findUnique: "findFirst",
+  findUniqueOrThrow: "findFirstOrThrow",
+};
+
+/**
+ * Given the original operation, return the operation actually executed after
+ * tenant scoping. Only `findUnique*` on a tenant-scoped model is rewritten.
+ */
+export function rewriteOperationForTenant(model: string | undefined, operation: string): string {
+  if (!isTenantScopedModel(model)) {
+    return operation;
+  }
+  return FIND_UNIQUE_REWRITE[operation] ?? operation;
+}
+
 /** Operations whose written `data` must carry the tenant id. */
 const CREATE_DATA_OPERATIONS: ReadonlySet<string> = new Set<Prisma.PrismaAction>([
   "create",
@@ -120,6 +145,11 @@ function injectSoftDeleteFilter(args: AnyArgs): AnyArgs {
 }
 
 type AnyArgs = Record<string, unknown>;
+
+/** Prisma delegate key for a model name: first letter lowercased (`Lead`→`lead`). */
+function lowerFirst(model: string): string {
+  return model.length === 0 ? model : model.charAt(0).toLowerCase() + model.slice(1);
+}
 
 function injectWhere(args: AnyArgs, organizationId: string): AnyArgs {
   const existingWhere = (args.where as AnyArgs | undefined) ?? {};
@@ -215,6 +245,24 @@ export function getTenantPrisma(ctx: TenantContext, options: TenantPrismaOptions
               organizationId,
               includeSoftDeleted,
             );
+
+            // `findUnique*` with an injected non-unique `organizationId` is
+            // invalid for Prisma; run the equivalent `findFirst*` instead.
+            // `args` is already fully tenant-scoped, and we dispatch on the
+            // BASE client so the extension does not re-run (no double scope).
+            const rewritten = rewriteOperationForTenant(model, operation);
+            if (rewritten !== operation && model) {
+              const delegate = (prisma as unknown as Record<string, Record<string, unknown>>)[
+                lowerFirst(model)
+              ];
+              const fn = delegate?.[rewritten] as
+                | ((a: unknown) => Promise<unknown>)
+                | undefined;
+              if (typeof fn === "function") {
+                return fn.call(delegate, nextArgs) as Promise<unknown>;
+              }
+            }
+
             return query(nextArgs);
           },
         },

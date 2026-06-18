@@ -91,3 +91,23 @@ export async function verifyRecaptcha(
 
   return { outcome: "ok", score };
 }
+
+/**
+ * Single decision point for whether a reCAPTCHA outcome is acceptable on a
+ * protected auth flow (register/login/forgot — docs/06 §6.1-6.2).
+ *
+ * Accepted:
+ *   - "ok"      → human (score ≥ threshold), or the v2 fallback succeeded.
+ *   - "skipped" → keys NOT configured (dev only). The verifier already logged a
+ *                 loud warning; in production the deployment checklist must set
+ *                 the keys, so "skipped" should not occur there.
+ * Rejected:
+ *   - "failed"    → Google rejected the token / network error / missing token.
+ *   - "low-score" → bot-like score below the configured threshold.
+ *
+ * Keeping this in ONE place stops the per-flow drift the security review found
+ * (some flows accepted "low-score"/"skipped" implicitly).
+ */
+export function isRecaptchaAccepted(outcome: RecaptchaOutcome): boolean {
+  return outcome === "ok" || outcome === "skipped";
+}

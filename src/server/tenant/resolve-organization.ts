@@ -10,8 +10,10 @@ import type { PrismaClient } from "@/generated/prisma/client";
  * the boundary must map the human-facing tenant identifier (a slug) to its id
  * BEFORE delegating to the use cases.
  *
- * - For Fase 1 the slug defaults to `env.DEFAULT_ORG_SLUG` ("fabio"), so the
- *   forms work against the seeded proUser tenant without extra input.
+ * - For Fase 1 the slug defaults to `env.DEFAULT_ORG_SLUG` (the NEUTRAL platform
+ *   tenant "customerspeed", where the superAdmin lives) when the form supplies
+ *   none. Customer tenants (e.g. Fabio) are reached with an explicit slug
+ *   (`/login?org=fabio`).
  * - This is the single seam to extend for subdomain / custom-domain routing:
  *   derive the slug from the request host and pass it here. No call site or the
  *   `@@unique` constraint changes.

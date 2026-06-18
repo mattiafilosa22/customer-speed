@@ -2,7 +2,12 @@ import { describe, expect, it } from "vitest";
 
 import { ConflictError, RateLimitedError, ValidationError } from "@/lib/errors";
 import { register } from "@/server/auth/register";
-import { blockAllRateLimiter, buildFakeDeps, FakeDb } from "@/server/auth/test-helpers";
+import {
+  blockAllRateLimiter,
+  buildFakeDeps,
+  FakeDb,
+  recaptchaReturning,
+} from "@/server/auth/test-helpers";
 
 const validInput = {
   organizationId: "org_1",
@@ -67,5 +72,34 @@ describe("register", () => {
     const db = new FakeDb();
     const deps = buildFakeDeps(db, { rateLimiter: blockAllRateLimiter() });
     await expect(register(deps, validInput)).rejects.toBeInstanceOf(RateLimitedError);
+  });
+
+  // ── reCAPTCHA enforcement (docs/06 §6.2) ──────────────────────────────────
+  it("rejects a FAILED reCAPTCHA and creates no user", async () => {
+    const db = new FakeDb();
+    const deps = buildFakeDeps(db, {
+      verifyRecaptcha: recaptchaReturning("failed") as unknown as typeof deps.verifyRecaptcha,
+    });
+    await expect(register(deps, validInput)).rejects.toBeInstanceOf(ConflictError);
+    expect(db.users).toHaveLength(0);
+  });
+
+  it("rejects a LOW-SCORE reCAPTCHA (bot-like) — previously accepted", async () => {
+    const db = new FakeDb();
+    const deps = buildFakeDeps(db, {
+      verifyRecaptcha: recaptchaReturning("low-score") as unknown as typeof deps.verifyRecaptcha,
+    });
+    await expect(register(deps, validInput)).rejects.toBeInstanceOf(ConflictError);
+    expect(db.users).toHaveLength(0);
+  });
+
+  it("accepts a SKIPPED reCAPTCHA (dev: keys not configured)", async () => {
+    const db = new FakeDb();
+    const deps = buildFakeDeps(db, {
+      verifyRecaptcha: recaptchaReturning("skipped") as unknown as typeof deps.verifyRecaptcha,
+    });
+    const result = await register(deps, validInput);
+    expect(result.userId).toBeTruthy();
+    expect(db.users).toHaveLength(1);
   });
 });

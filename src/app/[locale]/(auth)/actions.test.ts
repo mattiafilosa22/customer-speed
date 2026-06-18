@@ -78,7 +78,8 @@ describe("loginAction", () => {
 
     const result = await loginAction(idle, fd(valid));
 
-    expect(resolveOrganizationIdBySlug).toHaveBeenCalledWith({}, "fabio");
+    // No explicit slug → falls back to the neutral PLATFORM tenant default.
+    expect(resolveOrganizationIdBySlug).toHaveBeenCalledWith({}, "customerspeed");
     expect(useCases.login).toHaveBeenCalledOnce();
     expect(signIn).toHaveBeenCalledWith(
       "credentials",
@@ -89,6 +90,16 @@ describe("loginAction", () => {
       }),
     );
     expect(result).toEqual({ status: "success" });
+  });
+
+  it("resolves a customer tenant from an explicit organizationSlug (e.g. Fabio)", async () => {
+    useCases.login.mockResolvedValue({ userId: "u1", organizationId: "org_fabio", role: "proUser" });
+    signIn.mockResolvedValue(undefined);
+
+    await loginAction(idle, fd({ ...valid, organizationSlug: "fabio" }));
+
+    // The explicit slug overrides the platform default → Fabio can still log in.
+    expect(resolveOrganizationIdBySlug).toHaveBeenCalledWith({}, "fabio");
   });
 
   it("uses a locale-prefixed redirectTo for non-default locales", async () => {

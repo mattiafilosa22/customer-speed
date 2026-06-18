@@ -1,4 +1,5 @@
 import { RateLimitedError } from "@/lib/errors";
+import { isRecaptchaAccepted } from "@/lib/recaptcha";
 import { generateRawToken, hashToken, PASSWORD_RESET_TTL_MS } from "@/lib/tokens";
 import { type AuthDeps, clockNow, parseInput } from "@/server/auth/deps";
 import { requestPasswordResetSchema } from "@/server/auth/schemas";
@@ -31,7 +32,15 @@ export async function requestPasswordReset(
     throw new RateLimitedError(limit.retryAfterSeconds);
   }
 
-  await deps.verifyRecaptcha(data.recaptchaToken, {});
+  // reCAPTCHA: a "failed"/"low-score" outcome means bot-like traffic. We must
+  // NOT issue a reset token, but we also must NOT reveal that the request was
+  // rejected (no enumeration / no oracle): exit as a silent, non-revealing
+  // no-op returning the SAME `accepted: true`. Only "ok"/"skipped" proceed
+  // ("skipped" = keys unset in dev, the verifier already warned). docs/06 §6.1-6.2.
+  const captcha = await deps.verifyRecaptcha(data.recaptchaToken, {});
+  if (!isRecaptchaAccepted(captcha.outcome)) {
+    return { accepted: true };
+  }
 
   const user = await deps.prisma.user.findUnique({
     where: { organizationId_email: { organizationId: data.organizationId, email: data.email } },

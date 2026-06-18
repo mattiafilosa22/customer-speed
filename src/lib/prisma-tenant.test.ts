@@ -1,7 +1,11 @@
 import { describe, expect, it } from "vitest";
 
 import { Prisma } from "@/generated/prisma/client";
-import { applyTenantScope, TENANT_SCOPED_MODELS } from "@/lib/prisma-tenant";
+import {
+  applyTenantScope,
+  rewriteOperationForTenant,
+  TENANT_SCOPED_MODELS,
+} from "@/lib/prisma-tenant";
 
 const ORG = "org_A";
 
@@ -110,5 +114,34 @@ describe("applyTenantScope (isolation logic)", () => {
     const out = applyTenantScope("Organization", "findUnique", input, ORG);
     expect(out).toEqual(input);
     expect((out.where as Record<string, unknown>).organizationId).toBeUndefined();
+  });
+
+  it("injects organizationId into findUnique where on a tenant-scoped model", () => {
+    // The where is scoped; the OPERATION must be rewritten too (see below), since
+    // findUnique cannot accept a non-unique organizationId selector.
+    const out = applyTenantScope("Lead", "findUnique", { where: { id: "lead_1" } }, ORG);
+    expect(out.where).toMatchObject({ id: "lead_1", organizationId: ORG });
+  });
+});
+
+describe("rewriteOperationForTenant (findUnique → findFirst)", () => {
+  it("rewrites findUnique/findUniqueOrThrow to findFirst/findFirstOrThrow on tenant models", () => {
+    // findUnique only accepts UNIQUE selectors; injecting organizationId would
+    // make Prisma throw at runtime. The equivalent valid form is findFirst.
+    expect(rewriteOperationForTenant("Lead", "findUnique")).toBe("findFirst");
+    expect(rewriteOperationForTenant("Lead", "findUniqueOrThrow")).toBe("findFirstOrThrow");
+    expect(rewriteOperationForTenant("LeadSource", "findUnique")).toBe("findFirst");
+  });
+
+  it("does NOT rewrite other operations", () => {
+    expect(rewriteOperationForTenant("Lead", "findFirst")).toBe("findFirst");
+    expect(rewriteOperationForTenant("Lead", "findMany")).toBe("findMany");
+    expect(rewriteOperationForTenant("Lead", "update")).toBe("update");
+    expect(rewriteOperationForTenant("Lead", "create")).toBe("create");
+  });
+
+  it("does NOT rewrite for non-tenant-scoped models (e.g. Organization)", () => {
+    // Organization.findUnique by unique slug must stay findUnique.
+    expect(rewriteOperationForTenant("Organization", "findUnique")).toBe("findUnique");
   });
 });

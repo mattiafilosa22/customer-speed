@@ -2,7 +2,12 @@ import { describe, expect, it } from "vitest";
 
 import { RateLimitedError, UnauthorizedError, ValidationError } from "@/lib/errors";
 import { login } from "@/server/auth/login";
-import { blockAllRateLimiter, buildFakeDeps, FakeDb } from "@/server/auth/test-helpers";
+import {
+  blockAllRateLimiter,
+  buildFakeDeps,
+  FakeDb,
+  recaptchaReturning,
+} from "@/server/auth/test-helpers";
 
 function seedVerifiedUser(db: FakeDb) {
   return db.addUser({
@@ -107,5 +112,36 @@ describe("login", () => {
     seedVerifiedUser(db);
     const deps = buildFakeDeps(db, { rateLimiter: blockAllRateLimiter() });
     await expect(login(deps, baseInput)).rejects.toBeInstanceOf(RateLimitedError);
+  });
+
+  // ── reCAPTCHA enforcement (docs/06 §6.2) ──────────────────────────────────
+  it("rejects a FAILED reCAPTCHA with the generic UnauthorizedError", async () => {
+    const db = new FakeDb();
+    seedVerifiedUser(db);
+    const deps = buildFakeDeps(db, {
+      verifyRecaptcha: recaptchaReturning("failed") as unknown as typeof deps.verifyRecaptcha,
+    });
+    await expect(login(deps, baseInput)).rejects.toBeInstanceOf(UnauthorizedError);
+    // No successful login audit when captcha fails.
+    expect(db.audits.some((a) => a.action === "auth.login")).toBe(false);
+  });
+
+  it("rejects a LOW-SCORE reCAPTCHA (bot-like) — previously accepted", async () => {
+    const db = new FakeDb();
+    seedVerifiedUser(db);
+    const deps = buildFakeDeps(db, {
+      verifyRecaptcha: recaptchaReturning("low-score") as unknown as typeof deps.verifyRecaptcha,
+    });
+    await expect(login(deps, baseInput)).rejects.toBeInstanceOf(UnauthorizedError);
+  });
+
+  it("accepts a SKIPPED reCAPTCHA (dev: keys not configured)", async () => {
+    const db = new FakeDb();
+    seedVerifiedUser(db);
+    const deps = buildFakeDeps(db, {
+      verifyRecaptcha: recaptchaReturning("skipped") as unknown as typeof deps.verifyRecaptcha,
+    });
+    const result = await login(deps, baseInput);
+    expect(result.userId).toBeTruthy();
   });
 });
