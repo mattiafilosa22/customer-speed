@@ -85,6 +85,15 @@ const DEFAULT_LEAD_SOURCES: ReadonlyArray<{ label: string; sortOrder: number }> 
   { label: "Google", sortOrder: 3 },
 ];
 
+// Default loss reasons per tenant (docs/02 §2.5: "Vendite perse" needs reasons).
+// Required so the "move to LOST" flow always has at least one selectable reason.
+const DEFAULT_LOSS_REASONS: readonly string[] = [
+  "Non ha più risposto",
+  "Budget insufficiente",
+  "Ha scelto un concorrente",
+  "Non interessato",
+];
+
 const PIPELINE_STAGES: ReadonlyArray<{
   stage: LeadStage;
   sortOrder: number;
@@ -197,6 +206,16 @@ async function upsertTenant(
         where: { organizationId_label: { organizationId: organization.id, label: src.label } },
         update: { sortOrder: src.sortOrder, isActive: true },
         create: { organizationId: organization.id, label: src.label, sortOrder: src.sortOrder },
+      }),
+    ),
+  );
+
+  await Promise.all(
+    DEFAULT_LOSS_REASONS.map((label) =>
+      prisma.lossReason.upsert({
+        where: { organizationId_label: { organizationId: organization.id, label } },
+        update: {},
+        create: { organizationId: organization.id, label },
       }),
     ),
   );

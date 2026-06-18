@@ -1,6 +1,7 @@
 import { ForbiddenError } from "@/lib/rbac";
 import {
   ConflictError,
+  NotFoundError,
   RateLimitedError,
   UnauthorizedError,
   ValidationError,
@@ -60,6 +61,8 @@ export interface ErrorKeyMap {
   readonly unauthorized: string;
   /** Generic message for conflicts (e.g. registration could not complete). */
   readonly conflict: string;
+  /** Message for a missing/forbidden-as-missing entity (404). */
+  readonly notFound?: string;
   /** Message for rate limiting. */
   readonly rateLimited: string;
   /** Fallback for unexpected errors. */
@@ -81,6 +84,9 @@ export function toActionState(error: unknown, keys: ErrorKeyMap): ActionState {
   }
   if (error instanceof ForbiddenError) {
     return fail(keys.unauthorized);
+  }
+  if (error instanceof NotFoundError) {
+    return fail(keys.notFound ?? keys.generic);
   }
   if (error instanceof ConflictError) {
     return fail(keys.conflict);
