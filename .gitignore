@@ -22,6 +22,8 @@ next-env.d.ts
 
 # Prisma
 # (manteniamo prisma/migrations sotto versione; ignoriamo eventuali dump locali)
+# Client generato da `prisma generate` (Prisma 7, output custom): rigenerabile.
+/src/generated/
 *.db
 *.sqlite
 

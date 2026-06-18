@@ -18,6 +18,8 @@ const eslintConfig = [
       "playwright-report/**",
       "test-results/**",
       "next-env.d.ts",
+      // Prisma 7 generated client (custom output) — generated, not authored.
+      "src/generated/**",
     ],
   },
   ...nextCoreWebVitals,
@@ -32,6 +34,14 @@ const eslintConfig = [
         { argsIgnorePattern: "^_", varsIgnorePattern: "^_" },
       ],
       "no-console": ["warn", { allow: ["warn", "error"] }],
+    },
+  },
+  {
+    // CLI scripts (seed, migrations tooling) legitimately report progress to
+    // stdout; allow informational logging there.
+    files: ["prisma/**/*.ts"],
+    rules: {
+      "no-console": ["warn", { allow: ["warn", "error", "info"] }],
     },
   },
 ];
