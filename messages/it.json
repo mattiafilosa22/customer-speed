@@ -1,0 +1,75 @@
+{
+  "app": {
+    "name": "CustomerSpeed",
+    "description": "Piattaforma CRM multi-tenant"
+  },
+  "nav": {
+    "ariaLabel": "Navigazione principale",
+    "dashboard": "Dashboard",
+    "pipeline": "Pipeline",
+    "leads": "Lead",
+    "appointments": "Appuntamenti",
+    "settings": "Impostazioni"
+  },
+  "drawer": {
+    "open": "Apri il menu di navigazione",
+    "close": "Chiudi il menu"
+  },
+  "languageSwitcher": {
+    "label": "Lingua",
+    "it": "Italiano",
+    "en": "Inglese"
+  },
+  "home": {
+    "title": "CustomerSpeed",
+    "subtitle": "Scaffold attivo — Fase 0."
+  },
+  "pages": {
+    "dashboard": {
+      "title": "Dashboard",
+      "description": "Qui arriveranno i KPI e la panoramica del tenant."
+    },
+    "pipeline": {
+      "title": "Pipeline",
+      "description": "Qui arriverà la board kanban degli stage."
+    },
+    "leads": {
+      "title": "Lead",
+      "description": "Qui arriverà l'elenco dei lead con filtri e ricerca."
+    },
+    "appointments": {
+      "title": "Appuntamenti",
+      "description": "Qui arriverà l'agenda degli appuntamenti."
+    },
+    "settings": {
+      "title": "Impostazioni",
+      "description": "Qui arriverà la configurazione, incluso il pannello \"Aspetto & brand\"."
+    }
+  },
+  "enum": {
+    "leadStage": {
+      "TO_HANDLE": "Da gestire",
+      "TAKEN": "Preso in carico",
+      "CALL_SCHEDULED": "Call schedulata",
+      "WAITING_DOCS": "Attesa documenti",
+      "PRESENTATION_CALL": "Call presentazione",
+      "WAITING_DECISION": "Attesa decisione",
+      "WAITING_PAYMENT": "Attesa pagamento",
+      "WON": "Vinta",
+      "LOST": "Persa"
+    },
+    "capitalBracket": {
+      "B_0_50K": "0–50k",
+      "B_50_100K": "50–100k",
+      "B_100_250K": "100–250k",
+      "B_250_500K": "250–500k",
+      "B_500K_1M": "500k–1 mln",
+      "B_OVER_1M": "> 1 mln"
+    },
+    "appointmentStatus": {
+      "PENDING": "In attesa",
+      "DONE": "Fatto",
+      "CANCELED": "Annullato"
+    }
+  }
+}

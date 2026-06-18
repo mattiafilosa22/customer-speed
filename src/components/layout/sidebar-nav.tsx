@@ -1,10 +1,10 @@
 "use client";
 
-import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { useTranslations } from "next-intl";
 
 import { cn } from "@/lib/cn";
 import { NAV_ITEMS } from "@/components/layout/nav-items";
+import { Link, usePathname } from "@/i18n/navigation";
 
 interface SidebarNavProps {
   /** Called after a nav item activates — used by the drawer to close itself. */
@@ -15,10 +15,16 @@ interface SidebarNavProps {
  * The navigation list. Marks the active route with `aria-current="page"` (not
  * color alone) and resolves "active" on the route segment so child routes keep
  * the parent highlighted. Each item is a 44px-tall touch target with a visible
- * focus ring. Presentation only.
+ * focus ring.
+ *
+ * Uses the locale-aware `Link`/`usePathname` from `@/i18n/navigation`: the
+ * pathname is returned WITHOUT the locale prefix, so the comparisons stay
+ * locale-agnostic and the links get the active locale prefix automatically.
+ * Labels come from the `nav.*` messages — no hard-coded copy.
  */
 export function SidebarNav({ onNavigate }: SidebarNavProps) {
   const pathname = usePathname();
+  const t = useTranslations("nav");
 
   return (
     <ul className="flex flex-col gap-1">
@@ -43,8 +49,7 @@ export function SidebarNav({ onNavigate }: SidebarNavProps) {
               )}
             >
               <Icon className={isActive ? "text-accent" : "text-muted"} />
-              {/* i18n: da esternalizzare in messages/* */}
-              <span>{item.label}</span>
+              <span>{t(item.messageKey)}</span>
             </Link>
           </li>
         );

@@ -1,0 +1,75 @@
+{
+  "app": {
+    "name": "CustomerSpeed",
+    "description": "Multi-tenant CRM platform"
+  },
+  "nav": {
+    "ariaLabel": "Main navigation",
+    "dashboard": "Dashboard",
+    "pipeline": "Pipeline",
+    "leads": "Leads",
+    "appointments": "Appointments",
+    "settings": "Settings"
+  },
+  "drawer": {
+    "open": "Open the navigation menu",
+    "close": "Close the menu"
+  },
+  "languageSwitcher": {
+    "label": "Language",
+    "it": "Italian",
+    "en": "English"
+  },
+  "home": {
+    "title": "CustomerSpeed",
+    "subtitle": "Scaffold active — Phase 0."
+  },
+  "pages": {
+    "dashboard": {
+      "title": "Dashboard",
+      "description": "KPIs and the tenant overview will live here."
+    },
+    "pipeline": {
+      "title": "Pipeline",
+      "description": "The kanban board of stages will live here."
+    },
+    "leads": {
+      "title": "Leads",
+      "description": "The lead list with filters and search will live here."
+    },
+    "appointments": {
+      "title": "Appointments",
+      "description": "The appointments agenda will live here."
+    },
+    "settings": {
+      "title": "Settings",
+      "description": "Configuration, including the \"Appearance & brand\" panel, will live here."
+    }
+  },
+  "enum": {
+    "leadStage": {
+      "TO_HANDLE": "To handle",
+      "TAKEN": "Taken",
+      "CALL_SCHEDULED": "Call scheduled",
+      "WAITING_DOCS": "Waiting for documents",
+      "PRESENTATION_CALL": "Presentation call",
+      "WAITING_DECISION": "Waiting for decision",
+      "WAITING_PAYMENT": "Waiting for payment",
+      "WON": "Won",
+      "LOST": "Lost"
+    },
+    "capitalBracket": {
+      "B_0_50K": "0–50k",
+      "B_50_100K": "50–100k",
+      "B_100_250K": "100–250k",
+      "B_250_500K": "250–500k",
+      "B_500K_1M": "500k–1M",
+      "B_OVER_1M": "> 1M"
+    },
+    "appointmentStatus": {
+      "PENDING": "Pending",
+      "DONE": "Done",
+      "CANCELED": "Canceled"
+    }
+  }
+}

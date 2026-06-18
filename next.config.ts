@@ -1,4 +1,5 @@
 import type { NextConfig } from "next";
+import createNextIntlPlugin from "next-intl/plugin";
 
 const nextConfig: NextConfig = {
   reactStrictMode: true,
@@ -10,4 +11,8 @@ const nextConfig: NextConfig = {
   },
 };
 
-export default nextConfig;
+// Wires next-intl into the build: points it at the request config
+// (./src/i18n/request.ts by default) and enables the typed-messages support.
+const withNextIntl = createNextIntlPlugin();
+
+export default withNextIntl(nextConfig);
