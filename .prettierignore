@@ -1,0 +1,15 @@
+node_modules
+.next
+out
+build
+dist
+coverage
+playwright-report
+test-results
+pnpm-lock.yaml
+prisma/migrations
+
+# Documentation is authored content (not code) and is owned upstream; do not
+# reflow it with the code formatter.
+docs
+*.md

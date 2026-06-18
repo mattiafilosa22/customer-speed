@@ -1,0 +1,21 @@
+services:
+  db:
+    image: postgres:16
+    container_name: customerspeed-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: customerspeed
+      POSTGRES_PASSWORD: customerspeed
+      POSTGRES_DB: customerspeed
+    ports:
+      - "5432:5432"
+    volumes:
+      - customerspeed_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U customerspeed -d customerspeed"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  customerspeed_pgdata:
