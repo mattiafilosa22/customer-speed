@@ -4,6 +4,7 @@ import { getTranslations } from "next-intl/server";
 import { NotFoundError } from "@/lib/errors";
 import { requireTenantContext } from "@/lib/tenant";
 import { can } from "@/lib/rbac";
+import { LeadStage } from "@/generated/prisma/enums";
 import type { LeadDetailRow } from "@/server/leads";
 import {
   buildLeadDeps,
@@ -11,6 +12,7 @@ import {
   listLeadSources,
   listLossReasons,
 } from "@/server/leads";
+import { buildInvoiceDeps, listInvoices } from "@/server/invoices";
 import { Card, CardBody } from "@/components/ui";
 import { Link } from "@/i18n/navigation";
 import { formatDateShort } from "@/i18n/format";
@@ -22,6 +24,7 @@ import { ExternalRefsPanel } from "@/components/leads/detail/external-refs-panel
 import { StageTimeline } from "@/components/leads/detail/stage-timeline";
 import { UpdateStageDialog } from "@/components/leads/detail/update-stage-dialog";
 import { DeleteLeadButton } from "@/components/leads/detail/delete-lead-button";
+import { InvoicesPanel } from "@/components/leads/detail/invoices-panel";
 
 /**
  * Lead detail (docs/02 §2.5): three responsive columns — Contact + Capital,
@@ -74,7 +77,17 @@ export default async function LeadDetailPage({
     canMove: can(ctx.role, "pipeline.move"),
     canNote: can(ctx.role, "lead.note"),
     canDelete: can(ctx.role, "lead.delete"),
+    canInvoice: can(ctx.role, "invoice.create"),
   };
+
+  // Invoices are only relevant for WON leads (docs/02 §2.2/§2.5) and only for
+  // roles with the capability. Fetch them only then, so we never run the query —
+  // nor render the panel — when it cannot apply (the "Aggiungi fattura" control
+  // is disabled in the screenshots when not applicable).
+  const showInvoices = perms.canInvoice && lead.stage === LeadStage.WON;
+  const invoices = showInvoices
+    ? (await listInvoices(buildInvoiceDeps(ctx), { leadId: lead.id })).data
+    : [];
 
   return (
     <div className="mx-auto flex max-w-[1180px] flex-col gap-4">
@@ -141,6 +154,7 @@ export default async function LeadDetailPage({
             notes={lead.notes.map((n) => ({ id: n.id, body: n.body, createdAt: n.createdAt }))}
             canNote={perms.canNote}
           />
+          {showInvoices ? <InvoicesPanel leadId={lead.id} invoices={invoices} /> : null}
         </div>
 
         {/* Right column: external refs + stage history */}

@@ -514,5 +514,74 @@
     "colorLegend": "Colore dello stage {stage}",
     "colorOption": "Colore {token}",
     "terminalNote": "Gli stage Vinta e Persa sono terminali: non possono essere nascosti e restano in fondo."
+  },
+  "dashboard": {
+    "greeting": "Ciao {name}!",
+    "subtitle": "Ecco il tuo riepilogo",
+    "kpis": {
+      "regionLabel": "Indicatori principali",
+      "totals": "Lead totali",
+      "won": "Vinte",
+      "lost": "Perse",
+      "convRate": "Conv. rate",
+      "netRevenue": "Fatturato netto"
+    },
+    "distribution": {
+      "title": "Distribuzione pipeline",
+      "empty": "Nessuno stage visibile."
+    },
+    "invoices": {
+      "title": "Riepilogo fatture",
+      "empty": "Nessuna fattura nel periodo",
+      "count": "Fatture",
+      "totalGross": "Totale lordo",
+      "totalNet": "Totale netto"
+    },
+    "lost": {
+      "title": "Vendite perse",
+      "empty": "Nessuna vendita persa nel periodo.",
+      "unspecified": "Non specificato"
+    },
+    "active": {
+      "title": "Lead totali",
+      "empty": "Nessun lead attivo al momento."
+    }
+  },
+  "invoices": {
+    "title": "Fatture",
+    "add": "Aggiungi fattura",
+    "empty": "Nessuna fattura registrata.",
+    "form": {
+      "number": "Numero (opzionale)",
+      "grossAmount": "Importo lordo (€)",
+      "netAmount": "Importo netto (€)",
+      "issuedAt": "Data emissione",
+      "submit": "Salva fattura",
+      "saving": "Salvataggio…"
+    },
+    "row": {
+      "gross": "Lordo",
+      "delete": "Elimina"
+    },
+    "create": {
+      "success": "Fattura aggiunta."
+    },
+    "delete": {
+      "success": "Fattura eliminata."
+    },
+    "errors": {
+      "unauthorized": "Non hai i permessi per questa operazione.",
+      "notFound": "Fattura non trovata.",
+      "leadNotWon": "Puoi aggiungere una fattura solo a un lead vinto.",
+      "generic": "Si è verificato un errore. Riprova.",
+      "fields": {
+        "number": "Inserisci un numero valido.",
+        "grossAmount": "Inserisci un importo lordo valido.",
+        "netAmount": "Inserisci un importo netto valido (non superiore al lordo).",
+        "issuedAt": "Inserisci una data valida.",
+        "leadId": "Lead non valido.",
+        "form": "Controlla i dati inseriti."
+      }
+    }
   }
 }

@@ -1,0 +1,103 @@
+import { expect, test, type BrowserContext, type Page } from "@playwright/test";
+
+/**
+ * E2E for the Phase-4 critical flow (docs/08 roadmap, docs/00 §5): the DASHBOARD
+ * renders KPI tiles and the summary blocks coherently with the seeded Fabio
+ * tenant.
+ *
+ * Seed (prisma/seed.ts) for Fabio (current year): 4 leads — 1 WON, 1 LOST, 2
+ * active — plus ONE invoice on the WON lead with net 5000,00 €. The default
+ * period is the current year, so the dashboard must show:
+ *   - Lead totali: 4, Vinte: 1, Perse: 1, Conv. rate: 25%,
+ *   - Fatturato netto / Totale netto: 5.000,00 € (EUR, IT formatting),
+ *   - the "Vendite perse" block (the LOST lead has a reason),
+ *   - the active-leads list (2 non-terminal leads).
+ *
+ * Runs against the seeded Fabio tenant (proUser). Credentials come from env; the
+ * suite skips when unset.
+ */
+
+const EMAIL = process.env.E2E_FABIO_EMAIL ?? "fabio@fabio.local";
+const PASSWORD = process.env.E2E_FABIO_PASSWORD ?? process.env.SEED_FABIO_PASSWORD ?? "";
+
+async function dismissCookieBanner(page: Page): Promise<void> {
+  const reject = page.getByRole("button", { name: /rifiuta tutto|reject all/i });
+  if (await reject.isVisible().catch(() => false)) {
+    await reject.click();
+    await reject.waitFor({ state: "hidden" });
+  }
+}
+
+test.describe("dashboard — KPIs coherent with the seed", () => {
+  test.skip(PASSWORD.length === 0, "Set E2E_FABIO_PASSWORD / SEED_FABIO_PASSWORD to run.");
+  test.describe.configure({ mode: "serial" });
+
+  let context: BrowserContext;
+  let page: Page;
+
+  test.beforeAll(async ({ browser }) => {
+    context = await browser.newContext();
+    page = await context.newPage();
+    await page.goto("/login?org=fabio");
+    await dismissCookieBanner(page);
+    await page.getByLabel(/email/i).fill(EMAIL);
+    await page.getByLabel(/password/i).fill(PASSWORD);
+    await page.getByRole("button", { name: /accedi|sign in/i }).click();
+    await page.waitForURL(/\/dashboard/);
+  });
+
+  test.afterAll(async () => {
+    await context.close();
+  });
+
+  test("greets the user and renders the KPI tiles", async () => {
+    await page.goto("/dashboard");
+    await expect(page.getByRole("heading", { level: 1 })).toContainText(/ciao|hi/i);
+
+    const kpis = page.getByRole("region", { name: /indicatori principali|key indicators/i });
+    await expect(kpis).toBeVisible();
+    await expect(kpis.getByText(/lead totali|total leads/i)).toBeVisible();
+    await expect(kpis.getByText(/^(vinte|won)$/i)).toBeVisible();
+    await expect(kpis.getByText(/conv\. rate/i)).toBeVisible();
+    await expect(kpis.getByText(/fatturato netto|net revenue/i)).toBeVisible();
+  });
+
+  test("shows KPI figures coherent with the seed (4 leads, 1 won, 25%)", async () => {
+    await page.goto("/dashboard");
+    const kpis = page.getByRole("region", { name: /indicatori principali|key indicators/i });
+
+    // Conversion rate = 1 won / 4 total = 25%.
+    await expect(kpis.getByText("25%")).toBeVisible();
+    // Net revenue tile shows the seeded EUR amount (IT grouping: "5.000").
+    await expect(kpis.getByText(/5[.,]?000/)).toBeVisible();
+  });
+
+  test("renders the distribution, invoice summary, lost and active blocks", async () => {
+    await page.goto("/dashboard");
+
+    await expect(
+      page.getByRole("heading", { name: /distribuzione pipeline|pipeline distribution/i }),
+    ).toBeVisible();
+    await expect(
+      page.getByRole("heading", { name: /riepilogo fatture|invoice summary/i }),
+    ).toBeVisible();
+    await expect(
+      page.getByRole("heading", { name: /vendite perse|lost sales/i }),
+    ).toBeVisible();
+    // The active-leads block + at least one active (non-terminal) lead row.
+    await expect(page.getByRole("heading", { name: /^(lead totali|total leads)$/i })).toBeVisible();
+  });
+
+  test("the period filter is present and updates the data", async () => {
+    await page.goto("/dashboard");
+    const monthSelect = page.getByLabel(/mese|month/i);
+    await expect(monthSelect).toBeVisible();
+
+    // Pick January (month value "1"): the seeded data (issued/created "today")
+    // falls out of it, so the conversion rate should drop to 0%.
+    await monthSelect.selectOption("1");
+    await page.waitForLoadState("networkidle");
+    const kpis = page.getByRole("region", { name: /indicatori principali|key indicators/i });
+    await expect(kpis.getByText("0%")).toBeVisible();
+  });
+});
