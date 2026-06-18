@@ -514,5 +514,74 @@
     "colorLegend": "Colour of the {stage} stage",
     "colorOption": "Colour {token}",
     "terminalNote": "The Won and Lost stages are terminal: they cannot be hidden and stay at the end."
+  },
+  "dashboard": {
+    "greeting": "Hi {name}!",
+    "subtitle": "Here is your summary",
+    "kpis": {
+      "regionLabel": "Key indicators",
+      "totals": "Total leads",
+      "won": "Won",
+      "lost": "Lost",
+      "convRate": "Conv. rate",
+      "netRevenue": "Net revenue"
+    },
+    "distribution": {
+      "title": "Pipeline distribution",
+      "empty": "No visible stage."
+    },
+    "invoices": {
+      "title": "Invoice summary",
+      "empty": "No invoices in this period",
+      "count": "Invoices",
+      "totalGross": "Gross total",
+      "totalNet": "Net total"
+    },
+    "lost": {
+      "title": "Lost sales",
+      "empty": "No lost sales in this period.",
+      "unspecified": "Unspecified"
+    },
+    "active": {
+      "title": "Total leads",
+      "empty": "No active leads right now."
+    }
+  },
+  "invoices": {
+    "title": "Invoices",
+    "add": "Add invoice",
+    "empty": "No invoices recorded.",
+    "form": {
+      "number": "Number (optional)",
+      "grossAmount": "Gross amount (€)",
+      "netAmount": "Net amount (€)",
+      "issuedAt": "Issue date",
+      "submit": "Save invoice",
+      "saving": "Saving…"
+    },
+    "row": {
+      "gross": "Gross",
+      "delete": "Delete"
+    },
+    "create": {
+      "success": "Invoice added."
+    },
+    "delete": {
+      "success": "Invoice deleted."
+    },
+    "errors": {
+      "unauthorized": "You do not have permission for this action.",
+      "notFound": "Invoice not found.",
+      "leadNotWon": "You can only add an invoice to a won lead.",
+      "generic": "Something went wrong. Please try again.",
+      "fields": {
+        "number": "Enter a valid number.",
+        "grossAmount": "Enter a valid gross amount.",
+        "netAmount": "Enter a valid net amount (not greater than gross).",
+        "issuedAt": "Enter a valid date.",
+        "leadId": "Invalid lead.",
+        "form": "Please check the entered data."
+      }
+    }
   }
 }

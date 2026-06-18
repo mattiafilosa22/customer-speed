@@ -2,8 +2,7 @@ import { PrismaPg } from "@prisma/adapter-pg";
 import { hash } from "@node-rs/argon2";
 
 import { CapitalBracket, LeadStage, Role } from "../src/generated/prisma/enums";
-import { PrismaClient } from "../src/generated/prisma/client";
-import type { Prisma } from "../src/generated/prisma/client";
+import { Prisma, PrismaClient } from "../src/generated/prisma/client";
 
 /**
  * Seed — Fase 1.
@@ -151,7 +150,29 @@ const FABIO_LEADS: ReadonlyArray<{
     sourceLabel: "Google",
     adminNotes: "Non ha più risposto dopo il primo contatto.",
   },
+  {
+    firstName: "Giulia",
+    lastName: "Rossi",
+    email: "giulia.rossi@example.com",
+    phone: "+39 351 2233445",
+    stage: LeadStage.WON,
+    capitalBracket: CapitalBracket.B_250_500K,
+    sourceLabel: "Referenza",
+    adminNotes: "Contratto firmato. Cliente acquisito.",
+  },
 ];
+
+/**
+ * Example invoice for the WON lead, so the dashboard "Fatturato netto" KPI and
+ * "Riepilogo fatture" block have non-zero, deterministic data for the e2e.
+ * Issued in the current year so the default (current-year) period includes it.
+ */
+const FABIO_INVOICE = {
+  leadEmail: "giulia.rossi@example.com",
+  number: "2026-001",
+  grossAmount: "6100.00",
+  netAmount: "5000.00",
+} as const;
 
 /** Reads a seed password from env, falling back to a documented dev default. */
 function seedPassword(envVar: string, devDefault: string): string {
@@ -340,6 +361,31 @@ async function main(): Promise<void> {
           adminNotes: lead.adminNotes,
         },
       });
+    }
+
+    // 4) Example invoice on the WON lead (idempotent by lead + number).
+    const wonLead = await prisma.lead.findFirst({
+      where: { organizationId: fabioOrg.id, email: FABIO_INVOICE.leadEmail },
+      select: { id: true },
+    });
+    if (wonLead) {
+      const existingInvoice = await prisma.invoice.findFirst({
+        where: { organizationId: fabioOrg.id, leadId: wonLead.id, number: FABIO_INVOICE.number },
+        select: { id: true },
+      });
+      if (!existingInvoice) {
+        await prisma.invoice.create({
+          data: {
+            organizationId: fabioOrg.id,
+            leadId: wonLead.id,
+            number: FABIO_INVOICE.number,
+            grossAmount: new Prisma.Decimal(FABIO_INVOICE.grossAmount),
+            netAmount: new Prisma.Decimal(FABIO_INVOICE.netAmount),
+            // Issued today so the current-year default period includes it.
+            issuedAt: new Date(),
+          },
+        });
+      }
     }
 
     console.info(
