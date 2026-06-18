@@ -1,3 +1,11 @@
+import { auth } from "@/lib/auth";
+import { UnauthorizedError } from "@/lib/errors";
+import { prisma } from "@/lib/prisma";
+import {
+  getTenantPrisma,
+  type TenantPrismaClient,
+  type TenantPrismaOptions,
+} from "@/lib/prisma-tenant";
 import type { Role } from "@/generated/prisma/enums";
 
 /**
@@ -51,19 +59,81 @@ export function isSuperAdminContext(ctx: RequestContext): ctx is SuperAdminConte
 }
 
 /**
- * Resolves the request context from the authenticated session.
+ * Resolves the request context from the authenticated Auth.js session.
  *
- * Fase 1 will implement this against Auth.js:
  *   1. read the session (`auth()`),
- *   2. if absent → throw an `UnauthorizedError`,
- *   3. map the session user to `TenantContext` or `SuperAdminContext`.
+ *   2. if absent → throw `UnauthorizedError` (→ 401),
+ *   3. re-validate `sessionVersion` against the DB so password changes / forced
+ *      logouts invalidate other JWT sessions (stale token → 401),
+ *   4. map to `SuperAdminContext` (cross-tenant) or `TenantContext` (scoped).
  *
- * It is left unimplemented in Fase 0 on purpose: there is no auth yet, and a
- * fake default tenant would risk leaking across tenants if accidentally shipped.
+ * Returns a discriminated union so callers must consciously handle the
+ * superAdmin (cross-tenant) path vs the tenant-scoped path.
  */
-export function getTenantContext(): never {
-  throw new Error(
-    "getTenantContext() is not wired yet — implemented in Fase 1 (Auth.js). " +
-      "Do not call from request handlers until then.",
-  );
+export async function getTenantContext(): Promise<RequestContext> {
+  const session = await auth();
+  const sessionUser = session?.user;
+  if (!sessionUser?.id) {
+    throw new UnauthorizedError("No active session");
+  }
+
+  // Re-validate against the DB: the token is only trusted if the user still
+  // exists, is active, and the sessionVersion matches (invalidate-other-sessions).
+  const dbUser = await prisma.user.findUnique({
+    where: { id: sessionUser.id },
+    select: {
+      id: true,
+      organizationId: true,
+      role: true,
+      isActive: true,
+      sessionVersion: true,
+    },
+  });
+
+  if (!dbUser || !dbUser.isActive) {
+    throw new UnauthorizedError("User no longer active");
+  }
+  if (dbUser.sessionVersion !== sessionUser.sessionVersion) {
+    throw new UnauthorizedError("Session has been invalidated");
+  }
+
+  if (dbUser.role === "superAdmin") {
+    return {
+      kind: "superAdmin",
+      userId: dbUser.id,
+      role: "superAdmin",
+    };
+  }
+
+  return {
+    kind: "tenant",
+    organizationId: dbUser.organizationId,
+    userId: dbUser.id,
+    role: dbUser.role,
+  };
+}
+
+/**
+ * Convenience: resolve the context and assert it is tenant-scoped (the normal
+ * case for `(app)/` request handlers). Throws `UnauthorizedError` if a
+ * superAdmin reaches a tenant-only route without an explicit acting context.
+ */
+export async function requireTenantContext(): Promise<TenantContext> {
+  const ctx = await getTenantContext();
+  if (!isTenantContext(ctx)) {
+    throw new UnauthorizedError("Tenant context required");
+  }
+  return ctx;
+}
+
+/**
+ * Returns the per-request, tenant-bound Prisma client for the CURRENT session.
+ * This is the client domain code MUST use for tenant-scoped access — it forces
+ * `organizationId` and the soft-delete default at the data layer.
+ */
+export async function getTenantPrismaFromContext(
+  options?: TenantPrismaOptions,
+): Promise<TenantPrismaClient> {
+  const ctx = await requireTenantContext();
+  return getTenantPrisma(ctx, options);
 }

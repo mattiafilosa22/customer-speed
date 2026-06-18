@@ -19,13 +19,15 @@ import type { TenantContext } from "@/lib/tenant";
  *  - Non-tenant-scoped models (e.g. `Organization` itself) are passed through
  *    untouched.
  *
- * ── Fase 0 status ──────────────────────────────────────────────────────────
- * The mechanism is fully implemented and unit-testable. What remains for Fase 1:
- *   1. Build the `TenantContext` from the Auth.js session (`getTenantContext()`).
- *   2. Call `getTenantPrisma(ctx)` per request and use it for ALL domain access.
- *   3. Add the `superAdmin` path (use the base `prisma` from a separate, audited
- *      `(admin)/` context — never this extension).
- *   4. Soft-delete default filter (`deletedAt: null`) — see TODO below.
+ * ── Status (Fase 1) ─────────────────────────────────────────────────────────
+ * Fully wired:
+ *   1. `TenantContext` is built from the Auth.js session (`getTenantContext()`).
+ *   2. `getTenantPrisma(ctx)` returns the per-request tenant client used for ALL
+ *      domain access (see `getTenantPrismaFromContext()` in `src/lib/tenant.ts`).
+ *   3. The `superAdmin` path uses the base `prisma` from the audited `(admin)/`
+ *      context — never this extension.
+ *   4. Soft-delete default filter (`deletedAt: null`) is applied on `Lead` reads,
+ *      with an explicit opt-out for erasure/admin flows (`includeSoftDeleted`).
  */
 
 /**
@@ -82,6 +84,41 @@ const CREATE_DATA_OPERATIONS: ReadonlySet<string> = new Set<Prisma.PrismaAction>
   "upsert",
 ]);
 
+/**
+ * READ operations on which we apply the default soft-delete filter. Mutations
+ * (update/delete/upsert) are intentionally excluded so the app can still touch a
+ * soft-deleted row (e.g. to restore or to hard-erase it).
+ */
+const READ_OPERATIONS: ReadonlySet<string> = new Set<Prisma.PrismaAction>([
+  "findUnique",
+  "findUniqueOrThrow",
+  "findFirst",
+  "findFirstOrThrow",
+  "findMany",
+  "count",
+  "aggregate",
+  "groupBy",
+]);
+
+/**
+ * Models with a `deletedAt` soft-delete column. Reads exclude soft-deleted rows
+ * by default; mutations and the explicit `includeSoftDeleted` opt-out bypass it.
+ */
+const SOFT_DELETE_MODELS: ReadonlySet<string> = new Set<Prisma.ModelName>(["Lead"]);
+
+function injectSoftDeleteFilter(args: AnyArgs): AnyArgs {
+  const existingWhere = (args.where as AnyArgs | undefined) ?? {};
+  // Only default when the caller hasn't expressed an opinion on `deletedAt`,
+  // so an explicit `{ deletedAt: { not: null } }` still works.
+  if ("deletedAt" in existingWhere) {
+    return args;
+  }
+  return {
+    ...args,
+    where: { ...existingWhere, deletedAt: null },
+  };
+}
+
 type AnyArgs = Record<string, unknown>;
 
 function injectWhere(args: AnyArgs, organizationId: string): AnyArgs {
@@ -113,36 +150,71 @@ function injectCreateData(args: AnyArgs, organizationId: string): AnyArgs {
   return next;
 }
 
+export interface TenantPrismaOptions {
+  /**
+   * Opt-out of the default soft-delete filter (`deletedAt: null`) on reads.
+   * Only for erasure (GDPR right-to-be-forgotten) and admin/restore flows that
+   * must see soft-deleted rows. Off by default.
+   */
+  readonly includeSoftDeleted?: boolean;
+}
+
+/**
+ * Pure transform: given a model/operation/args, return the args the tenant
+ * client would actually run. Extracted so the isolation logic is unit-testable
+ * without a DB connection. Non-tenant-scoped models pass through unchanged.
+ */
+export function applyTenantScope(
+  model: string | undefined,
+  operation: string,
+  args: unknown,
+  organizationId: string,
+  includeSoftDeleted = false,
+): AnyArgs {
+  const baseArgs = (args ?? {}) as AnyArgs;
+  if (!isTenantScopedModel(model)) {
+    return baseArgs;
+  }
+
+  let nextArgs = baseArgs;
+  if (WHERE_OPERATIONS.has(operation)) {
+    nextArgs = injectWhere(nextArgs, organizationId);
+  }
+  if (CREATE_DATA_OPERATIONS.has(operation)) {
+    nextArgs = injectCreateData(nextArgs, organizationId);
+  }
+  if (!includeSoftDeleted && SOFT_DELETE_MODELS.has(model) && READ_OPERATIONS.has(operation)) {
+    nextArgs = injectSoftDeleteFilter(nextArgs);
+  }
+  return nextArgs;
+}
+
 /**
  * Returns a tenant-bound PrismaClient. Use this — not the base `prisma` — for
  * every request handled in a normal (non-superAdmin) tenant context.
+ *
+ * It enforces two invariants on every tenant-scoped model:
+ *  - the `organizationId` filter / value (cross-tenant isolation), and
+ *  - the soft-delete default (`deletedAt: null`) on reads of soft-deletable
+ *    models, unless `includeSoftDeleted` is set.
  */
-export function getTenantPrisma(ctx: TenantContext) {
+export function getTenantPrisma(ctx: TenantContext, options: TenantPrismaOptions = {}) {
   const { organizationId } = ctx;
+  const includeSoftDeleted = options.includeSoftDeleted ?? false;
 
   return prisma.$extends(
     Prisma.defineExtension({
-      name: `tenant(${organizationId})`,
+      name: `tenant(${organizationId})${includeSoftDeleted ? "+deleted" : ""}`,
       query: {
         $allModels: {
           $allOperations({ model, operation, args, query }) {
-            if (!isTenantScopedModel(model)) {
-              return query(args);
-            }
-
-            let nextArgs = (args ?? {}) as AnyArgs;
-
-            if (WHERE_OPERATIONS.has(operation)) {
-              nextArgs = injectWhere(nextArgs, organizationId);
-            }
-            if (CREATE_DATA_OPERATIONS.has(operation)) {
-              nextArgs = injectCreateData(nextArgs, organizationId);
-            }
-
-            // TODO(Fase 1): soft-delete default filter for `Lead`
-            //   if (model === "Lead" && reads) nextArgs.where.deletedAt ??= null;
-            //   with an explicit opt-out flag for admin/erasure flows.
-
+            const nextArgs = applyTenantScope(
+              model,
+              operation,
+              args,
+              organizationId,
+              includeSoftDeleted,
+            );
             return query(nextArgs);
           },
         },
