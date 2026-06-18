@@ -25,6 +25,20 @@ export class ValidationError extends Error {
   }
 }
 
+/**
+ * Requested entity does not exist OR is not visible in the current tenant
+ * context. Tenant-isolation note: a row that belongs to another tenant is
+ * reported as 404 (not 403), so callers cannot probe for the existence of
+ * cross-tenant ids (no information leak — docs/00 §4, docs/06).
+ */
+export class NotFoundError extends Error {
+  readonly status = 404 as const;
+  constructor(message = "Not found") {
+    super(message);
+    this.name = "NotFoundError";
+  }
+}
+
 export class ConflictError extends Error {
   readonly status = 409 as const;
   constructor(message = "Conflict") {

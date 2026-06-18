@@ -250,5 +250,191 @@
       "DONE": "Fatto",
       "CANCELED": "Annullato"
     }
+  },
+  "common": {
+    "optional": "(opzionale)",
+    "required": "Obbligatorio"
+  },
+  "leads": {
+    "title": "I miei lead",
+    "subtitle": "Gestisci i tuoi contatti e la pipeline",
+    "count": "{count, plural, =0 {Nessun lead} one {# lead} other {# lead}}",
+    "search": {
+      "label": "Cerca",
+      "placeholder": "Cerca per nome, email o telefono"
+    },
+    "filters": {
+      "period": "Periodo",
+      "allYear": "Tutto l'anno",
+      "year": "Anno",
+      "month": "Mese",
+      "sort": "Ordina",
+      "source": "Provenienza",
+      "allSources": "Tutte le provenienze"
+    },
+    "sort": {
+      "default": "Predefinito",
+      "daysAsc": "↑ Giorni asc.",
+      "daysDesc": "↓ Giorni desc.",
+      "over25": "Oltre 25gg",
+      "over30": "Oltre 30gg"
+    },
+    "tabs": {
+      "all": "Tutti",
+      "allWithCount": "Tutti ({count})"
+    },
+    "table": {
+      "name": "Nome",
+      "contact": "Contatto",
+      "source": "Provenienza",
+      "days": "Giorni",
+      "stage": "Stage"
+    },
+    "days": "{count, plural, one {# giorno} other {# giorni}}",
+    "daysInStageLabel": "{count} giorni nello stage",
+    "notesCount": "{count, plural, =0 {Nessuna nota} one {# nota} other {# note}}",
+    "empty": {
+      "title": "Nessun lead trovato",
+      "description": "Modifica i filtri o crea un nuovo lead.",
+      "cta": "Nuovo lead"
+    },
+    "loading": "Caricamento lead…",
+    "open": "Apri",
+    "openLead": "Apri il lead {name}",
+    "pagination": {
+      "previous": "Precedente",
+      "next": "Successivo",
+      "page": "Pagina {page} di {total}"
+    },
+    "new": {
+      "title": "Nuovo lead",
+      "cta": "Nuovo lead",
+      "description": "Inserisci i dati di contatto del lead."
+    },
+    "create": {
+      "submit": "Crea lead",
+      "submitting": "Creazione in corso…",
+      "success": "Lead creato con successo."
+    },
+    "update": {
+      "success": "Modifiche salvate."
+    },
+    "delete": {
+      "success": "Lead eliminato.",
+      "cta": "Elimina lead",
+      "confirmTitle": "Eliminare questo lead?",
+      "confirmBody": "Il lead verrà rimosso dalle liste. L'operazione è reversibile solo da un amministratore.",
+      "confirm": "Elimina"
+    },
+    "cancel": "Annulla",
+    "save": "Salva",
+    "saving": "Salvataggio…",
+    "stage": {
+      "success": "Stage aggiornato."
+    },
+    "errors": {
+      "unauthorized": "Non hai i permessi per questa operazione.",
+      "notFound": "Lead non trovato.",
+      "generic": "Si è verificato un errore. Riprova.",
+      "fields": {
+        "firstName": "Inserisci un nome valido.",
+        "lastName": "Inserisci un cognome valido.",
+        "email": "Inserisci un'email valida.",
+        "phone": "Inserisci un telefono valido.",
+        "lossReasonId": "Seleziona il motivo della perdita.",
+        "form": "Controlla i dati inseriti."
+      }
+    },
+    "fields": {
+      "firstName": "Nome",
+      "lastName": "Cognome",
+      "email": "Email",
+      "phone": "Telefono",
+      "source": "Provenienza",
+      "capital": "Capitale"
+    }
+  },
+  "leadDetail": {
+    "contact": {
+      "title": "Contatto",
+      "email": "Email",
+      "phone": "Telefono",
+      "createdAt": "Data creazione",
+      "adminNotes": "Note admin"
+    },
+    "capital": {
+      "title": "Capitale",
+      "placeholder": "Seleziona una fascia",
+      "none": "Non impostato"
+    },
+    "summary": {
+      "title": "Scheda riassuntiva",
+      "stage": "Stage attuale",
+      "stageDate": "Data stage",
+      "capital": "Capitale",
+      "source": "Provenienza",
+      "sourcePlaceholder": "Seleziona una provenienza",
+      "sourceNone": "Nessuna provenienza"
+    },
+    "updateStage": {
+      "cta": "Aggiorna stage",
+      "title": "Aggiorna lo stage",
+      "stageLabel": "Nuovo stage",
+      "lossReasonLabel": "Motivo della perdita",
+      "lossReasonPlaceholder": "Seleziona un motivo"
+    },
+    "timeline": {
+      "title": "Cronologia stage",
+      "empty": "Nessun cambio di stage registrato.",
+      "entry": "Da {from} a {to}",
+      "initial": "Creato in {to}"
+    },
+    "externalRefs": {
+      "title": "Aggiornamento dati",
+      "empty": "Nessun dato alternativo registrato. Usa \"Aggiungi\" se questo cliente è presente nel CRM esterno con nome o email diversi.",
+      "add": "Aggiungi",
+      "altName": "Nome alternativo",
+      "altEmail": "Email alternativa",
+      "source": "Sorgente esterna",
+      "delete": "Rimuovi"
+    },
+    "back": "Torna ai lead"
+  },
+  "notes": {
+    "title": "Note",
+    "add": "Aggiungi nota",
+    "placeholder": "Scrivi una nota…",
+    "empty": "Nessuna nota.",
+    "edit": "Modifica",
+    "deleteLabel": "Elimina",
+    "save": "Salva nota",
+    "cancel": "Annulla",
+    "create": {
+      "success": "Nota aggiunta."
+    },
+    "update": {
+      "success": "Nota aggiornata."
+    },
+    "delete": {
+      "success": "Nota eliminata."
+    },
+    "errors": {
+      "fields": {
+        "body": "Scrivi un testo per la nota."
+      }
+    }
+  },
+  "externalRefs": {
+    "create": {
+      "success": "Dato alternativo aggiunto."
+    },
+    "delete": {
+      "success": "Dato alternativo rimosso."
+    },
+    "errors": {
+      "fields": {
+        "form": "Inserisci almeno un valore."
+      }
+    }
   }
 }

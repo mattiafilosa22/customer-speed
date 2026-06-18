@@ -15,3 +15,12 @@ export type { LabelProps } from "./label";
 
 export { Pill } from "./pill";
 export type { PillProps, PillTone, PillStage } from "./pill";
+
+export { Select } from "./select";
+export type { SelectProps } from "./select";
+
+export { Textarea } from "./textarea";
+export type { TextareaProps } from "./textarea";
+
+export { Modal, ModalPrimitive } from "./modal";
+export type { ModalProps } from "./modal";
