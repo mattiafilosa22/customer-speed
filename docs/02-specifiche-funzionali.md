@@ -148,8 +148,13 @@ Accessibile da "I miei lead" o dalle card della pipeline ("› Apri"). Layout a 
   Implementare come enum `capitalBracket` (vedi `03-modello-dati.md`). UI: dropdown o gruppo di pill selezionabili, accessibile da tastiera. Modificabile inline, salvataggio immediato. Questo dato è utile per segmentazione e potrà alimentare future metriche (es. capitale totale in pipeline).
 
 ### Colonna centrale — Scheda riassuntiva + Note
-- **Scheda riassuntiva**: stage attuale + **data stage** (data ultimo cambio stage).
+- **Scheda riassuntiva** (campi strutturati a modifica rapida):
+  - **Stage attuale** + **data stage** (data ultimo cambio stage).
+  - **Capitale** — fascia di capitale del lead (vedi specchietto sotto / enum `capitalBracket`).
+  - **➕ NUOVO — Provenienza (sorgente del lead)**: selettore a scelta singola della sorgente da cui arriva il lead. Valori **configurabili per tenant** (modello `LeadSource`, vedi `03-modello-dati.md`), con default seed: **Funnel, Instagram, Referenza, Google** (estendibili: es. Facebook, LinkedIn, Sito web, Passaparola, Evento, Altro). UI: dropdown/pill accessibile da tastiera, salvataggio inline immediato. Il valore alimenta segmentazione e metriche per canale (vedi nota dashboard sotto).
 - **Note**: elenco cronologico di note (data + testo), con **"+ Aggiungi nota"**, modifica ed eliminazione per ogni nota.
+
+> **Provenienza & dashboard**: avendo la sorgente, si può aggiungere alla Dashboard una distribuzione "Lead per provenienza" e un conv. rate per canale (quali sorgenti portano più clienti vinti). Non obbligatorio in prima release, ma il dato va raccolto fin da subito. La provenienza è anche un buon candidato come **filtro** in "I miei lead".
 
 ### Colonna destra — Aggiornamento dati + Appuntamenti
 - **Aggiornamento dati**: spazio per "dati alternativi" del cliente nel CRM esterno (nome/email diversi). Stato vuoto: "Nessun dato alternativo registrato. Usa 'Aggiungi' se questo cliente è presente nel CRM esterno con nome o email diversi." Con pulsante **"+ Aggiungi"**.

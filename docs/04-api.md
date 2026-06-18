@@ -36,15 +36,15 @@ GET /api/dashboard/summary?year=&month=
 
 ## 4.3 Lead
 ```
-GET    /api/leads?query=&stage=&year=&month=&sort=days_asc|days_desc&minDays=
-       → lista paginata (per "I miei lead")
-POST   /api/leads                      # crea lead
+GET    /api/leads?query=&stage=&source=&year=&month=&sort=days_asc|days_desc&minDays=
+       → lista paginata (per "I miei lead"); filtro opzionale per provenienza (sourceId)
+POST   /api/leads                      # crea lead (sourceId opzionale)
 GET    /api/leads/:id                  # dettaglio
-PATCH  /api/leads/:id                  # aggiorna campi (incl. capitalBracket)
+PATCH  /api/leads/:id                  # aggiorna campi (incl. capitalBracket, sourceId)
 DELETE /api/leads/:id                  # solo ruoli con permesso (soft delete)
 PATCH  /api/leads/:id/stage            # { stage, lossReason? } -> aggiorna stage + stageChangedAt + StageHistory
 ```
-Validazioni: email formato valido (se presente), phone normalizzato, `capitalBracket` ∈ enum, transizione a `LOST` richiede `lossReason`.
+Validazioni: email formato valido (se presente), phone normalizzato, `capitalBracket` ∈ enum, `sourceId` deve appartenere allo stesso tenant, transizione a `LOST` richiede `lossReason`.
 
 ## 4.4 Note
 ```
@@ -83,6 +83,10 @@ GET    /api/org/settings               # appName, theme, featureFlags
 PATCH  /api/org/settings               # personalizzazione (permessi)
 GET    /api/org/loss-reasons
 POST   /api/org/loss-reasons
+GET    /api/org/lead-sources              # provenienze del tenant
+POST   /api/org/lead-sources              # crea sorgente (label)
+PATCH  /api/org/lead-sources/:id          # rinomina / attiva-disattiva / riordina
+DELETE /api/org/lead-sources/:id          # elimina (se non in uso, altrimenti disattiva)
 ```
 
 ## 4.9 Integrazioni calendario
