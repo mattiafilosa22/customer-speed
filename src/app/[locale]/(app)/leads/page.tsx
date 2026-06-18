@@ -1,3 +1,4 @@
+import { notFound } from "next/navigation";
 import { getTranslations } from "next-intl/server";
 
 import { requireTenantContext } from "@/lib/tenant";
@@ -28,6 +29,11 @@ export default async function LeadsPage({
   const sp = await searchParams;
 
   const ctx = await requireTenantContext();
+  // Server-authoritative read guard: robust against future per-tenant permission
+  // overrides (the matrix is configurable). 404 (not 403) avoids revealing the area.
+  if (!can(ctx.role, "lead.view")) {
+    notFound();
+  }
   const deps = buildLeadDeps(ctx);
   const canCreate = can(ctx.role, "lead.create");
 
