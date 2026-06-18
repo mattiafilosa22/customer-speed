@@ -90,7 +90,9 @@ test.describe("dashboard — KPIs coherent with the seed", () => {
 
   test("the period filter is present and updates the data", async () => {
     await page.goto("/dashboard");
-    const monthSelect = page.getByLabel(/mese|month/i);
+    // Exact label so it matches the period <select> ("Mese"/"Month") and NOT the
+    // sidebar mini-calendar's "Mese precedente/successivo" buttons.
+    const monthSelect = page.getByLabel(/^(mese|month)$/i);
     await expect(monthSelect).toBeVisible();
 
     // Pick January (month value "1"): the seeded data (issued/created "today")

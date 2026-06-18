@@ -3,12 +3,20 @@
 import { useTranslations } from "next-intl";
 
 import { cn } from "@/lib/cn";
+import type { FeatureFlagKey } from "@/lib/feature-flags";
 import { NAV_ITEMS } from "@/components/layout/nav-items";
 import { Link, usePathname } from "@/i18n/navigation";
 
 interface SidebarNavProps {
   /** Called after a nav item activates — used by the drawer to close itself. */
   onNavigate?: () => void;
+  /**
+   * Feature flags the tenant has ENABLED (serializable string keys). A nav item
+   * with a `feature` is shown only when its flag is in this list; items without
+   * one are always shown. Defaults to "all features enabled" so callers that do
+   * not gate (e.g. tests) keep the full nav.
+   */
+  enabledFeatures?: ReadonlyArray<FeatureFlagKey>;
 }
 
 /**
@@ -22,13 +30,18 @@ interface SidebarNavProps {
  * locale-agnostic and the links get the active locale prefix automatically.
  * Labels come from the `nav.*` messages — no hard-coded copy.
  */
-export function SidebarNav({ onNavigate }: SidebarNavProps) {
+export function SidebarNav({ onNavigate, enabledFeatures }: SidebarNavProps) {
   const pathname = usePathname();
   const t = useTranslations("nav");
 
+  // Filter feature-gated items. When `enabledFeatures` is omitted, show all.
+  const items = enabledFeatures
+    ? NAV_ITEMS.filter((item) => !item.feature || enabledFeatures.includes(item.feature))
+    : NAV_ITEMS;
+
   return (
     <ul className="flex flex-col gap-1">
-      {NAV_ITEMS.map((item) => {
+      {items.map((item) => {
         const isActive =
           pathname === item.href || pathname.startsWith(`${item.href}/`);
         const Icon = item.icon;

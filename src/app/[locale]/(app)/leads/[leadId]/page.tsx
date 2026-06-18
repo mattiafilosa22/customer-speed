@@ -13,6 +13,8 @@ import {
   listLossReasons,
 } from "@/server/leads";
 import { buildInvoiceDeps, listInvoices } from "@/server/invoices";
+import { buildAppointmentDeps, listAppointments } from "@/server/appointments";
+import { getTenantFeatureFlags } from "@/server/tenant/feature-flags";
 import { Card, CardBody } from "@/components/ui";
 import { Link } from "@/i18n/navigation";
 import { formatDateShort } from "@/i18n/format";
@@ -25,6 +27,7 @@ import { StageTimeline } from "@/components/leads/detail/stage-timeline";
 import { UpdateStageDialog } from "@/components/leads/detail/update-stage-dialog";
 import { DeleteLeadButton } from "@/components/leads/detail/delete-lead-button";
 import { InvoicesPanel } from "@/components/leads/detail/invoices-panel";
+import { AppointmentsPanel } from "@/components/leads/detail/appointments-panel";
 
 /**
  * Lead detail (docs/02 §2.5): three responsive columns — Contact + Capital,
@@ -78,6 +81,7 @@ export default async function LeadDetailPage({
     canNote: can(ctx.role, "lead.note"),
     canDelete: can(ctx.role, "lead.delete"),
     canInvoice: can(ctx.role, "invoice.create"),
+    canManageAppointments: can(ctx.role, "appointment.manage"),
   };
 
   // Invoices are only relevant for WON leads (docs/02 §2.2/§2.5) and only for
@@ -87,6 +91,20 @@ export default async function LeadDetailPage({
   const showInvoices = perms.canInvoice && lead.stage === LeadStage.WON;
   const invoices = showInvoices
     ? (await listInvoices(buildInvoiceDeps(ctx), { leadId: lead.id })).data
+    : [];
+
+  // Appointments panel (docs/02 §2.5 right column): only when the tenant has the
+  // `appointments` feature AND the role can manage them. Fetch the lead's
+  // appointments tenant-scoped via the dedicated use case (one batched query).
+  const flags = await getTenantFeatureFlags(ctx.organizationId);
+  const showAppointments = flags.appointments && perms.canManageAppointments;
+  const appointments = showAppointments
+    ? (
+        await listAppointments(buildAppointmentDeps(ctx), {
+          filter: "all",
+          leadId: lead.id,
+        })
+      ).data
     : [];
 
   return (
@@ -157,13 +175,16 @@ export default async function LeadDetailPage({
           {showInvoices ? <InvoicesPanel leadId={lead.id} invoices={invoices} /> : null}
         </div>
 
-        {/* Right column: external refs + stage history */}
+        {/* Right column: external refs + appointments + stage history */}
         <div className="flex flex-col gap-4">
           <ExternalRefsPanel
             leadId={lead.id}
             refs={lead.externalRefs}
             canNote={perms.canNote}
           />
+          {showAppointments ? (
+            <AppointmentsPanel leadId={lead.id} appointments={appointments} />
+          ) : null}
           <Card>
             <CardBody className="flex flex-col gap-3">
               <h2 className="font-display text-lg text-ink">{t("timeline.title")}</h2>

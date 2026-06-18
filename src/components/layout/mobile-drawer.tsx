@@ -4,12 +4,16 @@ import { useState } from "react";
 import * as Dialog from "@radix-ui/react-dialog";
 import { useTranslations } from "next-intl";
 
+import type { FeatureFlagKey } from "@/lib/feature-flags";
 import { Brand } from "@/components/layout/brand";
 import { SidebarNav } from "@/components/layout/sidebar-nav";
+import { MiniCalendar } from "@/components/appointments/mini-calendar";
 import { CloseIcon, MenuIcon } from "@/components/layout/icons";
 
 interface MobileDrawerProps {
   appName: string;
+  /** Feature flags the tenant has enabled (drives nav + mini-calendar). */
+  enabledFeatures: ReadonlyArray<FeatureFlagKey>;
 }
 
 /**
@@ -19,10 +23,11 @@ interface MobileDrawerProps {
  * sidebar takes over above it. The trigger and close are >= 44px touch targets
  * with a visible focus ring. All labels come from the i18n catalogue.
  */
-export function MobileDrawer({ appName }: MobileDrawerProps) {
+export function MobileDrawer({ appName, enabledFeatures }: MobileDrawerProps) {
   const [open, setOpen] = useState(false);
   const tDrawer = useTranslations("drawer");
   const tNav = useTranslations("nav");
+  const showCalendar = enabledFeatures.includes("appointments");
 
   return (
     <Dialog.Root open={open} onOpenChange={setOpen}>
@@ -50,9 +55,15 @@ export function MobileDrawer({ appName }: MobileDrawerProps) {
           </div>
           {/* Visually-hidden title for assistive tech (Radix requires one). */}
           <Dialog.Title className="sr-only">{appName}</Dialog.Title>
-          <nav className="flex-1">
-            <SidebarNav onNavigate={() => setOpen(false)} />
-          </nav>
+          <div className="flex flex-1 flex-col gap-4 overflow-y-auto">
+            <nav>
+              <SidebarNav
+                enabledFeatures={enabledFeatures}
+                onNavigate={() => setOpen(false)}
+              />
+            </nav>
+            {showCalendar ? <MiniCalendar onNavigate={() => setOpen(false)} /> : null}
+          </div>
         </Dialog.Content>
       </Dialog.Portal>
     </Dialog.Root>

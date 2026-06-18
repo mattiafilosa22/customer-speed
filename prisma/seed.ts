@@ -1,7 +1,12 @@
 import { PrismaPg } from "@prisma/adapter-pg";
 import { hash } from "@node-rs/argon2";
 
-import { CapitalBracket, LeadStage, Role } from "../src/generated/prisma/enums";
+import {
+  AppointmentStatus,
+  CapitalBracket,
+  LeadStage,
+  Role,
+} from "../src/generated/prisma/enums";
 import { Prisma, PrismaClient } from "../src/generated/prisma/client";
 
 /**
@@ -173,6 +178,44 @@ const FABIO_INVOICE = {
   grossAmount: "6100.00",
   netAmount: "5000.00",
 } as const;
+
+/**
+ * Example appointments for Fabio (docs/08 Fase 5), linked to existing leads so
+ * the agenda + mini-calendar have deterministic data for the UI/e2e. `daysFromNow`
+ * keeps them in the current month (so the mini-calendar default view highlights
+ * them); the times are at 09:00/15:00 local. Idempotent by [orgId, leadEmail,
+ * reason]. One DONE and one PENDING so both filter tabs are non-empty.
+ */
+const FABIO_APPOINTMENTS: ReadonlyArray<{
+  leadEmail: string;
+  reason: string;
+  daysFromNow: number;
+  hour: number;
+  status: AppointmentStatus;
+}> = [
+  {
+    leadEmail: "andrea.carapezza@example.com",
+    reason: "Call conoscitiva",
+    daysFromNow: 2,
+    hour: 9,
+    status: AppointmentStatus.PENDING,
+  },
+  {
+    leadEmail: "annalisa.giobbio@example.com",
+    reason: "Presentazione proposta",
+    daysFromNow: -3,
+    hour: 15,
+    status: AppointmentStatus.DONE,
+  },
+];
+
+/** A `Date` at `hour:00` local time, `daysFromNow` from today (00:00 baseline). */
+function appointmentDate(daysFromNow: number, hour: number): Date {
+  const date = new Date();
+  date.setHours(hour, 0, 0, 0);
+  date.setDate(date.getDate() + daysFromNow);
+  return date;
+}
 
 /** Reads a seed password from env, falling back to a documented dev default. */
 function seedPassword(envVar: string, devDefault: string): string {
@@ -388,10 +431,39 @@ async function main(): Promise<void> {
       }
     }
 
+    // 5) Example appointments for Fabio (idempotent by [orgId, leadEmail, reason]).
+    for (const appt of FABIO_APPOINTMENTS) {
+      const lead = await prisma.lead.findFirst({
+        where: { organizationId: fabioOrg.id, email: appt.leadEmail },
+        select: { id: true },
+      });
+      if (!lead) {
+        continue;
+      }
+      const existing = await prisma.appointment.findFirst({
+        where: { organizationId: fabioOrg.id, leadId: lead.id, reason: appt.reason },
+        select: { id: true },
+      });
+      if (existing) {
+        continue;
+      }
+      await prisma.appointment.create({
+        data: {
+          organizationId: fabioOrg.id,
+          leadId: lead.id,
+          ownerId: fabio.id,
+          startAt: appointmentDate(appt.daysFromNow, appt.hour),
+          reason: appt.reason,
+          status: appt.status,
+        },
+      });
+    }
+
     console.info(
       `Seed completed:\n` +
         `  - demo tenant "${DEMO_SLUG}" + superAdmin (${superAdminEmail})\n` +
-        `  - tenant "${FABIO_SLUG}" + proUser Fabio + ${FABIO_LEADS.length} example leads`,
+        `  - tenant "${FABIO_SLUG}" + proUser Fabio + ${FABIO_LEADS.length} example leads\n` +
+        `  - ${FABIO_APPOINTMENTS.length} example appointments`,
     );
   } finally {
     await prisma.$disconnect();

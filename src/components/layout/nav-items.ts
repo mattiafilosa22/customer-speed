@@ -1,5 +1,6 @@
 import type { ComponentType, SVGProps } from "react";
 
+import type { FeatureFlagKey } from "@/lib/feature-flags";
 import {
   AppointmentsIcon,
   DashboardIcon,
@@ -21,6 +22,10 @@ type NavMessageKey =
  * `messageKey` resolves against the `nav.*` next-intl namespace at render time
  * (see SidebarNav), so there is no hard-coded copy. Hrefs are locale-agnostic;
  * the locale-aware `Link` from `@/i18n/navigation` adds the prefix.
+ *
+ * `feature` (optional) gates the item behind a per-tenant feature flag: when set
+ * and the tenant has the flag OFF, the item is filtered out before rendering
+ * (`visibleNavItems`). Items without a `feature` are always shown.
  */
 export interface NavItem {
   /** Key within the `nav` message namespace (e.g. "dashboard"). */
@@ -28,12 +33,26 @@ export interface NavItem {
   /** Locale-agnostic path; the localized Link applies the locale prefix. */
   readonly href: string;
   readonly icon: ComponentType<SVGProps<SVGSVGElement>>;
+  /** Optional tenant feature flag that must be ON for the item to appear. */
+  readonly feature?: FeatureFlagKey;
 }
 
 export const NAV_ITEMS: ReadonlyArray<NavItem> = [
   { messageKey: "dashboard", href: "/dashboard", icon: DashboardIcon },
   { messageKey: "pipeline", href: "/pipeline", icon: PipelineIcon },
   { messageKey: "leads", href: "/leads", icon: LeadIcon },
-  { messageKey: "appointments", href: "/appointments", icon: AppointmentsIcon },
+  {
+    messageKey: "appointments",
+    href: "/appointments",
+    icon: AppointmentsIcon,
+    feature: "appointments",
+  },
   { messageKey: "settings", href: "/settings", icon: SettingsIcon },
 ];
+
+/** The nav items visible for a tenant given its enabled feature flags. */
+export function visibleNavItems(
+  flags: Readonly<Record<FeatureFlagKey, boolean>>,
+): ReadonlyArray<NavItem> {
+  return NAV_ITEMS.filter((item) => !item.feature || flags[item.feature]);
+}
