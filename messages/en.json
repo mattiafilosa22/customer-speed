@@ -46,6 +46,185 @@
       "description": "Configuration, including the \"Appearance & brand\" panel, will live here."
     }
   },
+  "account": {
+    "loggedInAs": "Signed in as",
+    "logout": "Sign out"
+  },
+  "auth": {
+    "fields": {
+      "name": "Name",
+      "email": "Email",
+      "password": "Password",
+      "newPassword": "New password",
+      "currentPassword": "Current password",
+      "passwordHint": "At least 10 characters, including a letter and a number."
+    },
+    "errors": {
+      "invalidCredentials": "Invalid credentials. Check your email and password.",
+      "couldNotComplete": "We couldn't complete the request. Please try again.",
+      "rateLimited": "Too many attempts. Please wait a few minutes and try again.",
+      "generic": "Something went wrong. Please try again later.",
+      "fields": {
+        "name": "Enter a valid name.",
+        "email": "Enter a valid email address.",
+        "password": "The password doesn't meet the requirements.",
+        "newPassword": "The new password doesn't meet the requirements.",
+        "currentPassword": "Current password is incorrect.",
+        "token": "Invalid or expired link.",
+        "consentPrivacy": "You must accept the privacy policy.",
+        "consentTerms": "You must accept the terms of service.",
+        "organizationSlug": "Invalid organization."
+      }
+    },
+    "login": {
+      "title": "Sign in",
+      "description": "Enter your credentials to access your account.",
+      "submit": "Sign in",
+      "submitting": "Signing in…",
+      "forgotLink": "Forgot your password?",
+      "noAccount": "Don't have an account?",
+      "registerLink": "Sign up"
+    },
+    "register": {
+      "title": "Create an account",
+      "description": "Fill in the fields to sign up.",
+      "submit": "Sign up",
+      "submitting": "Signing up…",
+      "success": "Registration complete. Check your email to confirm your address.",
+      "haveAccount": "Already have an account?",
+      "loginLink": "Sign in",
+      "consent": {
+        "privacy": "I have read and accept the <link>privacy policy</link>.",
+        "terms": "I accept the <link>terms of service</link>."
+      }
+    },
+    "verifyEmail": {
+      "title": "Verify email",
+      "description": "We're confirming your email address.",
+      "verifying": "Verifying…",
+      "success": "Email verified successfully. You can now sign in.",
+      "failed": "Verification failed. The link may have expired.",
+      "missingToken": "Missing token. Use the link from your email.",
+      "goToLogin": "Go to login"
+    },
+    "forgotPassword": {
+      "title": "Recover your password",
+      "description": "Enter your email: if the account exists you'll get a link to reset your password.",
+      "submit": "Send the link",
+      "submitting": "Sending…",
+      "success": "If the address is linked to an account, you'll receive an email with instructions.",
+      "backToLogin": "Back to login"
+    },
+    "resetPassword": {
+      "title": "Reset your password",
+      "description": "Choose a new password for your account.",
+      "submit": "Reset password",
+      "submitting": "Saving…",
+      "success": "Password reset. You can now sign in with your new password.",
+      "missingToken": "Missing or invalid token. Request a new link.",
+      "backToLogin": "Go to login"
+    },
+    "changePassword": {
+      "title": "Change password",
+      "description": "To change your password enter your current one and then the new one. Other sessions will be signed out.",
+      "submit": "Update password",
+      "submitting": "Updating…",
+      "success": "Password updated successfully.",
+      "errors": {
+        "unauthorized": "Couldn't change the password. Check your current password."
+      }
+    }
+  },
+  "legal": {
+    "versionLabel": "Version",
+    "privacy": {
+      "title": "Privacy policy",
+      "intro": "This policy describes how we process personal data of the platform's users. Baseline document, customizable per tenant.",
+      "sections": [
+        {
+          "heading": "Data controller",
+          "body": "The data controller of the leads' data is the customer using the platform; the service provider acts as data processor under Art. 28 GDPR."
+        },
+        {
+          "heading": "Data processed and purposes",
+          "body": "We process account data (name, email) for authentication and service delivery, and the data entered by users to manage the relationship with leads. Data is minimized and retained according to the retention policy."
+        },
+        {
+          "heading": "Legal basis",
+          "body": "Processing is based on the performance of the contract, legal obligations and, where applicable, the data subject's consent."
+        },
+        {
+          "heading": "Sub-processors",
+          "body": "To deliver the service we rely on infrastructure providers (hosting, database, transactional email, Google reCAPTCHA). The up-to-date list is available on request."
+        },
+        {
+          "heading": "Data subject rights",
+          "body": "You have the right of access, rectification, erasure, restriction, portability and objection, as well as withdrawal of consent. You can exercise your rights by contacting the controller."
+        }
+      ]
+    },
+    "cookie": {
+      "title": "Cookie policy",
+      "intro": "This page describes the cookies used by the platform and how to manage your preferences, in line with the Italian DPA guidelines.",
+      "sections": [
+        {
+          "heading": "Technical cookies (necessary)",
+          "body": "These are essential to operate the service (for example the authentication session cookie and the one that stores your cookie choices). They require no consent and are always on."
+        },
+        {
+          "heading": "Analytics cookies",
+          "body": "Any third-party analytics cookies are set only after your consent and help us understand how the platform is used."
+        },
+        {
+          "heading": "Google reCAPTCHA",
+          "body": "On the authentication pages we use Google reCAPTCHA to protect the forms from automated abuse. Google may collect data according to its own policy."
+        },
+        {
+          "heading": "Managing preferences",
+          "body": "You can accept or reject non-necessary cookies via the banner. You won't be asked again for 180 days, unless conditions change."
+        }
+      ]
+    },
+    "terms": {
+      "title": "Terms of service",
+      "intro": "These terms govern the use of the platform. Baseline document, to be reviewed by a lawyer before selling.",
+      "sections": [
+        {
+          "heading": "Subject of the service",
+          "body": "The platform is a multi-tenant CRM provided as SaaS. Use is subject to acceptance of these terms."
+        },
+        {
+          "heading": "Account and security",
+          "body": "The user is responsible for keeping their credentials confidential and for the activities carried out through their account."
+        },
+        {
+          "heading": "Permitted use",
+          "body": "Using the service for unlawful purposes or in violation of third-party rights is prohibited. The provider may suspend accounts in case of abuse."
+        },
+        {
+          "heading": "Limitation of liability",
+          "body": "The service is provided \"as is\". To the extent permitted by law, the provider is not liable for indirect damages arising from use of the service."
+        }
+      ]
+    }
+  },
+  "cookie": {
+    "regionLabel": "Cookie notice",
+    "title": "We respect your privacy",
+    "body": "We use necessary technical cookies and, with your consent, analytics cookies. You can accept, reject or manage your preferences.",
+    "policyLink": "Read the cookie policy",
+    "acceptAll": "Accept all",
+    "rejectAll": "Reject all",
+    "manage": "Manage preferences",
+    "savePreferences": "Save preferences",
+    "close": "Close without accepting",
+    "manageTitle": "Cookie preferences",
+    "manageDescription": "Choose which cookie categories to allow. Necessary cookies are always on.",
+    "categories": {
+      "necessary": "Necessary cookies (always on)",
+      "analytics": "Analytics cookies"
+    }
+  },
   "enum": {
     "leadStage": {
       "TO_HANDLE": "To handle",

@@ -31,10 +31,22 @@ const envSchema = z.object({
   // Public base URL of the app (used to build verification/reset links in emails).
   APP_URL: z.string().url().default("http://localhost:3000"),
 
+  // ── Tenant resolution (single-domain default) ────────────────────────
+  // Until per-subdomain/custom-domain routing lands, the login/register/forgot
+  // forms resolve the tenant from this default Organization `slug`. The seeded
+  // proUser tenant ("Fabio") uses slug "fabio". When subdomain routing arrives,
+  // the slug will be derived from the host and this becomes the fallback only.
+  DEFAULT_ORG_SLUG: z.string().min(1).default("fabio"),
+
   // ── reCAPTCHA (optional in dev; verification no-ops with a warning) ───
   // When both keys are absent the server-side verifier returns "skipped" so dev
   // works without Google keys. In production these SHOULD be set (see docs/06).
+  // Site key is exposed to the browser to render reCAPTCHA v3. Next.js only
+  // inlines variables prefixed with `NEXT_PUBLIC_` into client bundles, so the
+  // public mirror is the one the client reads; `RECAPTCHA_SITE_KEY` is kept for
+  // server-side reference/back-compat.
   RECAPTCHA_SITE_KEY: z.string().min(1).optional(),
+  NEXT_PUBLIC_RECAPTCHA_SITE_KEY: z.string().min(1).optional(),
   RECAPTCHA_SECRET_KEY: z.string().min(1).optional(),
   // Minimum v3 score to accept (0..1). Below it → reject / fall back to v2.
   RECAPTCHA_MIN_SCORE: z.coerce.number().min(0).max(1).default(0.5),
@@ -86,6 +98,7 @@ export const env: Env =
         NEXTAUTH_SECRET: "test-secret-test-secret-test-secret-32",
         NEXTAUTH_URL: "http://localhost:3000",
         APP_URL: "http://localhost:3000",
+        DEFAULT_ORG_SLUG: "fabio",
         RECAPTCHA_MIN_SCORE: 0.5,
         EMAIL_FROM: "CustomerSpeed <no-reply@example.com>",
       } as Env)

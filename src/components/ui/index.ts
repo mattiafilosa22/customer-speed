@@ -4,6 +4,9 @@ export type { ButtonProps, ButtonVariant, ButtonSize } from "./button";
 export { Card, CardBody } from "./card";
 export type { CardProps, CardSectionProps } from "./card";
 
+export { Checkbox } from "./checkbox";
+export type { CheckboxProps } from "./checkbox";
+
 export { Input } from "./input";
 export type { InputProps } from "./input";
 
