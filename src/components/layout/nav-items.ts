@@ -8,31 +8,32 @@ import {
   SettingsIcon,
 } from "@/components/layout/icons";
 
+/** Keys of the `nav` message namespace that act as item labels. */
+type NavMessageKey =
+  | "dashboard"
+  | "pipeline"
+  | "leads"
+  | "appointments"
+  | "settings";
+
 /**
- * Single source of truth for the app navigation. Kept in one place (not
- * scattered inline) so the labels are trivially externalizable to i18n.
- *
- * // i18n: `labelKey` will resolve via next-intl (messages/*); `label` is a
- * //       placeholder used until unit E wires next-intl.
+ * Single source of truth for the app navigation. Labels are NOT stored here —
+ * `messageKey` resolves against the `nav.*` next-intl namespace at render time
+ * (see SidebarNav), so there is no hard-coded copy. Hrefs are locale-agnostic;
+ * the locale-aware `Link` from `@/i18n/navigation` adds the prefix.
  */
 export interface NavItem {
-  /** Stable key — also the future i18n message key (e.g. nav.dashboard). */
-  readonly labelKey: string;
-  /** Placeholder Italian label (to be replaced by next-intl). */
-  readonly label: string;
+  /** Key within the `nav` message namespace (e.g. "dashboard"). */
+  readonly messageKey: NavMessageKey;
+  /** Locale-agnostic path; the localized Link applies the locale prefix. */
   readonly href: string;
   readonly icon: ComponentType<SVGProps<SVGSVGElement>>;
 }
 
 export const NAV_ITEMS: ReadonlyArray<NavItem> = [
-  { labelKey: "nav.dashboard", label: "Dashboard", href: "/dashboard", icon: DashboardIcon },
-  { labelKey: "nav.pipeline", label: "Pipeline", href: "/pipeline", icon: PipelineIcon },
-  { labelKey: "nav.leads", label: "Lead", href: "/leads", icon: LeadIcon },
-  {
-    labelKey: "nav.appointments",
-    label: "Appuntamenti",
-    href: "/appointments",
-    icon: AppointmentsIcon,
-  },
-  { labelKey: "nav.settings", label: "Settings", href: "/settings", icon: SettingsIcon },
+  { messageKey: "dashboard", href: "/dashboard", icon: DashboardIcon },
+  { messageKey: "pipeline", href: "/pipeline", icon: PipelineIcon },
+  { messageKey: "leads", href: "/leads", icon: LeadIcon },
+  { messageKey: "appointments", href: "/appointments", icon: AppointmentsIcon },
+  { messageKey: "settings", href: "/settings", icon: SettingsIcon },
 ];
