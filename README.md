@@ -26,6 +26,47 @@ Il prodotto è **white-label e personalizzabile**: nome piattaforma, palette col
 | **Lingue** | Bilingue **Italiano + Inglese** (i18n), default IT |
 | **Compliance** | WCAG 2.1 AA, GDPR (cookie/privacy policy, consensi), reCAPTCHA |
 
+## Avvio in locale
+
+Prerequisiti: **Node.js ≥ 20**, **pnpm 10**, **Docker** (per il database).
+
+```bash
+# 1. Installa le dipendenze
+pnpm install
+
+# 2. Configura l'ambiente (le credenziali DB combaciano con docker-compose.yml)
+cp .env.example .env.local
+# genera un secret per NextAuth quando servirà: openssl rand -base64 32
+
+# 3. Avvia PostgreSQL 16 in locale
+docker compose up -d
+
+# 4. (Fasi successive) applica lo schema e i dati demo
+#    Lo schema Prisma e il seed arrivano nelle unità dati della Fase 0.
+# pnpm db:migrate
+# pnpm db:seed
+
+# 5. Avvia l'app in sviluppo
+pnpm dev            # http://localhost:3000
+```
+
+### Script disponibili
+
+| Script | Descrizione |
+|--------|-------------|
+| `pnpm dev` | Avvia Next.js in sviluppo |
+| `pnpm build` / `pnpm start` | Build di produzione / avvio del build |
+| `pnpm lint` | ESLint (flat config) |
+| `pnpm typecheck` | `tsc --noEmit` |
+| `pnpm format` / `pnpm format:check` | Prettier |
+| `pnpm test` / `pnpm test:watch` | Vitest (unit/component) |
+| `pnpm test:e2e` | Playwright (e2e). Prima volta: `pnpm exec playwright install chromium` |
+| `pnpm db:migrate` / `pnpm db:deploy` | Migrazioni Prisma (dev / prod) |
+| `pnpm db:seed` | Seed dati demo |
+| `pnpm db:studio` | Prisma Studio |
+
+> Stack: Next.js 16 (App Router) · React 19 · TypeScript strict · Tailwind CSS 4 · Prisma 7 · Vitest 4 · Playwright 1.
+
 ## Indice della documentazione
 
 1. [Overview e architettura](docs/01-architettura.md) — stack, multi-tenancy, struttura del progetto, ambienti
