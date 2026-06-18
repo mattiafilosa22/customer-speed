@@ -18,3 +18,6 @@ Agenti specializzati per Claude Code, tarati sullo stack del progetto (Next.js A
 3. `tenant-isolation-reviewer` fa la revisione di sicurezza prima del merge.
 
 I `docs/` restano la fonte di verità: gli agenti li leggono prima di agire.
+
+## Standard di qualità (NON NEGOZIABILE)
+Ogni agente applica **`docs/00-standard-qualita.md`**: SOLID + layering netto, TypeScript `strict` senza `any`, **DB ultra-ottimizzato** (indici composti, zero N+1, `select` mirati, paginazione, transazioni, aggregati lato DB), **ogni endpoint/azione testato** (happy + auth + permesso + input invalido + cross-tenant). Nessun agente dichiara "fatto" senza prova (lint/typecheck/test eseguiti, output mostrato).

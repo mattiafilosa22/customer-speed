@@ -24,6 +24,7 @@ I `docs/` sono la fonte di verità: leggi il documento pertinente **prima** di i
 
 | Per capire… | Leggi |
 |---|---|
+| **Standard di qualità (SOLID, DB ottimizzato, test su ogni endpoint)** | `docs/00-standard-qualita.md` |
 | Stack, multi-tenancy, struttura cartelle, ambienti | `docs/01-architettura.md` |
 | Ruoli e matrice RBAC, feature in dettaglio | `docs/02-specifiche-funzionali.md` |
 | Schema Prisma, entità, enum, isolamento tenant | `docs/03-modello-dati.md` |
