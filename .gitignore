@@ -31,6 +31,7 @@ next-env.d.ts
 /coverage
 /playwright-report/
 /test-results/
+/.playwright-mcp/
 /.nyc_output
 
 # Logs

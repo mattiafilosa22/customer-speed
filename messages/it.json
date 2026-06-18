@@ -46,6 +46,185 @@
       "description": "Qui arriverà la configurazione, incluso il pannello \"Aspetto & brand\"."
     }
   },
+  "account": {
+    "loggedInAs": "Hai effettuato l'accesso come",
+    "logout": "Esci"
+  },
+  "auth": {
+    "fields": {
+      "name": "Nome",
+      "email": "Email",
+      "password": "Password",
+      "newPassword": "Nuova password",
+      "currentPassword": "Password attuale",
+      "passwordHint": "Almeno 10 caratteri, con una lettera e un numero."
+    },
+    "errors": {
+      "invalidCredentials": "Credenziali non valide. Controlla email e password.",
+      "couldNotComplete": "Non è stato possibile completare la richiesta. Riprova.",
+      "rateLimited": "Troppi tentativi. Attendi qualche minuto e riprova.",
+      "generic": "Si è verificato un errore. Riprova più tardi.",
+      "fields": {
+        "name": "Inserisci un nome valido.",
+        "email": "Inserisci un indirizzo email valido.",
+        "password": "La password non rispetta i requisiti.",
+        "newPassword": "La nuova password non rispetta i requisiti.",
+        "currentPassword": "Password attuale non corretta.",
+        "token": "Link non valido o scaduto.",
+        "consentPrivacy": "Devi accettare l'informativa sulla privacy.",
+        "consentTerms": "Devi accettare i termini di servizio.",
+        "organizationSlug": "Organizzazione non valida."
+      }
+    },
+    "login": {
+      "title": "Accedi",
+      "description": "Inserisci le tue credenziali per accedere.",
+      "submit": "Accedi",
+      "submitting": "Accesso in corso…",
+      "forgotLink": "Password dimenticata?",
+      "noAccount": "Non hai un account?",
+      "registerLink": "Registrati"
+    },
+    "register": {
+      "title": "Crea un account",
+      "description": "Compila i campi per registrarti.",
+      "submit": "Registrati",
+      "submitting": "Registrazione in corso…",
+      "success": "Registrazione completata. Controlla la tua email per confermare l'indirizzo.",
+      "haveAccount": "Hai già un account?",
+      "loginLink": "Accedi",
+      "consent": {
+        "privacy": "Ho letto e accetto l'<link>informativa sulla privacy</link>.",
+        "terms": "Accetto i <link>termini di servizio</link>."
+      }
+    },
+    "verifyEmail": {
+      "title": "Verifica email",
+      "description": "Stiamo confermando il tuo indirizzo email.",
+      "verifying": "Verifica in corso…",
+      "success": "Email verificata con successo. Ora puoi accedere.",
+      "failed": "Verifica non riuscita. Il link potrebbe essere scaduto.",
+      "missingToken": "Token mancante. Usa il link ricevuto via email.",
+      "goToLogin": "Vai al login"
+    },
+    "forgotPassword": {
+      "title": "Recupera la password",
+      "description": "Inserisci la tua email: se l'account esiste riceverai un link per reimpostare la password.",
+      "submit": "Invia il link",
+      "submitting": "Invio in corso…",
+      "success": "Se l'indirizzo è associato a un account, riceverai un'email con le istruzioni.",
+      "backToLogin": "Torna al login"
+    },
+    "resetPassword": {
+      "title": "Reimposta la password",
+      "description": "Scegli una nuova password per il tuo account.",
+      "submit": "Reimposta la password",
+      "submitting": "Salvataggio in corso…",
+      "success": "Password reimpostata. Ora puoi accedere con la nuova password.",
+      "missingToken": "Token mancante o non valido. Richiedi un nuovo link.",
+      "backToLogin": "Vai al login"
+    },
+    "changePassword": {
+      "title": "Cambio password",
+      "description": "Per cambiare la password inserisci quella attuale e poi la nuova. Le altre sessioni verranno disconnesse.",
+      "submit": "Aggiorna la password",
+      "submitting": "Aggiornamento in corso…",
+      "success": "Password aggiornata con successo.",
+      "errors": {
+        "unauthorized": "Impossibile cambiare la password. Verifica la password attuale."
+      }
+    }
+  },
+  "legal": {
+    "versionLabel": "Versione",
+    "privacy": {
+      "title": "Informativa sulla privacy",
+      "intro": "La presente informativa descrive come trattiamo i dati personali degli utenti della piattaforma. Documento di base, personalizzabile per ciascun tenant.",
+      "sections": [
+        {
+          "heading": "Titolare del trattamento",
+          "body": "Il titolare del trattamento dei dati dei lead è il cliente che utilizza la piattaforma; il fornitore del servizio agisce come responsabile del trattamento ai sensi dell'art. 28 GDPR."
+        },
+        {
+          "heading": "Dati trattati e finalità",
+          "body": "Trattiamo i dati di account (nome, email) per l'autenticazione e l'erogazione del servizio, e i dati inseriti dagli utenti per la gestione della relazione con i lead. I dati sono minimizzati e conservati secondo la policy di retention."
+        },
+        {
+          "heading": "Base giuridica",
+          "body": "Il trattamento si fonda sull'esecuzione del contratto, su obblighi legali e, ove previsto, sul consenso dell'interessato."
+        },
+        {
+          "heading": "Sub-responsabili",
+          "body": "Per erogare il servizio ci avvaliamo di fornitori infrastrutturali (hosting, database, email transazionale, reCAPTCHA di Google). L'elenco aggiornato è disponibile su richiesta."
+        },
+        {
+          "heading": "Diritti dell'interessato",
+          "body": "Hai diritto di accesso, rettifica, cancellazione, limitazione, portabilità e opposizione, oltre alla revoca del consenso. Puoi esercitare i tuoi diritti contattando il titolare."
+        }
+      ]
+    },
+    "cookie": {
+      "title": "Cookie policy",
+      "intro": "Questa pagina descrive i cookie utilizzati dalla piattaforma e come gestire le tue preferenze, in linea con le Linee guida del Garante.",
+      "sections": [
+        {
+          "heading": "Cookie tecnici (necessari)",
+          "body": "Sono indispensabili al funzionamento del servizio (ad esempio il cookie di sessione di autenticazione e quello che memorizza le tue scelte sui cookie). Non richiedono consenso e sono sempre attivi."
+        },
+        {
+          "heading": "Cookie analitici",
+          "body": "Eventuali cookie analitici di terze parti vengono installati solo previo tuo consenso e ci aiutano a capire come viene utilizzata la piattaforma."
+        },
+        {
+          "heading": "reCAPTCHA di Google",
+          "body": "Sulle pagine di autenticazione utilizziamo Google reCAPTCHA per proteggere i moduli da abusi automatizzati. Google può raccogliere dati secondo la propria informativa."
+        },
+        {
+          "heading": "Gestione delle preferenze",
+          "body": "Puoi accettare o rifiutare i cookie non necessari tramite il banner. Non ti verrà richiesto nuovamente per 180 giorni, salvo cambiamenti delle condizioni."
+        }
+      ]
+    },
+    "terms": {
+      "title": "Termini di servizio",
+      "intro": "I presenti termini regolano l'utilizzo della piattaforma. Documento di base, da validare con un legale prima della vendita.",
+      "sections": [
+        {
+          "heading": "Oggetto del servizio",
+          "body": "La piattaforma è un CRM multi-tenant fornito in modalità SaaS. L'utilizzo è soggetto all'accettazione dei presenti termini."
+        },
+        {
+          "heading": "Account e sicurezza",
+          "body": "L'utente è responsabile della riservatezza delle proprie credenziali e delle attività svolte tramite il proprio account."
+        },
+        {
+          "heading": "Uso consentito",
+          "body": "È vietato utilizzare il servizio per finalità illecite o in violazione dei diritti di terzi. Il fornitore può sospendere gli account in caso di abuso."
+        },
+        {
+          "heading": "Limitazione di responsabilità",
+          "body": "Il servizio è fornito \"così com'è\". Nei limiti consentiti dalla legge, il fornitore non risponde di danni indiretti derivanti dall'uso del servizio."
+        }
+      ]
+    }
+  },
+  "cookie": {
+    "regionLabel": "Avviso sui cookie",
+    "title": "Rispettiamo la tua privacy",
+    "body": "Utilizziamo cookie tecnici necessari e, previo consenso, cookie analitici. Puoi accettare, rifiutare o gestire le tue preferenze.",
+    "policyLink": "Leggi la cookie policy",
+    "acceptAll": "Accetta tutti",
+    "rejectAll": "Rifiuta tutto",
+    "manage": "Gestisci preferenze",
+    "savePreferences": "Salva le preferenze",
+    "close": "Chiudi senza accettare",
+    "manageTitle": "Preferenze cookie",
+    "manageDescription": "Scegli quali categorie di cookie consentire. I cookie necessari sono sempre attivi.",
+    "categories": {
+      "necessary": "Cookie necessari (sempre attivi)",
+      "analytics": "Cookie analitici"
+    }
+  },
   "enum": {
     "leadStage": {
       "TO_HANDLE": "Da gestire",

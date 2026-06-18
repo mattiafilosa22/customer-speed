@@ -6,6 +6,7 @@ import { getTranslations, setRequestLocale } from "next-intl/server";
 import { notFound } from "next/navigation";
 
 import { routing } from "@/i18n/routing";
+import { CookieBannerGate } from "@/components/cookie/cookie-banner-gate";
 
 import "@/styles/globals.css";
 
@@ -81,7 +82,10 @@ export default async function LocaleLayout({
       className={`${fontDisplay.variable} ${fontBody.variable} ${fontMono.variable}`}
     >
       <body>
-        <NextIntlClientProvider>{children}</NextIntlClientProvider>
+        <NextIntlClientProvider>
+          {children}
+          <CookieBannerGate />
+        </NextIntlClientProvider>
       </body>
     </html>
   );

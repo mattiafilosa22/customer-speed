@@ -19,3 +19,10 @@ export const routing = defineRouting({
 
 /** Union of the supported locale codes — use across the app instead of `string`. */
 export type Locale = (typeof routing.locales)[number];
+
+/** Narrow an arbitrary string to a supported `Locale`, falling back to default. */
+export function asLocale(value: string | null | undefined): Locale {
+  return routing.locales.includes(value as Locale)
+    ? (value as Locale)
+    : routing.defaultLocale;
+}
