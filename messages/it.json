@@ -370,7 +370,6 @@
       "title": "Contatto",
       "email": "Email",
       "phone": "Telefono",
-      "createdAt": "Data creazione",
       "adminNotes": "Note admin"
     },
     "capital": {
@@ -385,13 +384,15 @@
       "amountHint": "La fascia viene calcolata automaticamente dall'importo."
     },
     "summary": {
-      "title": "Scheda riassuntiva",
-      "stage": "Stage attuale",
-      "stageDate": "Data stage",
+      "title": "Sintesi",
+      "stage": "Stage",
       "capital": "Capitale",
       "source": "Provenienza",
-      "sourcePlaceholder": "Seleziona una provenienza",
+      "createdAt": "Creato il",
       "sourceNone": "Nessuna provenienza"
+    },
+    "details": {
+      "title": "Dettagli lead"
     },
     "updateStage": {
       "cta": "Aggiorna stage",

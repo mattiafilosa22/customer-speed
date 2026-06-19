@@ -4,6 +4,7 @@ import { getTranslations } from "next-intl/server";
 import { NotFoundError } from "@/lib/errors";
 import { requireTenantContext } from "@/lib/tenant";
 import { can } from "@/lib/rbac";
+import { daysInStage } from "@/lib/days";
 import { LeadStage } from "@/generated/prisma/enums";
 import type { LeadDetailRow } from "@/server/leads";
 import {
@@ -18,8 +19,9 @@ import { getTenantFeatureFlags } from "@/server/tenant/feature-flags";
 import { Link } from "@/i18n/navigation";
 import { formatDateShort } from "@/i18n/format";
 import { StagePill } from "@/components/leads/stage-pill";
+import { LeadSummary } from "@/components/leads/detail/lead-summary";
 import { ContactColumn } from "@/components/leads/detail/contact-column";
-import { SummaryColumn } from "@/components/leads/detail/summary-column";
+import { LeadDetails } from "@/components/leads/detail/lead-details";
 import { NotesPanel } from "@/components/leads/detail/notes-panel";
 import { ExternalRefsPanel } from "@/components/leads/detail/external-refs-panel";
 import { StageTimeline } from "@/components/leads/detail/stage-timeline";
@@ -29,12 +31,19 @@ import { InvoicesPanel } from "@/components/leads/detail/invoices-panel";
 import { AppointmentsPanel } from "@/components/leads/detail/appointments-panel";
 
 /**
- * Lead detail (docs/02 §2.5): three responsive columns — Contact + Capital,
- * Summary + Source + Notes, External data + Stage history. Server Component that
- * resolves the tenant context and fetches the lead (one batched query) plus the
- * tenant's lead sources / loss reasons for the inline selects.
+ * Lead detail (docs/02 §2.5). Layout "Sintesi in alto + 2 colonne":
+ *  - header (avatar + name + stage pill + primary/overflow actions),
+ *  - "Sintesi" read-only key-fact strip (stage + days, capital, source, created),
+ *  - main column (Contact, Dettagli lead = capital + source editors, Notes),
+ *  - side column (Appointments, External data, Stage history, Invoices if WON).
  *
- * RBAC drives which controls render (server-authoritative; the actions re-check).
+ * No fact is duplicated as an editor + a display in the same place: the summary
+ * is read-only; the editable capital/source live once in "Dettagli lead".
+ *
+ * Server Component that resolves the tenant context and fetches the lead (one
+ * batched query) plus the tenant's lead sources / loss reasons for the inline
+ * selects. RBAC drives which controls render (server-authoritative; the actions
+ * re-check).
  */
 export default async function LeadDetailPage({
   params,
@@ -153,30 +162,26 @@ export default async function LeadDetailPage({
         </div>
       </header>
 
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
-        {/* Left column: contact + capital */}
+      {/* Sintesi: read-only key-facts at a glance, under the header. */}
+      <LeadSummary
+        stage={lead.stage}
+        daysInStage={daysInStage(lead.stageChangedAt)}
+        capitalBracket={lead.capitalBracket}
+        capitalAmount={capitalAmount}
+        source={lead.source}
+        createdAt={await formatDateShort(lead.createdAt)}
+      />
+
+      {/* Two columns on desktop (main wider), stacked on mobile/tablet. */}
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-[1.6fr_1fr]">
+        {/* Main column: contact + lead details (editors) + notes. */}
         <div className="flex flex-col gap-4">
-          <ContactColumn
+          <ContactColumn email={lead.email} phone={lead.phone} adminNotes={lead.adminNotes} />
+          <LeadDetails
             leadId={lead.id}
-            email={lead.email}
-            phone={lead.phone}
-            createdAt={await formatDateShort(lead.createdAt)}
-            adminNotes={lead.adminNotes}
             capitalBracket={lead.capitalBracket}
             capitalAmount={capitalAmount}
             canSetCapital={perms.canSetCapital}
-            canUpdate={perms.canUpdate}
-          />
-        </div>
-
-        {/* Center column: summary + source + notes */}
-        <div className="flex flex-col gap-4">
-          <SummaryColumn
-            leadId={lead.id}
-            stage={lead.stage}
-            stageDate={await formatDateShort(lead.stageChangedAt)}
-            capitalBracket={lead.capitalBracket}
-            capitalAmount={capitalAmount}
             sourceId={lead.sourceId}
             sources={sources}
             canUpdate={perms.canUpdate}
@@ -186,22 +191,22 @@ export default async function LeadDetailPage({
             notes={lead.notes.map((n) => ({ id: n.id, body: n.body, createdAt: n.createdAt }))}
             canNote={perms.canNote}
           />
-          {showInvoices ? <InvoicesPanel leadId={lead.id} invoices={invoices} /> : null}
         </div>
 
-        {/* Right column: external refs + appointments + stage history */}
+        {/* Side column: appointments + external refs + stage history + invoices. */}
         <div className="flex flex-col gap-4">
+          {showAppointments ? (
+            <AppointmentsPanel leadId={lead.id} appointments={appointments} />
+          ) : null}
           <ExternalRefsPanel
             leadId={lead.id}
             refs={lead.externalRefs}
             canNote={perms.canNote}
           />
-          {showAppointments ? (
-            <AppointmentsPanel leadId={lead.id} appointments={appointments} />
-          ) : null}
           {/* StageTimeline renders its own Card + heading — no outer wrapper, so
               there is a single "Cronologia stage" title (audit P1.2). */}
           <StageTimeline history={lead.stageHistory} createdAt={lead.createdAt} />
+          {showInvoices ? <InvoicesPanel leadId={lead.id} invoices={invoices} /> : null}
         </div>
       </div>
 
