@@ -675,5 +675,38 @@
         "form": "Please check the entered data."
       }
     }
+  },
+  "integrations": {
+    "title": "Calendar integrations",
+    "description": "Connect your calendar to keep appointments in sync.",
+    "manageLink": "Manage integrations",
+    "providersHeading": "Available providers",
+    "empty": "No providers available.",
+    "notConfiguredHint": "Setup not available yet.",
+    "state": {
+      "connected": "Connected",
+      "notConnected": "Not connected",
+      "notConfigured": "Not configured"
+    },
+    "actions": {
+      "connect": "Connect",
+      "disconnect": "Disconnect"
+    },
+    "providers": {
+      "google": {
+        "name": "Google Calendar",
+        "description": "Two-way sync of your appointments with Google Calendar."
+      },
+      "calendly": {
+        "name": "Calendly",
+        "description": "Automatically import appointments booked through Calendly."
+      }
+    },
+    "statusBanner": {
+      "connected": "Connection completed.",
+      "denied": "Connection canceled.",
+      "invalid_state": "Security check failed. Please try again.",
+      "not_configured": "Integration not configured yet."
+    }
   }
 }

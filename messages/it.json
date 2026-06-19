@@ -675,5 +675,38 @@
         "form": "Controlla i dati inseriti."
       }
     }
+  },
+  "integrations": {
+    "title": "Integrazioni calendario",
+    "description": "Collega il tuo calendario per sincronizzare gli appuntamenti.",
+    "manageLink": "Gestisci le integrazioni",
+    "providersHeading": "Provider disponibili",
+    "empty": "Nessun provider disponibile.",
+    "notConfiguredHint": "Configurazione non ancora disponibile.",
+    "state": {
+      "connected": "Collegato",
+      "notConnected": "Non collegato",
+      "notConfigured": "Non configurato"
+    },
+    "actions": {
+      "connect": "Collega",
+      "disconnect": "Scollega"
+    },
+    "providers": {
+      "google": {
+        "name": "Google Calendar",
+        "description": "Sincronizzazione bidirezionale degli appuntamenti con il tuo Google Calendar."
+      },
+      "calendly": {
+        "name": "Calendly",
+        "description": "Importa automaticamente gli appuntamenti prenotati su Calendly."
+      }
+    },
+    "statusBanner": {
+      "connected": "Collegamento completato.",
+      "denied": "Collegamento annullato.",
+      "invalid_state": "Verifica di sicurezza non riuscita. Riprova.",
+      "not_configured": "Integrazione non ancora configurata."
+    }
   }
 }

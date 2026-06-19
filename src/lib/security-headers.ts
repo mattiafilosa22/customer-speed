@@ -52,14 +52,23 @@ export function buildCsp(nonce: string, isDev = false): string {
     "img-src": ["'self'", "data:", "https://www.gstatic.com", "https://www.google.com"],
     "font-src": ["'self'", "data:"],
     // reCAPTCHA siteverify is server-side; the client connects to Google for the
-    // challenge assets.
+    // challenge assets. The calendar OAuth/API calls are server-to-server, so no
+    // browser connect origin is needed for them.
     "connect-src": ["'self'", "https://www.google.com", "https://www.gstatic.com"],
-    // reCAPTCHA renders an invisible challenge in a Google frame.
-    "frame-src": ["'self'", "https://www.google.com"],
+    // reCAPTCHA renders an invisible challenge in a Google frame; Calendly may be
+    // embedded as a scheduling widget iframe (Fase 6, opt-in).
+    "frame-src": ["'self'", "https://www.google.com", "https://calendly.com"],
     // Clickjacking protection (modern equivalent of X-Frame-Options).
     "frame-ancestors": ["'none'"],
     "base-uri": ["'self'"],
-    "form-action": ["'self'"],
+    // The integrations "Connect" control navigates the top-level browser to the
+    // provider consent screens (OAuth Authorization Code). Allow those origins as
+    // navigation/form targets so the redirect is not blocked (Fase 6).
+    "form-action": [
+      "'self'",
+      "https://accounts.google.com",
+      "https://auth.calendly.com",
+    ],
     "object-src": ["'none'"],
     // FASE 8: add `upgrade-insecure-requests` and a report endpoint
     // (report-to / report-uri) once a reporting sink exists.
