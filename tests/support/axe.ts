@@ -9,12 +9,12 @@ import type { Page } from "@playwright/test";
  * `axe-core` UMD bundle into the page and run it via `page.evaluate`.
  *
  * `runAxe` returns ALL WCAG 2.1 A/AA violations. `blockingViolations` narrows
- * them to the gate bar set by docs/00 §5 and the task ("zero violazioni
- * critiche" / "axe senza violazioni critiche") — impact `critical`. `serious`
- * (and lower) findings are SURFACED by the caller (console + report) for triage
- * but do not fail the gate; the known `serious` debt (muted-text contrast on the
- * `--muted` token across pages — docs/05 §5.6 already flags it) is tracked for
- * the design-system engineer rather than silently masked.
+ * them to the gate bar: ANY `critical` finding, PLUS any `color-contrast`
+ * finding at `serious` severity. The color-contrast carve-out is deliberate —
+ * after the a11y audit (docs/05 §5.6) there is to be NO remaining
+ * critical/serious color-contrast debt, so a regression on the `--muted` token,
+ * the stage/tone pills, or the calendar today/out-of-month cells MUST fail the
+ * gate. Other `serious` findings (non-contrast) stay triage-only for now.
  */
 
 const require = createRequire(import.meta.url);
@@ -43,9 +43,15 @@ export async function runAxe(page: Page): Promise<AxeViolation[]> {
   return result.violations;
 }
 
-/** The subset of violations that FAIL the gate: impact `critical` (docs/00 §5). */
+/**
+ * The subset of violations that FAIL the gate: any `critical` finding, plus any
+ * `color-contrast` finding at `serious` severity (docs/05 §5.6 — no AA contrast
+ * debt is allowed to ship after the audit).
+ */
 export function blockingViolations(violations: AxeViolation[]): AxeViolation[] {
-  return violations.filter((v) => v.impact === "critical");
+  return violations.filter(
+    (v) => v.impact === "critical" || (v.impact === "serious" && v.id === "color-contrast"),
+  );
 }
 
 /** `serious` findings — reported for triage but non-blocking (design debt). */

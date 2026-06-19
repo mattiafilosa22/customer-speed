@@ -7,10 +7,17 @@ interface FormAlertProps {
   children: React.ReactNode;
 }
 
+/**
+ * Border uses the full semantic hue (non-text UI, ≥3:1 is enough); the text
+ * uses the `*-ink` variant — the SAME hue darkened toward black so the small
+ * body text clears WCAG AA (≥4.5:1) on the light panel/bg surfaces (the full
+ * hues #16a34a/#d97706 are only ~3.2:1 on white). Theme-driven, dark-mode safe
+ * (the ink resolves to the full hue in dark). See docs/05 §5.6.
+ */
 const TONE_CLASSES: Readonly<Record<AlertTone, string>> = {
-  error: "border-exec text-exec",
-  success: "border-ok text-ok",
-  warning: "border-warn text-warn",
+  error: "border-exec text-exec-ink",
+  success: "border-ok text-ok-ink",
+  warning: "border-warn text-warn-ink",
 };
 
 const TONE_ICON: Readonly<Record<AlertTone, string>> = {

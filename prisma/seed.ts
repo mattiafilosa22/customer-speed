@@ -66,7 +66,7 @@ const INDIGO_THEME = {
     bg: "#f7f7f9",
     panel: "#ffffff",
     ink: "#1c1c22",
-    muted: "#8c8c97",
+    muted: "#6e6e79",
     line: "#ececef",
     line2: "#f3f3f5",
     ok: "#16a34a",

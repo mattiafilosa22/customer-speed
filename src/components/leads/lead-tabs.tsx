@@ -75,7 +75,16 @@ export function LeadTabs({ stageCounts }: { stageCounts: LeadListResult["stageCo
           className={tabClasses(activeStage === stage)}
         >
           <span>{stageLabel(stage)}</span>
-          <span className="label-mono text-muted">({stageCounts[stage] ?? 0})</span>
+          {/* Count inherits the tab color (accent-ink active / muted inactive)
+              so it stays AA on the active accent-soft tint (docs/05 §5.6). */}
+          <span
+            className={cn(
+              "label-mono",
+              activeStage === stage ? "text-accent-ink" : "text-muted",
+            )}
+          >
+            ({stageCounts[stage] ?? 0})
+          </span>
         </Link>
       ))}
     </div>

@@ -6,6 +6,7 @@ import {
   contrastRatio,
   meetsLargeAA,
   meetsTextAA,
+  mixSrgb,
   relativeLuminance,
   validateThemeContrast,
 } from "@/lib/contrast";
@@ -43,6 +44,22 @@ describe("contrastRatio (known pairs)", () => {
   });
 });
 
+describe("mixSrgb (CSS color-mix in srgb)", () => {
+  it("returns the first color at 100% and the second at 0%", () => {
+    expect(mixSrgb("#123456", "#ffffff", 100)).toBe("#123456");
+    expect(mixSrgb("#123456", "#ffffff", 0)).toBe("#ffffff");
+  });
+
+  it("a 50/50 mix of black and white is mid grey", () => {
+    expect(mixSrgb("#000000", "#ffffff", 50)).toBe("#808080");
+  });
+
+  it("matches a known 12% indigo tint on white", () => {
+    // color-mix(in srgb, #5b5bd6 12%, #fff) → #ebebfa
+    expect(mixSrgb("#5b5bd6", "#ffffff", 12)).toBe("#ebebfa");
+  });
+});
+
 describe("AA threshold helpers", () => {
   it("ink on white passes text AA", () => {
     expect(meetsTextAA("#1c1c22", "#ffffff")).toBe(true);
@@ -62,12 +79,32 @@ describe("AA threshold helpers", () => {
 });
 
 describe("validateThemeContrast", () => {
-  it("passes for the Indigo default (only the documented muted warning)", () => {
+  it("passes for the Indigo default with NO issues (muted now AA on both surfaces)", () => {
     const report = validateThemeContrast(INDIGO_THEME);
     expect(report.passes).toBe(true);
-    // The single advisory issue is muted-on-panel (≈3.3), never an error.
-    expect(report.issues.every((i) => i.severity === "warning")).toBe(true);
-    expect(report.issues.some((i) => i.pair === "muted-on-panel")).toBe(true);
+    // After the a11y fix the default theme is fully clean — no warnings either.
+    expect(report.issues).toEqual([]);
+  });
+
+  it("the default --muted clears text AA on BOTH panel and bg (regression guard)", () => {
+    const { muted, panel, bg } = INDIGO_THEME.colors;
+    expect(contrastRatio(muted, panel)).toBeGreaterThanOrEqual(AA_TEXT);
+    expect(contrastRatio(muted, bg)).toBeGreaterThanOrEqual(AA_TEXT);
+  });
+
+  it("flags an ERROR when --muted is too light for small text", () => {
+    const bad: Theme = {
+      ...INDIGO_THEME,
+      colors: { ...INDIGO_THEME.colors, muted: "#8c8c97" }, // the old, failing value
+    };
+    const report = validateThemeContrast(bad);
+    expect(report.passes).toBe(false);
+    expect(
+      report.issues.some((i) => i.pair === "muted-on-panel" && i.severity === "error"),
+    ).toBe(true);
+    expect(report.issues.some((i) => i.pair === "muted-on-bg" && i.severity === "error")).toBe(
+      true,
+    );
   });
 
   it("flags an ERROR (and blocks) when body text has too little contrast", () => {
@@ -93,7 +130,11 @@ describe("validateThemeContrast", () => {
   });
 
   it("reports the numeric ratio rounded to two decimals", () => {
-    const report = validateThemeContrast(INDIGO_THEME);
+    const bad: Theme = {
+      ...INDIGO_THEME,
+      colors: { ...INDIGO_THEME.colors, muted: "#8c8c97" },
+    };
+    const report = validateThemeContrast(bad);
     const muted = report.issues.find((i) => i.pair === "muted-on-panel");
     expect(muted).toBeDefined();
     expect(Number.isFinite(muted?.ratio)).toBe(true);
