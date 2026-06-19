@@ -1,6 +1,13 @@
 import { describe, expect, it } from "vitest";
 
-import { INDIGO_THEME, resolveTheme, themeSchema, themeToCssVars } from "@/lib/theme";
+import {
+  INDIGO_THEME,
+  resolveMode,
+  resolveTheme,
+  themeDataAttributes,
+  themeSchema,
+  themeToCssVars,
+} from "@/lib/theme";
 
 describe("theme", () => {
   it("Indigo preset is a valid, complete theme", () => {
@@ -10,14 +17,38 @@ describe("theme", () => {
     expect(INDIGO_THEME.radius).toBe(12);
   });
 
-  it("themeToCssVars emits the runtime custom properties", () => {
+  it("themeToCssVars emits only the per-tenant, mode-independent tokens", () => {
     const vars = themeToCssVars(INDIGO_THEME);
     expect(vars["--accent"]).toBe("#5b5bd6");
     expect(vars["--accent-ink"]).toBe("#4a48c4");
     expect(vars["--radius"]).toBe("12px");
-    // Stage tokens are mapped from the enum-keyed stageColors.
-    expect(vars["--stage-taken"]).toBe("#5b5bd6");
-    expect(vars["--stage-lost"]).toBe("#e5533b");
+    // Neutral surfaces and stage hues are mode-owned in tokens.css (so dark mode
+    // takes effect instead of being overridden by inline light surfaces).
+    expect(vars["--bg"]).toBeUndefined();
+    expect(vars["--panel"]).toBeUndefined();
+    expect(vars["--ink"]).toBeUndefined();
+    expect(vars["--stage-taken"]).toBeUndefined();
+  });
+
+  it("themeToCssVars neutralizes shadows when softShadows is off", () => {
+    expect(themeToCssVars(INDIGO_THEME)["--sh"]).toBeUndefined();
+    const flat = themeToCssVars({ ...INDIGO_THEME, softShadows: false });
+    expect(flat["--sh"]).toBe("none");
+    expect(flat["--sh-sm"]).toBe("none");
+  });
+
+  it("resolveMode: user override wins over the stored theme mode", () => {
+    expect(resolveMode({ mode: "light" })).toBe("light");
+    expect(resolveMode({ mode: "dark" })).toBe("dark");
+    expect(resolveMode({ mode: "auto" })).toBe("light"); // auto → light on the server
+    expect(resolveMode({ mode: "light" }, "dark")).toBe("dark");
+    expect(resolveMode({ mode: "dark" }, "light")).toBe("light");
+    expect(resolveMode({ mode: "dark" }, null)).toBe("dark");
+  });
+
+  it("themeDataAttributes applies the mode override to data-theme", () => {
+    expect(themeDataAttributes(INDIGO_THEME)["data-theme"]).toBe("light");
+    expect(themeDataAttributes(INDIGO_THEME, "dark")["data-theme"]).toBe("dark");
   });
 
   it("rejects invalid hex colors", () => {

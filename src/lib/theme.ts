@@ -143,49 +143,29 @@ export const INDIGO_THEME: Theme = themeSchema.parse({
   softShadows: true,
 });
 
-/** Maps a stage color key to its CSS custom-property name (tokens.css). */
-const STAGE_CSS_VAR: Readonly<Record<keyof ThemeStageColors, string>> = {
-  TO_HANDLE: "--stage-to-handle",
-  TAKEN: "--stage-taken",
-  CALL_SCHEDULED: "--stage-call-scheduled",
-  WAITING_DOCS: "--stage-waiting-docs",
-  PRESENTATION_CALL: "--stage-presentation",
-  WAITING_DECISION: "--stage-waiting-decision",
-  WAITING_PAYMENT: "--stage-waiting-payment",
-  WON: "--stage-won",
-  LOST: "--stage-lost",
-};
-
 /**
  * Pure mapping: Theme → CSS custom properties.
  *
- * Returns a flat record of `--token: value` pairs. Only values that vary per
- * tenant are emitted (colors, stage colors, radius, fonts); derived tokens
- * (soft fills via color-mix, radius variants, shadows) stay in tokens.css and
- * recompute automatically from these. Font families are emitted as the bare
- * runtime --f-* vars; when next/font is in play, the layout passes its
- * generated families instead (see note in layout).
+ * Emits ONLY the tokens that vary per tenant AND are mode-independent: the brand
+ * accent (+ its hover ink) and the base radius. Everything else — neutral
+ * surfaces (bg/panel/ink/muted/line), semantic status colors, stage hues and all
+ * derived tokens (soft fills, ink variants, shadows) — is owned by tokens.css so
+ * it can switch between light (`:root`) and dark (`[data-theme="dark"]`). Those
+ * values are identical across all presets (only the accent differs), so nothing
+ * is lost by not injecting them — and crucially it lets dark mode actually take
+ * effect instead of being overridden by inline light surfaces. `--accent-soft`
+ * stays in tokens.css too: it is derived from `var(--accent)` (which we DO emit)
+ * with a mode-specific mix target, so it recolors per tenant AND adapts to mode.
+ *
+ * Font families come from next/font (emitted as --f-* on :root by the layout),
+ * not from here.
  */
 export function themeToCssVars(theme: Theme): Readonly<Record<string, string>> {
   const vars: Record<string, string> = {
     "--accent": theme.colors.accent,
     "--accent-ink": theme.colors.accentInk,
-    "--bg": theme.colors.bg,
-    "--panel": theme.colors.panel,
-    "--ink": theme.colors.ink,
-    "--muted": theme.colors.muted,
-    "--line": theme.colors.line,
-    "--line2": theme.colors.line2,
-    "--ok": theme.colors.ok,
-    "--warn": theme.colors.warn,
-    "--doc": theme.colors.doc,
-    "--exec": theme.colors.exec,
     "--radius": `${theme.radius}px`,
   };
-
-  for (const [key, cssVar] of Object.entries(STAGE_CSS_VAR)) {
-    vars[cssVar] = theme.stageColors[key as keyof ThemeStageColors];
-  }
 
   // Soft shadows off → neutralize the shadow tokens (kept theme-driven; the
   // utilities still reference --sh / --sh-sm, they just resolve to `none`).
@@ -197,17 +177,46 @@ export function themeToCssVars(theme: Theme): Readonly<Record<string, string>> {
   return vars;
 }
 
+/** Concrete (non-"auto") light/dark mode. */
+export type ResolvedMode = "light" | "dark";
+
+/**
+ * Cookie holding the user's light/dark override. Defined here (a server-safe
+ * module) — NOT in the "use client" toggle — because a constant exported from a
+ * client module becomes a client reference when imported by a Server Component,
+ * so the server layout would read the wrong key. Both the toggle (client) and
+ * the layout (server) import it from here.
+ */
+export const THEME_MODE_COOKIE = "cs-theme-mode";
+
+/**
+ * Resolves a theme's stored `mode` to a concrete light/dark value for SSR.
+ * "auto" resolves to light on the server (the OS preference is refined
+ * client-side by the mode toggle). An explicit user override (e.g. from the
+ * `cs-theme-mode` cookie) takes precedence over the tenant default.
+ */
+export function resolveMode(
+  theme: Pick<Theme, "mode">,
+  override?: ResolvedMode | null,
+): ResolvedMode {
+  if (override === "light" || override === "dark") return override;
+  return theme.mode === "dark" ? "dark" : "light";
+}
+
 /**
  * Non-color theme switches surfaced as `data-*` attributes on the theming
- * wrapper. tokens.css keys density spacing and button radius off these, so the
- * mapping stays declarative (no per-component conditionals, no hard-coded
- * style). Pure function — single source of truth for the attribute contract.
+ * wrapper. tokens.css keys the light/dark palette, density spacing and button
+ * radius off these, so the mapping stays declarative (no per-component
+ * conditionals, no hard-coded style). Pure function — single source of truth for
+ * the attribute contract. `mode` overrides the theme's stored mode (used to
+ * apply the user's light/dark toggle choice).
  */
 export function themeDataAttributes(
   theme: Theme,
+  mode?: ResolvedMode,
 ): Readonly<Record<`data-${string}`, string>> {
   return {
-    "data-theme": theme.mode === "dark" ? "dark" : "light",
+    "data-theme": mode ?? resolveMode(theme),
     "data-button-style": theme.buttonStyle,
     "data-density": theme.density,
   };

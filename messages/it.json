@@ -20,6 +20,10 @@
     "it": "Italiano",
     "en": "Inglese"
   },
+  "theme": {
+    "switchToDark": "Passa al tema scuro",
+    "switchToLight": "Passa al tema chiaro"
+  },
   "home": {
     "title": "CustomerSpeed",
     "subtitle": "Scaffold attivo — Fase 0."

@@ -85,7 +85,7 @@ export function GdprActions({
             {isExporting ? t("export.pending") : t("export.cta")}
           </Button>
           {exportError ? (
-            <span role="alert" className="font-body text-[12px] text-danger">
+            <span role="alert" className="font-body text-[12px] text-danger-ink">
               {tm(exportError)}
             </span>
           ) : null}
@@ -98,7 +98,7 @@ export function GdprActions({
           onOpenChange={setOpen}
           title={t("erase.confirmTitle")}
           description={t("erase.confirmBody")}
-          trigger={<Button variant="ghost">{t("erase.cta")}</Button>}
+          trigger={<Button variant="danger">{t("erase.cta")}</Button>}
         >
           <form action={formAction} noValidate className="flex flex-col gap-4">
             <input type="hidden" name="locale" value={locale} />
@@ -109,7 +109,7 @@ export function GdprActions({
             ) : null}
 
             <div className="flex flex-wrap gap-2">
-              <SubmitButton pendingLabel={t("erase.pending")} className="w-auto">
+              <SubmitButton variant="danger" pendingLabel={t("erase.pending")} className="w-auto">
                 {t("erase.confirm")}
               </SubmitButton>
               <Button variant="ghost" onClick={() => setOpen(false)}>

@@ -41,6 +41,12 @@
   --ok-soft: color-mix(in srgb, var(--ok) 10%, #fff);
   --warn-soft: color-mix(in srgb, var(--warn) 10%, #fff);
 
+  /* Danger — destructive actions (delete, erase). A deep red kept dark enough
+   * that white text on it clears AA in BOTH modes (white on #c2342d ≈ 5.5:1). */
+  --danger: #c2342d;
+  --danger-ink: #b3271f; /* hover + danger text on light surfaces (~6.5:1 on white) */
+  --danger-soft: color-mix(in srgb, var(--danger) 10%, #fff);
+
   /*
    * Semantic INK variants — the hue darkened toward black by --pill-ink-darken
    * for use as TEXT on light surfaces, where the full hue fails WCAG AA (e.g.
@@ -111,14 +117,15 @@
 }
 
 /*
- * Dark mode — speculative mirror tokens. Activated via [data-theme="dark"]
- * (set by the white-label panel / mode resolver). Accent and stage hues are
- * preserved; surfaces and text invert. Contrast targets WCAG AA on the dark bg.
+ * Dark mode — activated via [data-theme="dark"] (set by ThemeProvider from the
+ * resolved mode / user toggle). Surfaces and text invert; the brand `--accent`
+ * is NOT overridden here — it is injected per-tenant by themeToCssVars and kept
+ * in both modes (the tenant's indigo on a dark surface keeps white-on-accent at
+ * AA, e.g. #5b5bd6 → 5.37:1). Only the soft-fill mix target changes for dark.
+ * Stage/semantic hues are brightened for legibility on the dark background.
  */
 [data-theme="dark"] {
-  --accent: #8b8bf0;
-  --accent-ink: #a5a5f5;
-  --accent-soft: color-mix(in srgb, var(--accent) 16%, #14141a);
+  --accent-soft: color-mix(in srgb, var(--accent) 22%, #14141a);
 
   --bg: #0f0f14;
   --panel: #17171d;
@@ -135,6 +142,12 @@
   --exec-soft: color-mix(in srgb, var(--exec) 16%, #14141a);
   --ok-soft: color-mix(in srgb, var(--ok) 16%, #14141a);
   --warn-soft: color-mix(in srgb, var(--warn) 16%, #14141a);
+
+  /* Danger: keep the deep-red button bg (white text stays AA); the danger TEXT
+   * variant becomes a light red for legibility on the dark surface. */
+  --danger: #c2342d;
+  --danger-ink: #fca5a5;
+  --danger-soft: color-mix(in srgb, var(--danger) 22%, #14141a);
 
   --ring: var(--accent);
 
