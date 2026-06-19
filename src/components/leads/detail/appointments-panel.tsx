@@ -1,7 +1,7 @@
 import { getTranslations } from "next-intl/server";
 
 import type { AppointmentItem } from "@/server/appointments";
-import { Button, Card, CardBody } from "@/components/ui";
+import { Button, Card, CardBody, EmptyState } from "@/components/ui";
 import { formatDateTime } from "@/i18n/format";
 import { toDatetimeLocalValue } from "@/lib/datetime-local";
 import { AppointmentStatusPill } from "@/components/appointments/appointment-status-pill";
@@ -43,7 +43,7 @@ export async function AppointmentsPanel({
         </div>
 
         {appointments.length === 0 ? (
-          <p className="font-body text-muted text-[13.5px]">{t("lead.empty")}</p>
+          <EmptyState icon="🗓" message={t("lead.empty")} />
         ) : (
           <ul className="flex flex-col gap-3">
             {appointments.map((appt) => (

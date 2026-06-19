@@ -81,7 +81,13 @@ export function CapitalSelect({
         ))}
       </Select>
 
-      <SubmitButton pendingLabel={t("leads.saving")}>{t("leads.save")}</SubmitButton>
+      {/* Inline save: small, auto-width, right-aligned (audit P1.2) — not a
+          full-width bar dominating the field. */}
+      <div className="flex justify-end">
+        <SubmitButton size="sm" className="w-auto" pendingLabel={t("leads.saving")}>
+          {t("leads.save")}
+        </SubmitButton>
+      </div>
     </form>
   );
 }

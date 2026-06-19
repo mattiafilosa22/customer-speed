@@ -43,6 +43,11 @@ export function ThemePreview({ theme }: { theme: Theme }) {
           <Button variant="ghost" squared={theme.buttonStyle === "squared"}>
             {t("sampleGhost")}
           </Button>
+          {/* A destructive button next to the primary so the tenant can SEE any
+              accent↔danger collision live (audit P2). */}
+          <Button variant="danger" squared={theme.buttonStyle === "squared"}>
+            {t("sampleDanger")}
+          </Button>
           <Pill stage="waiting-decision">{t("sampleStage")}</Pill>
         </div>
 

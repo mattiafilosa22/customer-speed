@@ -4,6 +4,7 @@ import type { ReactNode } from "react";
 import * as Dialog from "@radix-ui/react-dialog";
 
 import { cn } from "@/lib/cn";
+import { useThemeContainer } from "@/components/ui/theme-portal";
 
 /**
  * Accessible modal dialog built on Radix Dialog: focus trap, ESC to close,
@@ -31,10 +32,14 @@ export function Modal({
   trigger,
   className,
 }: ModalProps) {
+  // Portal INTO the theme scope so the dialog surface is correctly dark/light
+  // themed (the palette lives on the [data-theme] wrapper; the default body
+  // portal would otherwise resolve the light :root tokens in dark mode).
+  const container = useThemeContainer();
   return (
     <Dialog.Root open={open} onOpenChange={onOpenChange}>
       {trigger ? <Dialog.Trigger asChild>{trigger}</Dialog.Trigger> : null}
-      <Dialog.Portal>
+      <Dialog.Portal container={container}>
         <Dialog.Overlay className="bg-ink/40 fixed inset-0 z-40" />
         <Dialog.Content
           className={cn(

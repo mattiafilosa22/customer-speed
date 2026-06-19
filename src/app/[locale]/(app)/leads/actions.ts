@@ -22,6 +22,7 @@ import {
   buildExportDeps,
   eraseLeadData,
   exportLeadData,
+  exportLeadDataXlsx,
   type LeadDataExport,
 } from "@/server/privacy";
 import {
@@ -348,6 +349,39 @@ export async function exportLeadDataAction(leadId: string): Promise<ExportLeadRe
     unstable_rethrow(error);
     // `toActionState` always yields an error state here (we only reach this on a
     // thrown domain error); narrow it for the discriminated return type.
+    const state = toActionState(error, gdprErrorKeys);
+    if (state.status === "error") return state;
+    return fail(gdprErrorKeys.generic) as ActionState & { status: "error" };
+  }
+}
+
+/**
+ * Discriminated result for the EXCEL export: on success it carries the .xlsx as
+ * base64 (Server Actions can't return a Buffer/Blob over the wire) + filename;
+ * the client decodes it into the spreadsheet Blob and downloads it. On failure
+ * it reuses the form `ActionState` (localized, non-revealing).
+ */
+export type ExportLeadXlsxResult =
+  | { status: "success"; filename: string; base64: string }
+  | (ActionState & { status: "error" });
+
+/**
+ * Export a lead's personal data as Excel (.xlsx) (right of access/portability,
+ * docs/06 §6.5, audit P0.2). Same chain as the JSON export: auth → RBAC
+ * (`lead.exportData`) → tenant-scoped deps → use case (audited, `format: xlsx`)
+ * → base64 payload. Same minimization as JSON (one shared collector).
+ */
+export async function exportLeadDataXlsxAction(
+  leadId: string,
+): Promise<ExportLeadXlsxResult> {
+  try {
+    const ctx = await requireTenantContext();
+    requirePermission(ctx.role, "lead.exportData");
+    const deps = buildExportDeps(ctx);
+    const { filename, buffer } = await exportLeadDataXlsx(deps, leadId);
+    return { status: "success", filename, base64: buffer.toString("base64") };
+  } catch (error) {
+    unstable_rethrow(error);
     const state = toActionState(error, gdprErrorKeys);
     if (state.status === "error") return state;
     return fail(gdprErrorKeys.generic) as ActionState & { status: "error" };

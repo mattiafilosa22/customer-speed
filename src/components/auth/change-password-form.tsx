@@ -67,9 +67,12 @@ export function ChangePasswordForm() {
         {t("auth.fields.passwordHint")}
       </p>
 
-      <SubmitButton pendingLabel={t("auth.changePassword.submitting")}>
-        {t("auth.changePassword.submit")}
-      </SubmitButton>
+      {/* Auto-width submit, left-aligned within the narrow form (audit P1.3). */}
+      <div className="flex">
+        <SubmitButton className="w-auto" pendingLabel={t("auth.changePassword.submitting")}>
+          {t("auth.changePassword.submit")}
+        </SubmitButton>
+      </div>
     </form>
   );
 }

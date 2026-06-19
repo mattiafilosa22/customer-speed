@@ -1,6 +1,6 @@
 import { getTranslations } from "next-intl/server";
 
-import { Card, CardBody } from "@/components/ui";
+import { Card, CardBody, EmptyState } from "@/components/ui";
 import { LeadStage } from "@/generated/prisma/enums";
 import { getLeadStageLabel } from "@/i18n/enum-labels";
 import { formatDateShort } from "@/i18n/format";
@@ -44,7 +44,7 @@ export async function StageTimeline({ history }: StageTimelineProps) {
         <h2 className="font-display text-ink text-lg">{t("title")}</h2>
 
         {items.length === 0 ? (
-          <p className="font-body text-muted text-[13.5px]">{t("empty")}</p>
+          <EmptyState icon="↻" message={t("empty")} />
         ) : (
           <ol className="flex flex-col gap-3">
             {items.map(({ entry, text, dateText }) => (

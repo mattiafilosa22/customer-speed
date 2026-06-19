@@ -53,7 +53,12 @@ function AddNoteForm({ leadId }: { leadId: string }) {
             : undefined
         }
       />
-      <SubmitButton pendingLabel={t("leads.saving")}>{t("notes.save")}</SubmitButton>
+      {/* Inline save: small, auto-width, right-aligned (audit P1.2). */}
+      <div className="flex justify-end">
+        <SubmitButton size="sm" className="w-auto" pendingLabel={t("leads.saving")}>
+          {t("notes.save")}
+        </SubmitButton>
+      </div>
     </form>
   );
 }

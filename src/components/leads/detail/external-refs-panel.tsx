@@ -3,7 +3,7 @@
 import { useActionState, useEffect, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 
-import { Button, Card, CardBody, Input } from "@/components/ui";
+import { Button, Card, CardBody, EmptyState, Input } from "@/components/ui";
 import {
   createExternalRefAction,
   deleteExternalRefAction,
@@ -145,7 +145,7 @@ export function ExternalRefsPanel({
         {canNote && adding ? <AddRefForm leadId={leadId} onDone={() => setAdding(false)} /> : null}
 
         {refs.length === 0 ? (
-          <p className="font-body text-muted text-[13.5px]">{t("leadDetail.externalRefs.empty")}</p>
+          <EmptyState icon="⊕" message={t("leadDetail.externalRefs.empty")} />
         ) : (
           <ul className="flex flex-col gap-3">
             {refs.map((reference) => (

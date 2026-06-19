@@ -59,11 +59,17 @@ export interface LeadDataExport {
 }
 
 /**
- * Build the export for `leadId` in the current tenant. The caller layer enforces
- * RBAC (`lead.view`) + tenant context; this use case enforces ownership and
- * writes the audit proof.
+ * Collect ALL of a subject's personal data, tenant-scoped, as the structured
+ * `LeadDataExport`. SINGLE source of truth for the export query + minimization
+ * (docs/00 §1 DRY): both the JSON (`exportLeadData`) and the Excel
+ * (`exportLeadDataXlsx`) use cases call this, so the two formats can never drift
+ * in WHAT data they expose. It does NOT write audit — the caller records the
+ * audit with the chosen `format` in the meta, so the trail names the artefact.
+ *
+ * Isolation: the tenant-scoped client forces `organizationId`, so a foreign lead
+ * id resolves to nothing → `NotFoundError` (404, non-revealing).
  */
-export async function exportLeadData(
+export async function collectLeadDataForExport(
   deps: PrivacyDeps,
   leadId: string,
 ): Promise<LeadDataExport> {
@@ -110,7 +116,7 @@ export async function exportLeadData(
 
   const exportedAt = clockNow(deps).toISOString();
 
-  const result: LeadDataExport = {
+  return {
     format: "customerspeed.lead-export.v1",
     exportedAt,
     subject: { kind: "lead", id: lead.id },
@@ -150,17 +156,31 @@ export async function exportLeadData(
       changedAt: s.changedAt.toISOString(),
     })),
   };
+}
 
-  // Audit proof (docs/06 §6.4). Record WHAT was exported (counts) — never the
-  // personal data itself — so the trail is meaningful without re-leaking PII.
+/**
+ * Build a JSON export for `leadId` in the current tenant. The caller layer
+ * enforces RBAC (`lead.exportData`) + tenant context; this use case enforces
+ * ownership (via the shared collector) and writes the audit proof.
+ */
+export async function exportLeadData(
+  deps: PrivacyDeps,
+  leadId: string,
+): Promise<LeadDataExport> {
+  const result = await collectLeadDataForExport(deps, leadId);
+
+  // Audit proof (docs/06 §6.4). Record WHAT was exported (counts + format) —
+  // never the personal data itself — so the trail is meaningful without
+  // re-leaking PII.
   await deps.audit.record({
     action: "gdpr.export",
     organizationId: deps.actor.organizationId,
     actorId: deps.actor.userId,
     entity: "Lead",
-    entityId: lead.id,
+    entityId: result.subject.id,
     meta: {
       subject: "lead",
+      format: "json",
       counts: {
         notes: result.notes.length,
         appointments: result.appointments.length,

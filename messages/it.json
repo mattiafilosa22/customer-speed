@@ -409,12 +409,20 @@
       "source": "Sorgente esterna",
       "delete": "Rimuovi"
     },
-    "back": "Torna ai lead"
+    "back": "Torna ai lead",
+    "actions": {
+      "menuLabel": "Altre azioni del lead"
+    }
   },
   "gdpr": {
     "export": {
       "cta": "Esporta dati",
-      "pending": "Esportazione…"
+      "pending": "Esportazione…",
+      "menuLabel": "Esporta dati",
+      "excel": "Excel (.xlsx)",
+      "json": "JSON",
+      "pendingExcel": "Esportazione Excel…",
+      "pendingJson": "Esportazione JSON…"
     },
     "erase": {
       "cta": "Cancella dati",
@@ -641,7 +649,8 @@
       "reopen": "Riapri",
       "cancel": "Annulla",
       "edit": "Modifica",
-      "delete": "Elimina"
+      "delete": "Elimina",
+      "menuLabel": "Altre azioni dell'appuntamento"
     },
     "new": {
       "cta": "Nuovo appuntamento",
@@ -814,7 +823,8 @@
       "sampleInputLabel": "Nome lead",
       "sampleInputPlaceholder": "Mario Rossi",
       "sampleStage": "In trattativa",
-      "announced": "Anteprima aggiornata."
+      "announced": "Anteprima aggiornata.",
+      "sampleDanger": "Elimina"
     },
     "contrast": {
       "title": "Controllo contrasto (WCAG AA)",
@@ -863,9 +873,15 @@
       "unauthorized": "Non sei autorizzato a eseguire questa operazione.",
       "notFound": "Risorsa non trovata.",
       "generic": "Si è verificato un errore. Riprova.",
-      "slug": { "taken": "Questo identificativo (slug) è già in uso." },
-      "email": { "taken": "Questa email è già registrata per questo tenant." },
-      "organization": { "conflict": "Conflitto: identificativo o dominio già in uso." }
+      "slug": {
+        "taken": "Questo identificativo (slug) è già in uso."
+      },
+      "email": {
+        "taken": "Questa email è già registrata per questo tenant."
+      },
+      "organization": {
+        "conflict": "Conflitto: identificativo o dominio già in uso."
+      }
     },
     "dashboard": {
       "title": "Metriche globali",

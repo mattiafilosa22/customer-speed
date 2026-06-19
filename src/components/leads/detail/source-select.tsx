@@ -80,7 +80,12 @@ export function SourceSelect({
         ))}
       </Select>
 
-      <SubmitButton pendingLabel={t("leads.saving")}>{t("leads.save")}</SubmitButton>
+      {/* Inline save: small, auto-width, right-aligned (audit P1.2). */}
+      <div className="flex justify-end">
+        <SubmitButton size="sm" className="w-auto" pendingLabel={t("leads.saving")}>
+          {t("leads.save")}
+        </SubmitButton>
+      </div>
     </form>
   );
 }

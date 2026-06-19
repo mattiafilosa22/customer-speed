@@ -6,5 +6,13 @@
  */
 export type { PrivacyActor, PrivacyDeps } from "@/server/privacy/deps";
 export { buildExportDeps, buildErasureDeps } from "@/server/privacy/context-deps";
-export { exportLeadData, type LeadDataExport } from "@/server/privacy/export-lead-data";
+export {
+  exportLeadData,
+  collectLeadDataForExport,
+  type LeadDataExport,
+} from "@/server/privacy/export-lead-data";
+export {
+  exportLeadDataXlsx,
+  type LeadDataXlsxExport,
+} from "@/server/privacy/export-lead-data-xlsx";
 export { eraseLeadData, type EraseLeadResult } from "@/server/privacy/erase-lead-data";

@@ -46,12 +46,17 @@ export function KanbanColumn({
   const accent = `var(${colorToken ?? defaultColorToken})`;
   const label = stageLabel(stage);
 
+  const isEmpty = cards.length === 0;
+
   return (
     <section
       aria-label={t("pipeline.column.label", { stage: label, count })}
-      className="bg-bg flex h-full w-[280px] shrink-0 snap-start flex-col rounded-[var(--radius)]"
+      // Distinct surface (audit P0.4): a panel-tinted card with a border so each
+      // column — even an empty one — reads as a region in both light and dark
+      // (the old `bg-bg` was invisible, especially in dark). All token-driven.
+      className="bg-line2 border-line flex h-full w-[280px] shrink-0 snap-start flex-col rounded border"
     >
-      <header className="flex items-center justify-between gap-2 px-1 pb-2">
+      <header className="border-line flex items-center justify-between gap-2 border-b px-3 py-2">
         <div className="flex items-center gap-2">
           <span
             aria-hidden="true"
@@ -68,7 +73,7 @@ export function KanbanColumn({
       <div
         ref={setNodeRef}
         className={[
-          "flex min-h-24 flex-1 flex-col gap-2 rounded-[var(--radius)] p-1 transition-colors",
+          "flex min-h-24 flex-1 flex-col gap-2 rounded-b p-2 transition-colors",
           isOver ? "bg-accent-soft" : "",
         ].join(" ")}
       >
@@ -82,8 +87,12 @@ export function KanbanColumn({
           </ul>
         </SortableContext>
 
-        {cards.length === 0 ? (
-          <p className="text-muted px-2 py-6 text-center text-[13px]">{t("pipeline.column.empty")}</p>
+        {isEmpty ? (
+          // A clearly droppable empty zone: dashed outline + centred label, so
+          // the column reads as a valid drop target (audit P0.4).
+          <div className="border-line text-muted flex flex-1 items-center justify-center rounded border border-dashed px-2 py-8 text-center text-[13px]">
+            {t("pipeline.column.empty")}
+          </div>
         ) : null}
 
         {hasMore ? (

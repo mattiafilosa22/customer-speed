@@ -1,10 +1,15 @@
 "use client";
 
-import { useState, type ChangeEvent } from "react";
+import { useState } from "react";
 import { useTranslations } from "next-intl";
 
 import { LeadStage } from "@/generated/prisma/enums";
-import { Select } from "@/components/ui";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  OverflowTrigger,
+} from "@/components/ui";
 import { useBoard } from "@/components/pipeline/board-context";
 import { LossReasonDialog } from "@/components/pipeline/loss-reason-dialog";
 
@@ -15,13 +20,14 @@ export interface StageOption {
 
 /**
  * Keyboard-accessible ALTERNATIVE to drag&drop (docs/02 §2.3, docs/05 §5.6 —
- * VINCOLANTE: the DnD must never be the only way to change stage).
+ * VINCOLANTE: DnD must never be the only way to change stage).
  *
- * A native, fully labelled `<select>` ("Sposta in…") lists the destination
- * stages; choosing one triggers the same optimistic `moveLead` the drag uses.
- * Choosing LOST opens the loss-reason dialog first (a reason is required). After
- * a successful move the board's ARIA live region announces it (handled in
- * `moveLead`). The select resets to its placeholder so it always reads "move to".
+ * A compact "⋯" overflow menu (audit P0.3) replaces the bulky native select.
+ * The trigger keeps the "Sposta in…" accessible name; Radix gives full keyboard
+ * navigation + `aria-haspopup="menu"`. Choosing a stage triggers the same
+ * optimistic `moveLead` the drag uses; choosing LOST opens the loss-reason
+ * dialog first (a reason is required). Successful moves are announced by the
+ * board's ARIA live region (handled in `moveLead`).
  */
 export function MoveStageMenu({
   leadId,
@@ -35,45 +41,36 @@ export function MoveStageMenu({
   const t = useTranslations();
   const { moveLead } = useBoard();
   const [lossOpen, setLossOpen] = useState(false);
-  const [value, setValue] = useState("");
 
-  const onChange = async (event: ChangeEvent<HTMLSelectElement>) => {
-    const target = event.currentTarget.value as LeadStage | "";
-    if (!target || target === currentStage) {
-      setValue("");
-      return;
-    }
+  const onSelectStage = (target: LeadStage) => {
+    if (target === currentStage) return;
     if (target === LeadStage.LOST) {
       setLossOpen(true);
-      setValue("");
       return;
     }
-    // Optimistic move; reset the control regardless of outcome (the live region
-    // / a rollback communicates the result).
-    setValue("");
-    await moveLead({ leadId, stage: target }).catch(() => {
-      /* rollback + announcement handled centrally in moveLead */
+    // Optimistic move; a rollback + announcement is handled centrally in moveLead.
+    void moveLead({ leadId, stage: target }).catch(() => {
+      /* handled in moveLead */
     });
   };
 
+  const destinations = stageOptions.filter((option) => option.stage !== currentStage);
+
   return (
     <>
-      <Select
-        label={t("pipeline.moveMenu.label")}
-        hideLabel
-        value={value}
-        onChange={onChange}
-        className="max-w-[150px]"
-      >
-        <option value="">{t("pipeline.moveMenu.placeholder")}</option>
-        {stageOptions
-          .filter((option) => option.stage !== currentStage)
-          .map((option) => (
-            <option key={option.stage} value={option.stage}>
+      <DropdownMenu>
+        <OverflowTrigger size="sm" label={t("pipeline.moveMenu.label")} />
+        <DropdownMenuContent>
+          {destinations.map((option) => (
+            <DropdownMenuItem
+              key={option.stage}
+              onSelect={() => onSelectStage(option.stage)}
+            >
               {option.label}
-            </option>
+            </DropdownMenuItem>
           ))}
-      </Select>
+        </DropdownMenuContent>
+      </DropdownMenu>
 
       <LossReasonDialog leadId={leadId} open={lossOpen} onOpenChange={setLossOpen} />
     </>
