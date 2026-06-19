@@ -17,6 +17,7 @@ const buildLeadDeps = vi.fn((..._a: unknown[]) => ({ deps: true }));
 const createLead = vi.fn();
 const softDeleteLead = vi.fn();
 const changeStage = vi.fn();
+const exportLeadDataXlsx = vi.fn();
 
 vi.mock("@/lib/tenant", () => ({
   requireTenantContext: (...a: unknown[]) => requireTenantContext(...a),
@@ -39,11 +40,19 @@ vi.mock("@/server/leads", () => ({
   deleteExternalRef: vi.fn(),
 }));
 vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }));
+vi.mock("@/server/privacy", () => ({
+  buildExportDeps: (..._a: unknown[]) => ({ deps: true }),
+  buildErasureDeps: (..._a: unknown[]) => ({ deps: true }),
+  exportLeadData: vi.fn(),
+  exportLeadDataXlsx: (...a: unknown[]) => exportLeadDataXlsx(...a),
+  eraseLeadData: vi.fn(),
+}));
 
 import {
   changeStageAction,
   createLeadAction,
   deleteLeadAction,
+  exportLeadDataXlsxAction,
 } from "@/app/[locale]/(app)/leads/actions";
 
 const TENANT = { kind: "tenant", role: "proUser", organizationId: "org_a", userId: "u" };
@@ -104,6 +113,51 @@ describe("deleteLeadAction", () => {
     softDeleteLead.mockRejectedValue(new NotFoundError());
 
     const res = await deleteLeadAction({ status: "idle" }, fd({ leadId: "x" }));
+    expect(res).toMatchObject({ status: "error", formError: "leads.errors.notFound" });
+  });
+});
+
+describe("exportLeadDataXlsxAction", () => {
+  it("checks auth + lead.exportData and returns the base64 .xlsx (happy path)", async () => {
+    requireTenantContext.mockResolvedValue(TENANT);
+    requirePermission.mockReturnValue(undefined);
+    exportLeadDataXlsx.mockResolvedValue({
+      filename: "lead-lead_1-export.xlsx",
+      buffer: Buffer.from("hello-xlsx"),
+    });
+
+    const res = await exportLeadDataXlsxAction("lead_1");
+
+    expect(requirePermission).toHaveBeenCalledWith("proUser", "lead.exportData");
+    expect(res).toEqual({
+      status: "success",
+      filename: "lead-lead_1-export.xlsx",
+      base64: Buffer.from("hello-xlsx").toString("base64"),
+    });
+  });
+
+  it("returns a generic unauthorized key (no throw) when unauthenticated", async () => {
+    requireTenantContext.mockRejectedValue(new UnauthorizedError());
+    const res = await exportLeadDataXlsxAction("lead_1");
+    expect(res).toMatchObject({ status: "error", formError: "leads.errors.unauthorized" });
+    expect(exportLeadDataXlsx).not.toHaveBeenCalled();
+  });
+
+  it("returns an error key (no throw) when the role lacks lead.exportData", async () => {
+    requireTenantContext.mockResolvedValue(TENANT);
+    requirePermission.mockImplementation(() => {
+      throw new UnauthorizedError();
+    });
+    const res = await exportLeadDataXlsxAction("lead_1");
+    expect(res).toMatchObject({ status: "error", formError: "leads.errors.unauthorized" });
+    expect(exportLeadDataXlsx).not.toHaveBeenCalled();
+  });
+
+  it("maps NotFoundError (cross-tenant id) to the notFound key", async () => {
+    requireTenantContext.mockResolvedValue(TENANT);
+    requirePermission.mockReturnValue(undefined);
+    exportLeadDataXlsx.mockRejectedValue(new NotFoundError());
+    const res = await exportLeadDataXlsxAction("foreign_lead");
     expect(res).toMatchObject({ status: "error", formError: "leads.errors.notFound" });
   });
 });

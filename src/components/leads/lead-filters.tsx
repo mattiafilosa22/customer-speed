@@ -74,6 +74,7 @@ export function LeadFilters({ sources }: { sources: readonly ReferenceItem[] }) 
         label={t("filters.source")}
         value={params.get("sourceId") ?? ""}
         onChange={(e) => setParam("sourceId", e.currentTarget.value)}
+        className="w-auto min-w-[12rem] max-w-full"
       >
         <option value="">{t("filters.allSources")}</option>
         {sources.map((source) => (
@@ -87,6 +88,7 @@ export function LeadFilters({ sources }: { sources: readonly ReferenceItem[] }) 
         label={t("filters.sort")}
         value={currentSort}
         onChange={(e) => onSortChange(e.currentTarget.value)}
+        className="w-auto min-w-[12rem] max-w-full"
       >
         <option value="default">{t("sort.default")}</option>
         <option value="days_asc">{t("sort.daysAsc")}</option>

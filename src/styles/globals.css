@@ -78,6 +78,20 @@
     -webkit-text-size-adjust: 100%; /* allow user resize up to 200% */
   }
 
+  /*
+   * Tell the UA which palette to render native chrome (scrollbars, form
+   * controls, the kanban board's horizontal scrollbar — audit P2) in, so they
+   * match the resolved theme. ThemeProvider sets [data-theme]; default (light)
+   * is the implicit `normal`. This keeps the dark board scrollbar dark.
+   */
+  [data-theme="dark"] {
+    color-scheme: dark;
+  }
+
+  [data-theme="light"] {
+    color-scheme: light;
+  }
+
   body {
     font-family: var(--f-body);
     font-size: 13.5px;

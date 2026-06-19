@@ -63,6 +63,7 @@ export function PeriodFilter({ currentYear }: { currentYear: number }) {
         label={t("year")}
         value={selectedYear}
         onChange={(e) => setParam("year", e.currentTarget.value)}
+        className="w-auto min-w-[7rem]"
       >
         {years.map((year) => (
           <option key={year} value={year}>
@@ -75,6 +76,7 @@ export function PeriodFilter({ currentYear }: { currentYear: number }) {
         label={t("month")}
         value={selectedMonth}
         onChange={(e) => setParam("month", e.currentTarget.value)}
+        className="w-auto min-w-[9rem]"
       >
         <option value="">{t("allYear")}</option>
         {MONTH_KEYS.map((key, index) => (

@@ -15,7 +15,6 @@ import {
 import { buildInvoiceDeps, listInvoices } from "@/server/invoices";
 import { buildAppointmentDeps, listAppointments } from "@/server/appointments";
 import { getTenantFeatureFlags } from "@/server/tenant/feature-flags";
-import { Card, CardBody } from "@/components/ui";
 import { Link } from "@/i18n/navigation";
 import { formatDateShort } from "@/i18n/format";
 import { StagePill } from "@/components/leads/stage-pill";
@@ -25,8 +24,7 @@ import { NotesPanel } from "@/components/leads/detail/notes-panel";
 import { ExternalRefsPanel } from "@/components/leads/detail/external-refs-panel";
 import { StageTimeline } from "@/components/leads/detail/stage-timeline";
 import { UpdateStageDialog } from "@/components/leads/detail/update-stage-dialog";
-import { DeleteLeadButton } from "@/components/leads/detail/delete-lead-button";
-import { GdprActions } from "@/components/leads/detail/gdpr-actions";
+import { LeadOverflowActions } from "@/components/leads/detail/lead-overflow-actions";
 import { InvoicesPanel } from "@/components/leads/detail/invoices-panel";
 import { AppointmentsPanel } from "@/components/leads/detail/appointments-panel";
 
@@ -132,6 +130,9 @@ export default async function LeadDetailPage({
             <StagePill stage={lead.stage} />
           </div>
         </div>
+        {/* One primary button ("Aggiorna stage"); everything else lives behind
+            the "⋯" overflow menu (audit P0.1) so the header reads cleanly and
+            destructive actions never collide with the accent primary. */}
         <div className="flex flex-wrap items-center gap-2">
           {perms.canMove ? (
             <UpdateStageDialog
@@ -140,11 +141,11 @@ export default async function LeadDetailPage({
               lossReasons={lossReasons}
             />
           ) : null}
-          {perms.canDelete ? <DeleteLeadButton leadId={lead.id} /> : null}
-          <GdprActions
+          <LeadOverflowActions
             leadId={lead.id}
             canExport={perms.canExportData}
             canErase={perms.canEraseData}
+            canDelete={perms.canDelete}
           />
         </div>
       </header>
@@ -193,12 +194,9 @@ export default async function LeadDetailPage({
           {showAppointments ? (
             <AppointmentsPanel leadId={lead.id} appointments={appointments} />
           ) : null}
-          <Card>
-            <CardBody className="flex flex-col gap-3">
-              <h2 className="font-display text-lg text-ink">{t("timeline.title")}</h2>
-              <StageTimeline history={lead.stageHistory} createdAt={lead.createdAt} />
-            </CardBody>
-          </Card>
+          {/* StageTimeline renders its own Card + heading — no outer wrapper, so
+              there is a single "Cronologia stage" title (audit P1.2). */}
+          <StageTimeline history={lead.stageHistory} createdAt={lead.createdAt} />
         </div>
       </div>
 

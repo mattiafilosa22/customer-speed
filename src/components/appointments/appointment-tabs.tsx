@@ -36,12 +36,15 @@ export function AppointmentTabs({ counts }: { counts: AppointmentTabCounts }) {
     return qs ? `${pathname}?${qs}` : pathname;
   };
 
+  // Active tab is more strongly marked (audit P2): accent ring + soft fill +
+  // accent-ink semibold text. All token-driven; the ring avoids a border-width
+  // layout shift between states.
   const tabClasses = (isActive: boolean): string =>
     cn(
       "inline-flex items-center gap-1.5 rounded-control border px-3 py-1.5 font-body text-[13px]",
       "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring",
       isActive
-        ? "border-accent bg-accent-soft text-accent-ink"
+        ? "border-accent bg-accent-soft text-accent-ink font-semibold ring-1 ring-accent"
         : "border-line text-muted hover:bg-accent-soft",
     );
 

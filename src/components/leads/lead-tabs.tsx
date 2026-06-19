@@ -45,12 +45,14 @@ export function LeadTabs({ stageCounts }: { stageCounts: LeadListResult["stageCo
     return qs ? `${pathname}?${qs}` : pathname;
   };
 
+  // Active tab is more strongly marked (audit P2): accent ring + soft fill +
+  // accent-ink semibold text — all token-driven, no layout shift between states.
   const tabClasses = (active: boolean): string =>
     cn(
       "inline-flex items-center gap-1.5 rounded-control border px-3 py-1.5 font-body text-[13px]",
       "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring",
       active
-        ? "border-accent bg-accent-soft text-accent-ink"
+        ? "border-accent bg-accent-soft text-accent-ink font-semibold ring-1 ring-accent"
         : "border-line text-muted hover:bg-accent-soft",
     );
 

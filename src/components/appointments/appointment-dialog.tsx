@@ -42,6 +42,14 @@ interface AppointmentDialogProps {
   lockedLeadId?: string;
   /** Custom trigger (defaults to a primary "Nuovo appuntamento" button). */
   trigger?: ReactNode;
+  /**
+   * Controlled open state — lets a parent (e.g. an overflow menu's "Modifica"
+   * item, audit P1.1) drive the dialog without its own trigger button. When
+   * provided, the internal trigger is omitted. Uncontrolled (trigger-based)
+   * otherwise.
+   */
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
 }
 
 /**
@@ -56,6 +64,8 @@ export function AppointmentDialog({
   appointment,
   lockedLeadId,
   trigger,
+  open: openProp,
+  onOpenChange: onOpenChangeProp,
 }: AppointmentDialogProps) {
   const t = useTranslations("appointments");
   const tm = useMessage();
@@ -63,7 +73,14 @@ export function AppointmentDialog({
   const isEdit = appointment !== undefined;
   const action = isEdit ? updateAppointmentAction : createAppointmentAction;
 
-  const [open, setOpen] = useState(false);
+  // Controlled when the parent passes `open`; otherwise self-managed.
+  const isControlled = openProp !== undefined;
+  const [openInternal, setOpenInternal] = useState(false);
+  const open = isControlled ? openProp : openInternal;
+  const setOpen = (next: boolean) => {
+    if (!isControlled) setOpenInternal(next);
+    onOpenChangeProp?.(next);
+  };
   const [state, formAction] = useActionState(action, initialState);
 
   // Close on the success transition (render-time state adjustment — no effect).
@@ -87,7 +104,7 @@ export function AppointmentDialog({
       onOpenChange={setOpen}
       title={isEdit ? t("edit.title") : t("new.title")}
       description={isEdit ? t("edit.description") : t("new.description")}
-      trigger={trigger ?? <Button>{t("new.cta")}</Button>}
+      trigger={isControlled ? undefined : (trigger ?? <Button>{t("new.cta")}</Button>)}
     >
       <form action={formAction} noValidate className="flex flex-col gap-4">
         <input type="hidden" name="locale" value={locale} />

@@ -409,12 +409,20 @@
       "source": "External source",
       "delete": "Remove"
     },
-    "back": "Back to leads"
+    "back": "Back to leads",
+    "actions": {
+      "menuLabel": "More lead actions"
+    }
   },
   "gdpr": {
     "export": {
       "cta": "Export data",
-      "pending": "Exporting…"
+      "pending": "Exporting…",
+      "menuLabel": "Export data",
+      "excel": "Excel (.xlsx)",
+      "json": "JSON",
+      "pendingExcel": "Exporting Excel…",
+      "pendingJson": "Exporting JSON…"
     },
     "erase": {
       "cta": "Erase data",
@@ -641,7 +649,8 @@
       "reopen": "Reopen",
       "cancel": "Cancel",
       "edit": "Edit",
-      "delete": "Delete"
+      "delete": "Delete",
+      "menuLabel": "More appointment actions"
     },
     "new": {
       "cta": "New appointment",
@@ -814,7 +823,8 @@
       "sampleInputLabel": "Lead name",
       "sampleInputPlaceholder": "John Doe",
       "sampleStage": "In negotiation",
-      "announced": "Preview updated."
+      "announced": "Preview updated.",
+      "sampleDanger": "Delete"
     },
     "contrast": {
       "title": "Contrast check (WCAG AA)",
@@ -863,9 +873,15 @@
       "unauthorized": "You are not authorized to perform this action.",
       "notFound": "Resource not found.",
       "generic": "Something went wrong. Please try again.",
-      "slug": { "taken": "This identifier (slug) is already in use." },
-      "email": { "taken": "This email is already registered for this tenant." },
-      "organization": { "conflict": "Conflict: identifier or domain already in use." }
+      "slug": {
+        "taken": "This identifier (slug) is already in use."
+      },
+      "email": {
+        "taken": "This email is already registered for this tenant."
+      },
+      "organization": {
+        "conflict": "Conflict: identifier or domain already in use."
+      }
     },
     "dashboard": {
       "title": "Global metrics",
