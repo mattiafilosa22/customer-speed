@@ -43,6 +43,46 @@ const optionalPhone = z
 const capitalBracket = z.nativeEnum(CapitalBracket);
 const stage = z.nativeEnum(LeadStage);
 
+/** Exclusive upper bound for an exact capital amount (€): keep it < 1e12. */
+const MAX_CAPITAL_AMOUNT = 1e12;
+
+/**
+ * Exact capital amount (€). Accepts either a number or a form string using `.`
+ * or `,` as the decimal separator (and optional thousands separators), which is
+ * normalized to a number. An empty string means "not provided" → undefined (so
+ * the use case can clear the column). The value must be finite, `>= 0` and
+ * `< 1e12`; the bracket is DERIVED from it server-side, never sent by the client.
+ */
+const optionalCapitalAmount = z
+  .union([z.number(), z.string(), z.null()])
+  .transform((raw, ctx) => {
+    // null / "" clear the column → null.
+    if (raw === null) return null;
+    if (typeof raw === "number") return raw;
+    const trimmed = raw.trim();
+    if (trimmed === "") return null;
+    // Normalize "1.234,50" / "1234,50" / "1234.50" → 1234.50: drop grouping dots
+    // when a comma decimal is present, else treat comma as the decimal separator.
+    const hasComma = trimmed.includes(",");
+    const normalized = hasComma ? trimmed.replace(/\./g, "").replace(",", ".") : trimmed;
+    const value = Number(normalized);
+    if (!Number.isFinite(value)) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Invalid amount" });
+      return z.NEVER;
+    }
+    return value;
+  })
+  .pipe(
+    z
+      .number()
+      .nonnegative("Amount must be ≥ 0")
+      .lt(MAX_CAPITAL_AMOUNT, "Amount too large")
+      .nullable(),
+  )
+  // The whole field is optional at the OBJECT level: an absent key leaves the
+  // column untouched (PATCH semantics); a present null / "" clears it.
+  .optional();
+
 /** A non-empty id (cuid-shaped, but we only require non-empty here). */
 const id = z.string().min(1);
 const optionalId = id.optional().or(z.literal("").transform(() => undefined));
@@ -54,6 +94,9 @@ export const createLeadSchema = z.object({
   lastName: name,
   email: optionalEmail,
   phone: optionalPhone,
+  // Capital on create: an exact amount OR a bracket (the amount wins and the
+  // bracket is derived in the use case). Both optional.
+  capitalAmount: optionalCapitalAmount,
   capitalBracket: capitalBracket.optional(),
   sourceId: optionalId,
 });
@@ -72,6 +115,7 @@ export const updateLeadSchema = z
     email: optionalEmail.nullable(),
     phone: optionalPhone.nullable(),
     capitalBracket: capitalBracket.nullable().optional(),
+    capitalAmount: optionalCapitalAmount,
     sourceId: optionalId.nullable(),
     adminNotes: z.string().trim().max(5000).nullable().optional(),
   })
@@ -79,6 +123,20 @@ export const updateLeadSchema = z
     message: "At least one field is required",
   });
 export type UpdateLeadInput = z.infer<typeof updateLeadSchema>;
+
+// --- Set capital (exact amount OR bracket) ---------------------------------
+
+/**
+ * Inline "imposta capitale" payload (docs/02 §2.4). The user chooses EITHER an
+ * exact amount OR a bracket; the bracket is then DERIVED from the amount in the
+ * use case (never trusted from the client when an amount is present). Both
+ * fields optional/nullable: when both are empty the use case clears the capital.
+ */
+export const setCapitalSchema = z.object({
+  capitalAmount: optionalCapitalAmount,
+  capitalBracket: capitalBracket.nullable().optional(),
+});
+export type SetCapitalInput = z.infer<typeof setCapitalSchema>;
 
 // --- Change stage ----------------------------------------------------------
 

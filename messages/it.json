@@ -376,7 +376,13 @@
     "capital": {
       "title": "Capitale",
       "placeholder": "Seleziona una fascia",
-      "none": "Non impostato"
+      "none": "Non impostato",
+      "modeLabel": "Modalità capitale",
+      "modeBracket": "Fascia",
+      "modeAmount": "Importo esatto",
+      "amountLabel": "Importo esatto (€)",
+      "amountPlaceholder": "es. 175000",
+      "amountHint": "La fascia viene calcolata automaticamente dall'importo."
     },
     "summary": {
       "title": "Scheda riassuntiva",

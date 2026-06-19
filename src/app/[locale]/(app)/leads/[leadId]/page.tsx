@@ -72,6 +72,9 @@ export default async function LeadDetailPage({
 
   const fullName = `${lead.firstName} ${lead.lastName}`;
   const initials = `${lead.firstName.charAt(0)}${lead.lastName.charAt(0)}`.toUpperCase();
+  // Decimal → number at the RSC boundary (Decimal is not serializable to client
+  // components); precision is bounded by the column's @db.Decimal(14,2).
+  const capitalAmount = lead.capitalAmount === null ? null : lead.capitalAmount.toNumber();
 
   const perms = {
     canUpdate: can(ctx.role, "lead.update"),
@@ -160,6 +163,7 @@ export default async function LeadDetailPage({
             createdAt={await formatDateShort(lead.createdAt)}
             adminNotes={lead.adminNotes}
             capitalBracket={lead.capitalBracket}
+            capitalAmount={capitalAmount}
             canSetCapital={perms.canSetCapital}
             canUpdate={perms.canUpdate}
           />
@@ -172,6 +176,7 @@ export default async function LeadDetailPage({
             stage={lead.stage}
             stageDate={await formatDateShort(lead.stageChangedAt)}
             capitalBracket={lead.capitalBracket}
+            capitalAmount={capitalAmount}
             sourceId={lead.sourceId}
             sources={sources}
             canUpdate={perms.canUpdate}

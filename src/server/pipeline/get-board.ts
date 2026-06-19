@@ -46,6 +46,12 @@ export interface PipelineCard {
   readonly stage: LeadStage;
   readonly daysInStage: number;
   readonly capitalBracket: PipelineCardRowCapital;
+  /**
+   * Exact capital amount (€) when set, else null. Serialized to a plain number
+   * for the client (Decimal is not serializable across the RSC boundary); the
+   * card shows the cifra when present, otherwise the bracket label.
+   */
+  readonly capitalAmount: number | null;
   readonly source: { id: string; label: string } | null;
 }
 
@@ -131,6 +137,7 @@ export async function getBoard(deps: PipelineDeps, input: unknown): Promise<Pipe
       stage: row.stage,
       daysInStage: daysInStage(row.stageChangedAt, now),
       capitalBracket: row.capitalBracket,
+      capitalAmount: row.capitalAmount === null ? null : row.capitalAmount.toNumber(),
       source: row.source,
     });
   }

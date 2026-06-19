@@ -1,3 +1,4 @@
+import { resolveCapital } from "@/lib/capital";
 import { parseInput } from "@/server/validation";
 import { clockNow, type LeadDeps } from "@/server/leads/deps";
 import { createLeadSchema } from "@/server/leads/schemas";
@@ -23,6 +24,13 @@ export async function createLead(deps: LeadDeps, input: unknown): Promise<{ id: 
     await assertSourceBelongsToTenant(deps, data.sourceId);
   }
 
+  // Capital on create: exact amount OR bracket; the amount wins and the bracket
+  // is derived from it (docs/02 §2.4) — single shared resolver, server-side.
+  const capital = resolveCapital({
+    capitalAmount: data.capitalAmount,
+    capitalBracket: data.capitalBracket,
+  });
+
   const now = clockNow(deps);
   const lead = await deps.prisma.lead.create({
     data: {
@@ -34,7 +42,8 @@ export async function createLead(deps: LeadDeps, input: unknown): Promise<{ id: 
       lastName: data.lastName,
       email: data.email ?? null,
       phone: data.phone ?? null,
-      capitalBracket: data.capitalBracket ?? null,
+      capitalBracket: capital?.capitalBracket ?? null,
+      capitalAmount: capital?.capitalAmount ?? null,
       sourceId: data.sourceId ?? null,
       stageChangedAt: now,
     },

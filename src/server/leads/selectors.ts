@@ -36,6 +36,7 @@ export const leadDetailSelect = {
   stage: true,
   stageChangedAt: true,
   capitalBracket: true,
+  capitalAmount: true,
   adminNotes: true,
   sourceId: true,
   lossReasonId: true,

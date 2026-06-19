@@ -15,6 +15,11 @@ export interface InputProps
    * error is not communicated by color alone (docs/05 §5.6).
    */
   error?: string;
+  /**
+   * Optional helper text, rendered below the field and linked via
+   * `aria-describedby` (kept readable by screen readers alongside any error).
+   */
+  hint?: ReactNode;
 }
 
 /**
@@ -23,13 +28,18 @@ export interface InputProps
  * the parent supplies `error` (Zod errors arrive from the form/server layer).
  */
 export const Input = forwardRef<HTMLInputElement, InputProps>(function Input(
-  { label, id, error, className, ...props },
+  { label, id, error, hint, className, ...props },
   ref,
 ) {
   const generatedId = useId();
   const inputId = id ?? generatedId;
   const errorId = `${inputId}-error`;
+  const hintId = `${inputId}-hint`;
   const hasError = Boolean(error);
+  const hasHint = Boolean(hint);
+  const describedBy = [hasError ? errorId : null, hasHint ? hintId : null]
+    .filter(Boolean)
+    .join(" ");
 
   return (
     <div className="flex flex-col gap-1">
@@ -38,7 +48,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(function Input(
         ref={ref}
         id={inputId}
         aria-invalid={hasError || undefined}
-        aria-describedby={hasError ? errorId : undefined}
+        aria-describedby={describedBy || undefined}
         className={cn(
           "min-h-11 w-full rounded-input border bg-panel px-3 text-ink",
           "font-body text-[13.5px] placeholder:text-muted",
@@ -48,6 +58,11 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(function Input(
         )}
         {...props}
       />
+      {hasHint ? (
+        <p id={hintId} className="font-body text-muted text-[12px]">
+          {hint}
+        </p>
+      ) : null}
       {hasError ? (
         <p id={errorId} className="font-body text-[12px] text-exec-ink">
           {error}

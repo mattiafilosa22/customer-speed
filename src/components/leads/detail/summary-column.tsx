@@ -3,7 +3,7 @@ import { getTranslations } from "next-intl/server";
 import type { ReferenceItem } from "@/server/leads";
 import { Card, CardBody } from "@/components/ui";
 import { CapitalBracket, LeadStage } from "@/generated/prisma/enums";
-import { getCapitalBracketLabel } from "@/i18n/enum-labels";
+import { getCapitalDisplay } from "@/components/leads/capital-display";
 import { StagePill } from "@/components/leads/stage-pill";
 import { SourceSelect } from "@/components/leads/detail/source-select";
 
@@ -12,6 +12,7 @@ interface SummaryColumnProps {
   stage: LeadStage;
   stageDate: string;
   capitalBracket: CapitalBracket | null;
+  capitalAmount: number | null;
   sourceId: string | null;
   sources: readonly ReferenceItem[];
   canUpdate: boolean;
@@ -27,14 +28,13 @@ export async function SummaryColumn({
   stage,
   stageDate,
   capitalBracket,
+  capitalAmount,
   sourceId,
   sources,
   canUpdate,
 }: SummaryColumnProps) {
   const t = await getTranslations("leadDetail");
-  const capitalText = capitalBracket
-    ? await getCapitalBracketLabel(capitalBracket)
-    : t("capital.none");
+  const capitalText = await getCapitalDisplay({ capitalAmount, capitalBracket });
 
   return (
     <Card>

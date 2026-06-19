@@ -11,6 +11,7 @@ interface ContactColumnProps {
   createdAt: string;
   adminNotes: string | null;
   capitalBracket: CapitalBracket | null;
+  capitalAmount: number | null;
   canSetCapital: boolean;
   canUpdate: boolean;
 }
@@ -37,6 +38,7 @@ export async function ContactColumn({
   createdAt,
   adminNotes,
   capitalBracket,
+  capitalAmount,
   canSetCapital,
 }: ContactColumnProps) {
   const t = await getTranslations("leadDetail");
@@ -64,6 +66,7 @@ export async function ContactColumn({
           <CapitalSelect
             leadId={leadId}
             capitalBracket={capitalBracket}
+            capitalAmount={capitalAmount}
             canSetCapital={canSetCapital}
           />
         </div>

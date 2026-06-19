@@ -93,6 +93,7 @@ export async function createLeadAction(
       lastName: str(form, "lastName"),
       email: str(form, "email"),
       phone: str(form, "phone"),
+      capitalAmount: str(form, "capitalAmount") || undefined,
       capitalBracket: str(form, "capitalBracket") || undefined,
       sourceId: str(form, "sourceId") || undefined,
     });
@@ -136,7 +137,13 @@ export async function updateLeadAction(
   }
 }
 
-/** Capability `lead.setCapital`: inline single-field save of the capital bracket. */
+/**
+ * Capability `lead.setCapital`: inline save of the capital. The user picks a
+ * mode (exact amount OR bracket) — we forward BOTH raw fields and the use case
+ * (`resolveCapital`) decides: an exact amount wins and DERIVES the bracket
+ * server-side, otherwise the bracket is stored and the amount cleared; both
+ * empty clears the capital. The client is never trusted for the bracket.
+ */
 export async function setCapitalAction(
   _prev: ActionState,
   form: FormData,
@@ -146,7 +153,13 @@ export async function setCapitalAction(
     requirePermission(ctx.role, "lead.setCapital");
     const deps = buildLeadDeps(ctx);
     const leadId = str(form, "leadId");
-    await updateLead(deps, leadId, { capitalBracket: str(form, "capitalBracket") || null });
+    const mode = str(form, "capitalMode");
+    // Only forward the field for the chosen mode (the other is explicitly
+    // cleared by passing an empty value), so switching modes resets the other.
+    await updateLead(deps, leadId, {
+      capitalAmount: mode === "amount" ? str(form, "capitalAmount") || null : null,
+      capitalBracket: mode === "amount" ? null : str(form, "capitalBracket") || null,
+    });
     leadPaths(leadId);
     return ok("leads.update.success");
   } catch (error) {
