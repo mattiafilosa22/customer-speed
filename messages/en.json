@@ -1,0 +1,990 @@
+{
+  "app": {
+    "name": "CustomerSpeed",
+    "description": "Multi-tenant CRM platform"
+  },
+  "nav": {
+    "ariaLabel": "Main navigation",
+    "dashboard": "Dashboard",
+    "pipeline": "Pipeline",
+    "leads": "Leads",
+    "appointments": "Appointments",
+    "settings": "Settings"
+  },
+  "drawer": {
+    "open": "Open the navigation menu",
+    "close": "Close the menu"
+  },
+  "languageSwitcher": {
+    "label": "Language",
+    "it": "Italian",
+    "en": "English"
+  },
+  "home": {
+    "title": "CustomerSpeed",
+    "subtitle": "Scaffold active — Phase 0."
+  },
+  "pages": {
+    "dashboard": {
+      "title": "Dashboard",
+      "description": "KPIs and the tenant overview will live here."
+    },
+    "pipeline": {
+      "title": "Pipeline",
+      "description": "The kanban board of stages will live here."
+    },
+    "leads": {
+      "title": "Leads",
+      "description": "The lead list with filters and search will live here."
+    },
+    "appointments": {
+      "title": "Appointments",
+      "description": "The appointments agenda will live here."
+    },
+    "settings": {
+      "title": "Settings",
+      "description": "Configuration, including the \"Appearance & brand\" panel, will live here."
+    }
+  },
+  "account": {
+    "loggedInAs": "Signed in as",
+    "logout": "Sign out"
+  },
+  "auth": {
+    "fields": {
+      "name": "Name",
+      "email": "Email",
+      "password": "Password",
+      "newPassword": "New password",
+      "currentPassword": "Current password",
+      "passwordHint": "At least 10 characters, including a letter and a number."
+    },
+    "errors": {
+      "invalidCredentials": "Invalid credentials. Check your email and password.",
+      "couldNotComplete": "We couldn't complete the request. Please try again.",
+      "rateLimited": "Too many attempts. Please wait a few minutes and try again.",
+      "generic": "Something went wrong. Please try again later.",
+      "fields": {
+        "name": "Enter a valid name.",
+        "email": "Enter a valid email address.",
+        "password": "The password doesn't meet the requirements.",
+        "newPassword": "The new password doesn't meet the requirements.",
+        "currentPassword": "Current password is incorrect.",
+        "token": "Invalid or expired link.",
+        "consentPrivacy": "You must accept the privacy policy.",
+        "consentTerms": "You must accept the terms of service.",
+        "organizationSlug": "Invalid organization."
+      }
+    },
+    "login": {
+      "title": "Sign in",
+      "description": "Enter your credentials to access your account.",
+      "submit": "Sign in",
+      "submitting": "Signing in…",
+      "forgotLink": "Forgot your password?",
+      "noAccount": "Don't have an account?",
+      "registerLink": "Sign up"
+    },
+    "register": {
+      "title": "Create an account",
+      "description": "Fill in the fields to sign up.",
+      "submit": "Sign up",
+      "submitting": "Signing up…",
+      "success": "Registration complete. Check your email to confirm your address.",
+      "haveAccount": "Already have an account?",
+      "loginLink": "Sign in",
+      "consent": {
+        "privacy": "I have read and accept the <link>privacy policy</link>.",
+        "terms": "I accept the <link>terms of service</link>."
+      }
+    },
+    "verifyEmail": {
+      "title": "Verify email",
+      "description": "We're confirming your email address.",
+      "verifying": "Verifying…",
+      "success": "Email verified successfully. You can now sign in.",
+      "failed": "Verification failed. The link may have expired.",
+      "missingToken": "Missing token. Use the link from your email.",
+      "goToLogin": "Go to login"
+    },
+    "forgotPassword": {
+      "title": "Recover your password",
+      "description": "Enter your email: if the account exists you'll get a link to reset your password.",
+      "submit": "Send the link",
+      "submitting": "Sending…",
+      "success": "If the address is linked to an account, you'll receive an email with instructions.",
+      "backToLogin": "Back to login"
+    },
+    "resetPassword": {
+      "title": "Reset your password",
+      "description": "Choose a new password for your account.",
+      "submit": "Reset password",
+      "submitting": "Saving…",
+      "success": "Password reset. You can now sign in with your new password.",
+      "missingToken": "Missing or invalid token. Request a new link.",
+      "backToLogin": "Go to login"
+    },
+    "changePassword": {
+      "title": "Change password",
+      "description": "To change your password enter your current one and then the new one. Other sessions will be signed out.",
+      "submit": "Update password",
+      "submitting": "Updating…",
+      "success": "Password updated successfully.",
+      "errors": {
+        "unauthorized": "Couldn't change the password. Check your current password."
+      }
+    }
+  },
+  "legal": {
+    "versionLabel": "Version",
+    "privacy": {
+      "title": "Privacy policy",
+      "intro": "This policy describes how we process personal data of the platform's users. Baseline document, customizable per tenant.",
+      "sections": [
+        {
+          "heading": "Data controller",
+          "body": "The data controller of the leads' data is the customer using the platform; the service provider acts as data processor under Art. 28 GDPR."
+        },
+        {
+          "heading": "Data processed and purposes",
+          "body": "We process account data (name, email) for authentication and service delivery, and the data entered by users to manage the relationship with leads. Data is minimized and retained according to the retention policy."
+        },
+        {
+          "heading": "Legal basis",
+          "body": "Processing is based on the performance of the contract, legal obligations and, where applicable, the data subject's consent."
+        },
+        {
+          "heading": "Sub-processors",
+          "body": "To deliver the service we rely on infrastructure providers (hosting, database, transactional email, Google reCAPTCHA). The up-to-date list is available on request."
+        },
+        {
+          "heading": "Data subject rights",
+          "body": "You have the right of access, rectification, erasure, restriction, portability and objection, as well as withdrawal of consent. You can exercise your rights by contacting the controller."
+        }
+      ]
+    },
+    "cookie": {
+      "title": "Cookie policy",
+      "intro": "This page describes the cookies used by the platform and how to manage your preferences, in line with the Italian DPA guidelines.",
+      "sections": [
+        {
+          "heading": "Technical cookies (necessary)",
+          "body": "These are essential to operate the service (for example the authentication session cookie and the one that stores your cookie choices). They require no consent and are always on."
+        },
+        {
+          "heading": "Analytics cookies",
+          "body": "Any third-party analytics cookies are set only after your consent and help us understand how the platform is used."
+        },
+        {
+          "heading": "Google reCAPTCHA",
+          "body": "On the authentication pages we use Google reCAPTCHA to protect the forms from automated abuse. Google may collect data according to its own policy."
+        },
+        {
+          "heading": "Managing preferences",
+          "body": "You can accept or reject non-necessary cookies via the banner. You won't be asked again for 180 days, unless conditions change."
+        }
+      ]
+    },
+    "terms": {
+      "title": "Terms of service",
+      "intro": "These terms govern the use of the platform. Baseline document, to be reviewed by a lawyer before selling.",
+      "sections": [
+        {
+          "heading": "Subject of the service",
+          "body": "The platform is a multi-tenant CRM provided as SaaS. Use is subject to acceptance of these terms."
+        },
+        {
+          "heading": "Account and security",
+          "body": "The user is responsible for keeping their credentials confidential and for the activities carried out through their account."
+        },
+        {
+          "heading": "Permitted use",
+          "body": "Using the service for unlawful purposes or in violation of third-party rights is prohibited. The provider may suspend accounts in case of abuse."
+        },
+        {
+          "heading": "Limitation of liability",
+          "body": "The service is provided \"as is\". To the extent permitted by law, the provider is not liable for indirect damages arising from use of the service."
+        }
+      ]
+    }
+  },
+  "cookie": {
+    "regionLabel": "Cookie notice",
+    "title": "We respect your privacy",
+    "body": "We use necessary technical cookies and, with your consent, analytics cookies. You can accept, reject or manage your preferences.",
+    "policyLink": "Read the cookie policy",
+    "acceptAll": "Accept all",
+    "rejectAll": "Reject all",
+    "manage": "Manage preferences",
+    "savePreferences": "Save preferences",
+    "close": "Close without accepting",
+    "manageTitle": "Cookie preferences",
+    "manageDescription": "Choose which cookie categories to allow. Necessary cookies are always on.",
+    "categories": {
+      "necessary": "Necessary cookies (always on)",
+      "analytics": "Analytics cookies"
+    },
+    "managePage": {
+      "title": "Manage or withdraw consent",
+      "body": "You can review or withdraw consent to non-necessary cookies at any time. Withdrawing is as easy as granting it: the banner will reappear for a fresh choice.",
+      "cta": "Review cookie preferences",
+      "pending": "Updating…",
+      "done": "Preferences reset: the banner will reappear."
+    }
+  },
+  "enum": {
+    "leadStage": {
+      "TO_HANDLE": "To handle",
+      "TAKEN": "Taken",
+      "CALL_SCHEDULED": "Call scheduled",
+      "WAITING_DOCS": "Waiting for documents",
+      "PRESENTATION_CALL": "Presentation call",
+      "WAITING_DECISION": "Waiting for decision",
+      "WAITING_PAYMENT": "Waiting for payment",
+      "WON": "Won",
+      "LOST": "Lost"
+    },
+    "capitalBracket": {
+      "B_0_50K": "0–50k",
+      "B_50_100K": "50–100k",
+      "B_100_250K": "100–250k",
+      "B_250_500K": "250–500k",
+      "B_500K_1M": "500k–1M",
+      "B_OVER_1M": "> 1M"
+    },
+    "appointmentStatus": {
+      "PENDING": "Pending",
+      "DONE": "Done",
+      "CANCELED": "Canceled"
+    }
+  },
+  "common": {
+    "optional": "(optional)",
+    "required": "Required"
+  },
+  "leads": {
+    "title": "My leads",
+    "subtitle": "Manage your contacts and pipeline",
+    "count": "{count, plural, =0 {No leads} one {# lead} other {# leads}}",
+    "search": {
+      "label": "Search",
+      "placeholder": "Search by name, email or phone"
+    },
+    "filters": {
+      "period": "Period",
+      "allYear": "All year",
+      "year": "Year",
+      "month": "Month",
+      "sort": "Sort",
+      "source": "Source",
+      "allSources": "All sources"
+    },
+    "sort": {
+      "default": "Default",
+      "daysAsc": "↑ Days asc.",
+      "daysDesc": "↓ Days desc.",
+      "over25": "Over 25d",
+      "over30": "Over 30d"
+    },
+    "tabs": {
+      "all": "All",
+      "allWithCount": "All ({count})"
+    },
+    "table": {
+      "name": "Name",
+      "contact": "Contact",
+      "source": "Source",
+      "days": "Days",
+      "stage": "Stage"
+    },
+    "days": "{count, plural, one {# day} other {# days}}",
+    "daysInStageLabel": "{count} days in stage",
+    "notesCount": "{count, plural, =0 {No notes} one {# note} other {# notes}}",
+    "empty": {
+      "title": "No leads found",
+      "description": "Adjust the filters or create a new lead.",
+      "cta": "New lead"
+    },
+    "loading": "Loading leads…",
+    "open": "Open",
+    "openLead": "Open lead {name}",
+    "pagination": {
+      "previous": "Previous",
+      "next": "Next",
+      "page": "Page {page} of {total}"
+    },
+    "new": {
+      "title": "New lead",
+      "cta": "New lead",
+      "description": "Enter the lead's contact details."
+    },
+    "create": {
+      "submit": "Create lead",
+      "submitting": "Creating…",
+      "success": "Lead created successfully."
+    },
+    "update": {
+      "success": "Changes saved."
+    },
+    "delete": {
+      "success": "Lead deleted.",
+      "cta": "Delete lead",
+      "confirmTitle": "Delete this lead?",
+      "confirmBody": "The lead will be removed from the lists. Only an administrator can restore it.",
+      "confirm": "Delete"
+    },
+    "cancel": "Cancel",
+    "save": "Save",
+    "saving": "Saving…",
+    "stage": {
+      "success": "Stage updated."
+    },
+    "errors": {
+      "unauthorized": "You don't have permission for this action.",
+      "notFound": "Lead not found.",
+      "generic": "Something went wrong. Please try again.",
+      "fields": {
+        "firstName": "Enter a valid first name.",
+        "lastName": "Enter a valid last name.",
+        "email": "Enter a valid email.",
+        "phone": "Enter a valid phone number.",
+        "lossReasonId": "Select a loss reason.",
+        "form": "Check the entered data."
+      }
+    },
+    "fields": {
+      "firstName": "First name",
+      "lastName": "Last name",
+      "email": "Email",
+      "phone": "Phone",
+      "source": "Source",
+      "capital": "Capital"
+    }
+  },
+  "leadDetail": {
+    "contact": {
+      "title": "Contact",
+      "email": "Email",
+      "phone": "Phone",
+      "createdAt": "Created on",
+      "adminNotes": "Admin notes"
+    },
+    "capital": {
+      "title": "Capital",
+      "placeholder": "Select a bracket",
+      "none": "Not set"
+    },
+    "summary": {
+      "title": "Summary",
+      "stage": "Current stage",
+      "stageDate": "Stage date",
+      "capital": "Capital",
+      "source": "Source",
+      "sourcePlaceholder": "Select a source",
+      "sourceNone": "No source"
+    },
+    "updateStage": {
+      "cta": "Update stage",
+      "title": "Update stage",
+      "stageLabel": "New stage",
+      "lossReasonLabel": "Loss reason",
+      "lossReasonPlaceholder": "Select a reason"
+    },
+    "timeline": {
+      "title": "Stage history",
+      "empty": "No stage changes recorded yet.",
+      "entry": "From {from} to {to}",
+      "initial": "Created in {to}"
+    },
+    "externalRefs": {
+      "title": "External data",
+      "empty": "No alternative data recorded. Use \"Add\" if this customer exists in the external CRM with a different name or email.",
+      "add": "Add",
+      "altName": "Alternative name",
+      "altEmail": "Alternative email",
+      "source": "External source",
+      "delete": "Remove"
+    },
+    "back": "Back to leads"
+  },
+  "gdpr": {
+    "export": {
+      "cta": "Export data",
+      "pending": "Exporting…"
+    },
+    "erase": {
+      "cta": "Erase data",
+      "confirmTitle": "Erase personal data",
+      "confirmBody": "This irreversibly anonymizes this lead's personal data (name, contacts, notes, external references). Linked invoices are retained for legal obligations. Do you want to proceed?",
+      "confirm": "Confirm erasure",
+      "cancel": "Cancel",
+      "pending": "Erasing…",
+      "success": "Personal data erased."
+    },
+    "errors": {
+      "unauthorized": "You do not have permission for this operation.",
+      "notFound": "Lead not found.",
+      "generic": "Operation failed. Please try again.",
+      "fields": {
+        "form": "Invalid data."
+      }
+    }
+  },
+  "notes": {
+    "title": "Notes",
+    "add": "Add note",
+    "placeholder": "Write a note…",
+    "empty": "No notes yet.",
+    "edit": "Edit",
+    "deleteLabel": "Delete",
+    "save": "Save note",
+    "cancel": "Cancel",
+    "create": {
+      "success": "Note added."
+    },
+    "update": {
+      "success": "Note updated."
+    },
+    "delete": {
+      "success": "Note deleted."
+    },
+    "errors": {
+      "fields": {
+        "body": "Write some text for the note."
+      }
+    }
+  },
+  "externalRefs": {
+    "create": {
+      "success": "External data added."
+    },
+    "delete": {
+      "success": "External data removed."
+    },
+    "errors": {
+      "fields": {
+        "form": "Enter at least one value."
+      }
+    }
+  },
+  "pipeline": {
+    "title": "Pipeline Kanban",
+    "hint": "Drag the cards to move leads between stages, or use the \"Move to…\" menu.",
+    "configureCta": "Configure stages",
+    "boardLabel": "Pipeline kanban board",
+    "empty": {
+      "title": "No visible stage",
+      "description": "No pipeline stage is currently visible. Configure the stages to see the board."
+    },
+    "period": {
+      "year": "Year",
+      "month": "Month",
+      "allYear": "Whole year",
+      "months": {
+        "jan": "January",
+        "feb": "February",
+        "mar": "March",
+        "apr": "April",
+        "may": "May",
+        "jun": "June",
+        "jul": "July",
+        "aug": "August",
+        "sep": "September",
+        "oct": "October",
+        "nov": "November",
+        "dec": "December"
+      }
+    },
+    "column": {
+      "label": "{stage}, {count} leads",
+      "empty": "No leads",
+      "more": "+{count} more"
+    },
+    "card": {
+      "label": "Lead {name}, stage {stage}",
+      "dragHandle": "Drag lead {name} to move it to another stage"
+    },
+    "moveMenu": {
+      "label": "Move to another stage",
+      "placeholder": "Move to…"
+    },
+    "lossReason": {
+      "title": "Loss reason",
+      "label": "Why was the lead lost?",
+      "placeholder": "Select a reason"
+    },
+    "announce": {
+      "moved": "{name} moved to {stage}.",
+      "failed": "Could not move {name}: {reason}",
+      "regionLabel": "Pipeline updates"
+    },
+    "errors": {
+      "invalid": "Invalid data.",
+      "notFound": "Item not found.",
+      "unauthorized": "You do not have permission for this action.",
+      "generic": "Something went wrong. Please try again.",
+      "lossReasonRequired": "Select a loss reason.",
+      "config": {
+        "terminalHide": "The Won and Lost stages cannot be hidden.",
+        "hideWithLeads": "You cannot hide a stage that contains leads. Move them to another stage first.",
+        "terminalNotLast": "The Won and Lost stages must stay at the end of the pipeline."
+      }
+    }
+  },
+  "pipelineConfig": {
+    "title": "Pipeline configuration",
+    "description": "Show or hide stages, reorder them and customize their colours. The Won and Lost stages stay visible and at the end.",
+    "back": "← Back to pipeline",
+    "listLabel": "Pipeline stages",
+    "leadCount": "{count, plural, =0 {No leads} one {# lead} other {# leads}}",
+    "moveUp": "Move {stage} up",
+    "moveDown": "Move {stage} down",
+    "visibilityLabel": "Show the {stage} stage in the pipeline",
+    "terminalLocked": "Terminal stages cannot be hidden",
+    "colorLegend": "Colour of the {stage} stage",
+    "colorOption": "Colour {token}",
+    "terminalNote": "The Won and Lost stages are terminal: they cannot be hidden and stay at the end."
+  },
+  "dashboard": {
+    "greeting": "Hi {name}!",
+    "subtitle": "Here is your summary",
+    "kpis": {
+      "regionLabel": "Key indicators",
+      "totals": "Total leads",
+      "won": "Won",
+      "lost": "Lost",
+      "convRate": "Conv. rate",
+      "netRevenue": "Net revenue"
+    },
+    "distribution": {
+      "title": "Pipeline distribution",
+      "empty": "No visible stage."
+    },
+    "invoices": {
+      "title": "Invoice summary",
+      "empty": "No invoices in this period",
+      "count": "Invoices",
+      "totalGross": "Gross total",
+      "totalNet": "Net total"
+    },
+    "lost": {
+      "title": "Lost sales",
+      "empty": "No lost sales in this period.",
+      "unspecified": "Unspecified"
+    },
+    "active": {
+      "title": "Total leads",
+      "empty": "No active leads right now."
+    }
+  },
+  "invoices": {
+    "title": "Invoices",
+    "add": "Add invoice",
+    "empty": "No invoices recorded.",
+    "form": {
+      "number": "Number (optional)",
+      "grossAmount": "Gross amount (€)",
+      "netAmount": "Net amount (€)",
+      "issuedAt": "Issue date",
+      "submit": "Save invoice",
+      "saving": "Saving…"
+    },
+    "row": {
+      "gross": "Gross",
+      "delete": "Delete"
+    },
+    "create": {
+      "success": "Invoice added."
+    },
+    "delete": {
+      "success": "Invoice deleted."
+    },
+    "errors": {
+      "unauthorized": "You do not have permission for this action.",
+      "notFound": "Invoice not found.",
+      "leadNotWon": "You can only add an invoice to a won lead.",
+      "generic": "Something went wrong. Please try again.",
+      "fields": {
+        "number": "Enter a valid number.",
+        "grossAmount": "Enter a valid gross amount.",
+        "netAmount": "Enter a valid net amount (not greater than gross).",
+        "issuedAt": "Enter a valid date.",
+        "leadId": "Invalid lead.",
+        "form": "Please check the entered data."
+      }
+    }
+  },
+  "appointments": {
+    "title": "Appointments",
+    "count": "{count, plural, =0 {No appointments} one {# appointment} other {# appointments}}",
+    "dayFilter": "Day: {date}",
+    "clearDayFilter": "Show all",
+    "filters": {
+      "label": "Filter appointments by status",
+      "all": "All",
+      "todo": "To do",
+      "done": "Done"
+    },
+    "table": {
+      "date": "Date and time",
+      "reason": "Reason",
+      "lead": "Lead",
+      "status": "Status",
+      "actions": "Actions"
+    },
+    "row": {
+      "markDone": "✓ Done",
+      "reopen": "Reopen",
+      "cancel": "Cancel",
+      "edit": "Edit",
+      "delete": "Delete"
+    },
+    "new": {
+      "cta": "New appointment",
+      "title": "New appointment",
+      "description": "Enter date, time and reason. You can link the appointment to a lead."
+    },
+    "edit": {
+      "title": "Edit appointment",
+      "description": "Update the date, time, reason or linked lead."
+    },
+    "form": {
+      "startAt": "Date and time",
+      "reason": "Reason",
+      "lead": "Linked lead",
+      "noLead": "No lead",
+      "submit": "Save appointment",
+      "saving": "Saving…"
+    },
+    "delete": {
+      "confirmTitle": "Delete the appointment?",
+      "confirmBody": "This action cannot be undone.",
+      "confirm": "Delete",
+      "cancel": "Cancel",
+      "success": "Appointment deleted."
+    },
+    "empty": {
+      "title": "No appointments",
+      "description": "Create your first appointment with \"New appointment\"."
+    },
+    "pagination": {
+      "previous": "Previous",
+      "next": "Next",
+      "page": "Page {page} of {total}"
+    },
+    "calendar": {
+      "title": "Mini calendar",
+      "previousMonth": "Previous month",
+      "nextMonth": "Next month",
+      "today": "Today",
+      "todayLabel": "today",
+      "hasAppointments": "has appointments"
+    },
+    "lead": {
+      "title": "Appointments",
+      "add": "+ Add appointment",
+      "empty": "No appointments for this lead."
+    },
+    "create": {
+      "success": "Appointment created."
+    },
+    "update": {
+      "success": "Appointment updated."
+    },
+    "status": {
+      "success": "Status updated."
+    },
+    "errors": {
+      "unauthorized": "You do not have permission for this action.",
+      "notFound": "Appointment not found.",
+      "generic": "Something went wrong. Please try again.",
+      "fields": {
+        "startAt": "Enter a valid date and time.",
+        "reason": "Enter a reason.",
+        "leadId": "Invalid lead.",
+        "form": "Please check the entered data."
+      }
+    }
+  },
+  "integrations": {
+    "title": "Calendar integrations",
+    "description": "Connect your calendar to keep appointments in sync.",
+    "manageLink": "Manage integrations",
+    "providersHeading": "Available providers",
+    "empty": "No providers available.",
+    "notConfiguredHint": "Setup not available yet.",
+    "state": {
+      "connected": "Connected",
+      "notConnected": "Not connected",
+      "notConfigured": "Not configured"
+    },
+    "actions": {
+      "connect": "Connect",
+      "disconnect": "Disconnect"
+    },
+    "providers": {
+      "google": {
+        "name": "Google Calendar",
+        "description": "Two-way sync of your appointments with Google Calendar."
+      },
+      "calendly": {
+        "name": "Calendly",
+        "description": "Automatically import appointments booked through Calendly."
+      }
+    },
+    "statusBanner": {
+      "connected": "Connection completed.",
+      "denied": "Connection canceled.",
+      "invalid_state": "Security check failed. Please try again.",
+      "not_configured": "Integration not configured yet."
+    }
+  },
+  "appearance": {
+    "title": "Appearance & brand",
+    "description": "Customize the platform identity. Changes update the preview in real time; press \"Save theme\" to apply them.",
+    "manageLink": "Customize appearance & brand",
+    "sections": {
+      "brand": "Brand",
+      "themeColors": "Theme & colors",
+      "components": "Components",
+      "preview": "Preview"
+    },
+    "brand": {
+      "appName": "Platform name",
+      "appNameHint": "Shown in the sidebar and on the sign-in page.",
+      "logo": "Logo",
+      "logoHint": "PNG or SVG. The mark is used when no logo is set.",
+      "logoAlt": "Platform logo",
+      "favicon": "Favicon",
+      "faviconHint": "Square PNG or SVG.",
+      "faviconAlt": "Favicon",
+      "mark": "Mark (fallback)",
+      "markHint": "Up to 3 characters, used when no logo is set.",
+      "upload": "Upload file",
+      "remove": "Remove",
+      "poweredBy": "Show \"powered by\""
+    },
+    "theme": {
+      "primaryColor": "Primary color",
+      "primaryColorHint": "Color of primary actions.",
+      "presets": "Palette presets",
+      "mode": "Mode",
+      "modeLight": "Light",
+      "modeDark": "Dark",
+      "modeAuto": "Auto",
+      "typography": "Typography",
+      "presetNames": {
+        "indigo": "Indigo",
+        "coral": "Coral",
+        "teal": "Teal",
+        "blue": "Blue",
+        "violet": "Violet",
+        "gold": "Gold",
+        "near-black": "Near black"
+      },
+      "fontPairs": {
+        "bebas-montserrat": "Bebas Neue + Montserrat",
+        "inter": "Inter",
+        "manrope": "Manrope",
+        "system": "System UI"
+      }
+    },
+    "components": {
+      "radius": "Roundness",
+      "radiusHint": "Corner radius, from 0 to 22 px.",
+      "buttonStyle": "Button style",
+      "buttonFilled": "Filled",
+      "buttonSquared": "Squared",
+      "density": "Interface density",
+      "densityComfortable": "Comfortable",
+      "densityCompact": "Compact",
+      "softShadows": "Soft shadows"
+    },
+    "preview": {
+      "heading": "Live preview",
+      "description": "Sample interface with the current theme.",
+      "kpiLabel": "Active leads",
+      "kpiValue": "128",
+      "sampleButton": "Primary action",
+      "sampleGhost": "Secondary",
+      "sampleInputLabel": "Lead name",
+      "sampleInputPlaceholder": "John Doe",
+      "sampleStage": "In negotiation",
+      "announced": "Preview updated."
+    },
+    "contrast": {
+      "title": "Contrast check (WCAG AA)",
+      "passText": "All combinations pass AA contrast.",
+      "warningIntro": "Contrast warnings:",
+      "errorIntro": "Insufficient contrast: fix before saving.",
+      "ratio": "ratio {ratio}:1 (required {required}:1)",
+      "pairs": {
+        "ink-on-panel": "Text on surface",
+        "ink-on-bg": "Text on background",
+        "white-on-accent": "Text on primary color",
+        "accent-on-bg": "Primary color on background",
+        "muted-on-panel": "Secondary text on surface"
+      }
+    },
+    "actions": {
+      "save": "Save theme",
+      "saving": "Saving...",
+      "reset": "Reset to default"
+    },
+    "status": {
+      "saved": "Theme saved.",
+      "unsaved": "Unsaved changes."
+    },
+    "errors": {
+      "invalid": "Invalid values. Check the fields.",
+      "contrast": "The theme does not meet the minimum AA contrast.",
+      "unauthorized": "You do not have permission to change appearance.",
+      "generic": "Something went wrong. Please try again."
+    }
+  },
+  "admin": {
+    "brand": "CustomerSpeed Admin",
+    "brandSub": "Cross-tenant console",
+    "meta": {
+      "title": "CustomerSpeed Admin — Cross-tenant console"
+    },
+    "nav": {
+      "label": "Admin navigation",
+      "dashboard": "Metrics",
+      "tenants": "Tenants"
+    },
+    "errors": {
+      "invalid": "Invalid data. Check the fields and try again.",
+      "contrast": "Insufficient contrast: pick more readable colors (WCAG AA).",
+      "unauthorized": "You are not authorized to perform this action.",
+      "notFound": "Resource not found.",
+      "generic": "Something went wrong. Please try again.",
+      "slug.taken": "This identifier (slug) is already in use.",
+      "email.taken": "This email is already registered for this tenant.",
+      "organization.conflict": "Conflict: identifier or domain already in use."
+    },
+    "dashboard": {
+      "title": "Global metrics",
+      "subtitle": "Aggregate summary across all tenants.",
+      "tenants": "Tenants",
+      "users": "Total users",
+      "leads": "Total leads",
+      "won": "Won",
+      "convRate": "Conv. rate",
+      "netRevenue": "Net revenue"
+    },
+    "tenants": {
+      "title": "Tenants",
+      "subtitle": "{count, plural, =0 {No tenants} one {# tenant} other {# tenants}}",
+      "create": "New tenant",
+      "empty": "No tenants yet.",
+      "table": {
+        "name": "Name",
+        "slug": "Slug",
+        "users": "Users",
+        "leads": "Leads",
+        "status": "Status",
+        "created": "Created",
+        "actions": "Actions",
+        "configure": "Configure"
+      },
+      "status": {
+        "active": "Active",
+        "suspended": "Suspended"
+      },
+      "actions": {
+        "suspend": "Suspend",
+        "activate": "Reactivate"
+      },
+      "pagination": {
+        "label": "Tenant pagination",
+        "prev": "Previous",
+        "next": "Next",
+        "status": "Page {page} of {totalPages}"
+      }
+    },
+    "create": {
+      "title": "New tenant",
+      "subtitle": "Create an organization and its first proUser.",
+      "sections": {
+        "org": "Organization",
+        "owner": "Owner user",
+        "ownerHint": "They will receive an email to set their password."
+      },
+      "fields": {
+        "name": "Organization name",
+        "slug": "Identifier (slug)",
+        "slugHint": "Lowercase letters, digits and hyphens. Used for routing.",
+        "appName": "Platform name",
+        "ownerName": "Owner name",
+        "ownerEmail": "Owner email"
+      },
+      "submit": "Create tenant",
+      "submitting": "Creating…"
+    },
+    "detail": {
+      "back": "Back to list",
+      "sections": {
+        "settings": "Settings",
+        "flags": "Features",
+        "users": "Users",
+        "appearance": "Appearance & brand"
+      }
+    },
+    "settings": {
+      "title": "Tenant settings",
+      "name": "Organization name",
+      "appName": "Platform name",
+      "slug": "Identifier (slug)",
+      "customDomain": "Custom domain",
+      "customDomainPlaceholder": "crm.example.com",
+      "save": "Save settings",
+      "saving": "Saving…",
+      "saved": "Settings saved."
+    },
+    "flags": {
+      "title": "Features",
+      "hint": "Enable or disable modules for this tenant.",
+      "modules": {
+        "leads": "Leads",
+        "pipeline": "Pipeline",
+        "dashboard": "Dashboard",
+        "appointments": "Appointments",
+        "invoices": "Invoices",
+        "calendarIntegrations": "Calendar integrations"
+      },
+      "save": "Save features",
+      "saving": "Saving…",
+      "saved": "Features saved."
+    },
+    "roles": {
+      "proUser": "Pro User",
+      "baseUser": "Base User"
+    },
+    "users": {
+      "title": "Tenant users",
+      "empty": "No users.",
+      "invite": {
+        "name": "Name",
+        "email": "Email",
+        "role": "Role",
+        "submit": "Invite user"
+      },
+      "table": {
+        "name": "User",
+        "role": "Role",
+        "status": "Status",
+        "actions": "Actions"
+      },
+      "status": {
+        "active": "Active",
+        "inactive": "Inactive"
+      },
+      "actions": {
+        "activate": "Activate",
+        "deactivate": "Deactivate",
+        "resetPassword": "Reset password"
+      }
+    }
+  }
+}

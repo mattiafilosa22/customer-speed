@@ -22,6 +22,8 @@ next-env.d.ts
 
 # Prisma
 # (manteniamo prisma/migrations sotto versione; ignoriamo eventuali dump locali)
+# Client generato da `prisma generate` (Prisma 7, output custom): rigenerabile.
+/src/generated/
 *.db
 *.sqlite
 
@@ -29,7 +31,10 @@ next-env.d.ts
 /coverage
 /playwright-report/
 /test-results/
+/.playwright-mcp/
 /.nyc_output
+# Per-role authenticated storageState produced by the Playwright `setup` project.
+/tests/.auth/
 
 # Logs
 *.log
