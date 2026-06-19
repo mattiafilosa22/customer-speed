@@ -8,7 +8,8 @@ services:
       POSTGRES_PASSWORD: customerspeed
       POSTGRES_DB: customerspeed
     ports:
-      - "5432:5432"
+      # Host port 5544 to avoid clashing with a local Postgres on the default 5432.
+      - "5544:5432"
     volumes:
       - customerspeed_pgdata:/var/lib/postgresql/data
     healthcheck:

@@ -35,19 +35,32 @@ Prerequisiti: **Node.js ≥ 20**, **pnpm 10**, **Docker** (per il database).
 pnpm install
 
 # 2. Configura l'ambiente (le credenziali DB combaciano con docker-compose.yml)
-cp .env.example .env.local
-# genera un secret per NextAuth quando servirà: openssl rand -base64 32
+cp .env.example .env
+# genera un secret per NextAuth: openssl rand -base64 32  -> NEXTAUTH_SECRET
 
-# 3. Avvia PostgreSQL 16 in locale
+# 3. Avvia PostgreSQL 16 in locale (porta host 5544 per non collidere con un Postgres sulla 5432)
 docker compose up -d
 
-# 4. (Fasi successive) applica lo schema e i dati demo
-#    Lo schema Prisma e il seed arrivano nelle unità dati della Fase 0.
-# pnpm db:migrate
-# pnpm db:seed
+# 4. Applica lo schema e i dati demo
+pnpm db:deploy      # applica le migrazioni
+pnpm db:seed        # tenant + utenti + dati di esempio
 
 # 5. Avvia l'app in sviluppo
 pnpm dev            # http://localhost:3000
+```
+
+Utenti seed (solo locale): **Fabio** `fabio@fabio.local` / `ChangeMe!Fabio123` · **superAdmin** `admin@customerspeed.local` / `ChangeMe!Admin123` (→ `/admin`).
+
+### Test
+
+```bash
+pnpm test           # unit (Vitest) — non serve il DB
+
+# e2e (Playwright): serve il DB su (3) + migrazioni+seed (4). Esporta le password
+# del seed così il setup di login non viene saltato; Playwright avvia da solo il web server.
+export SEED_FABIO_PASSWORD="ChangeMe!Fabio123"
+export SEED_SUPERADMIN_PASSWORD="ChangeMe!Admin123"
+pnpm test:e2e
 ```
 
 ### Script disponibili
