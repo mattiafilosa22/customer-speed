@@ -85,6 +85,17 @@ model Organization {
   theme        Json // design tokens (vedi docs/05)
   featureFlags Json   @default("{}") // { calendarIntegrations:false, invoices:true, ... }
 
+  // Brand assets (pannello "Aspetto & brand", docs/05 §5.4). Fase 7.
+  // Storage: per ora data URL (PNG/SVG) salvati direttamente in colonna @db.Text —
+  // niente blob storage in questa fase. TODO infra: spostare su object storage
+  // (S3/R2) e qui conservare solo l'URL. La sigla/mark è il fallback testuale
+  // (max 3 char) usato quando manca il logo. `poweredBy` mostra/nasconde la
+  // dicitura "powered by" in footer/sidebar.
+  logoUrl      String?  @db.Text // logo PNG/SVG (data URL o URL)
+  markFallback String? // sigla testuale fallback, max 3 caratteri (validato in Zod)
+  faviconUrl   String?  @db.Text // favicon (data URL o URL)
+  poweredBy    Boolean  @default(true)
+
   // Back-relations: ogni entità di dominio è raggiungibile dal tenant.
   users               User[]
   leads               Lead[]

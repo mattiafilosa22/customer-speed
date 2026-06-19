@@ -708,5 +708,108 @@
       "invalid_state": "Verifica di sicurezza non riuscita. Riprova.",
       "not_configured": "Integrazione non ancora configurata."
     }
+  },
+  "appearance": {
+    "title": "Aspetto & brand",
+    "description": "Personalizza l'identità della piattaforma. Le modifiche aggiornano l'anteprima in tempo reale; premi \"Salva tema\" per applicarle.",
+    "manageLink": "Personalizza aspetto & brand",
+    "sections": {
+      "brand": "Brand",
+      "themeColors": "Tema & colori",
+      "components": "Componenti",
+      "preview": "Anteprima"
+    },
+    "brand": {
+      "appName": "Nome piattaforma",
+      "appNameHint": "Mostrato nella barra laterale e nella pagina di accesso.",
+      "logo": "Logo",
+      "logoHint": "PNG o SVG. In assenza di logo viene usata la sigla.",
+      "logoAlt": "Logo della piattaforma",
+      "favicon": "Favicon",
+      "faviconHint": "PNG o SVG quadrata.",
+      "faviconAlt": "Favicon",
+      "mark": "Sigla (fallback)",
+      "markHint": "Massimo 3 caratteri, usata se manca il logo.",
+      "upload": "Carica file",
+      "remove": "Rimuovi",
+      "poweredBy": "Mostra \"powered by\""
+    },
+    "theme": {
+      "primaryColor": "Colore primario",
+      "primaryColorHint": "Colore delle azioni principali.",
+      "presets": "Preset palette",
+      "mode": "Modalità",
+      "modeLight": "Chiara",
+      "modeDark": "Scura",
+      "modeAuto": "Auto",
+      "typography": "Tipografia",
+      "presetNames": {
+        "indigo": "Indigo",
+        "coral": "Corallo",
+        "teal": "Teal",
+        "blue": "Blu",
+        "violet": "Viola",
+        "gold": "Oro",
+        "near-black": "Quasi nero"
+      },
+      "fontPairs": {
+        "bebas-montserrat": "Bebas Neue + Montserrat",
+        "inter": "Inter",
+        "manrope": "Manrope",
+        "system": "System UI"
+      }
+    },
+    "components": {
+      "radius": "Stondatura",
+      "radiusHint": "Raggio degli angoli, da 0 a 22 px.",
+      "buttonStyle": "Stile bottoni",
+      "buttonFilled": "Pieno",
+      "buttonSquared": "Squadrato",
+      "density": "Densità interfaccia",
+      "densityComfortable": "Comoda",
+      "densityCompact": "Compatta",
+      "softShadows": "Ombre morbide"
+    },
+    "preview": {
+      "heading": "Anteprima live",
+      "description": "Esempio di interfaccia con il tema corrente.",
+      "kpiLabel": "Lead attivi",
+      "kpiValue": "128",
+      "sampleButton": "Azione primaria",
+      "sampleGhost": "Secondaria",
+      "sampleInputLabel": "Nome lead",
+      "sampleInputPlaceholder": "Mario Rossi",
+      "sampleStage": "In trattativa",
+      "announced": "Anteprima aggiornata."
+    },
+    "contrast": {
+      "title": "Controllo contrasto (WCAG AA)",
+      "passText": "Tutte le combinazioni superano il contrasto AA.",
+      "warningIntro": "Avvisi di contrasto:",
+      "errorIntro": "Contrasto insufficiente: correggi prima di salvare.",
+      "ratio": "rapporto {ratio}:1 (richiesto {required}:1)",
+      "pairs": {
+        "ink-on-panel": "Testo su superficie",
+        "ink-on-bg": "Testo su sfondo",
+        "white-on-accent": "Testo su colore primario",
+        "accent-on-bg": "Colore primario su sfondo",
+        "muted-on-panel": "Testo secondario su superficie"
+      }
+    },
+    "actions": {
+      "save": "Salva tema",
+      "saving": "Salvataggio...",
+      "reset": "Ripristina default"
+    },
+    "status": {
+      "saved": "Tema salvato.",
+      "unsaved": "Modifiche non salvate."
+    },
+    "errors": {
+      "invalid": "Valori non validi. Controlla i campi.",
+      "contrast": "Il tema non supera il contrasto AA minimo.",
+      "unauthorized": "Non hai i permessi per modificare l'aspetto.",
+      "generic": "Si è verificato un errore. Riprova."
+    }
   }
 }

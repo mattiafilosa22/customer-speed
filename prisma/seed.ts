@@ -71,6 +71,10 @@ const INDIGO_THEME = {
     WON: "#16a34a",
     LOST: "#e5533b",
   },
+  // Component-style switches (docs/05 §5.4, Fase 7).
+  buttonStyle: "filled",
+  density: "comfortable",
+  softShadows: true,
 } satisfies Prisma.InputJsonObject;
 
 const FEATURE_FLAGS = {

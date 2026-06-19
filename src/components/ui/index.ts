@@ -24,3 +24,12 @@ export type { TextareaProps } from "./textarea";
 
 export { Modal, ModalPrimitive } from "./modal";
 export type { ModalProps } from "./modal";
+
+export { Switch } from "./switch";
+export type { SwitchProps } from "./switch";
+
+export { Slider } from "./slider";
+export type { SliderProps } from "./slider";
+
+export { Segmented } from "./segmented";
+export type { SegmentedProps, SegmentedOption } from "./segmented";
