@@ -859,9 +859,9 @@
       "unauthorized": "You are not authorized to perform this action.",
       "notFound": "Resource not found.",
       "generic": "Something went wrong. Please try again.",
-      "slug.taken": "This identifier (slug) is already in use.",
-      "email.taken": "This email is already registered for this tenant.",
-      "organization.conflict": "Conflict: identifier or domain already in use."
+      "slug": { "taken": "This identifier (slug) is already in use." },
+      "email": { "taken": "This email is already registered for this tenant." },
+      "organization": { "conflict": "Conflict: identifier or domain already in use." }
     },
     "dashboard": {
       "title": "Global metrics",

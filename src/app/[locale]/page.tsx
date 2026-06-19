@@ -1,16 +1,15 @@
 import { hasLocale } from "next-intl";
-import { getTranslations, setRequestLocale } from "next-intl/server";
 import { notFound } from "next/navigation";
 
 import { routing } from "@/i18n/routing";
-
-export function generateStaticParams() {
-  return routing.locales.map((locale) => ({ locale }));
-}
+import { redirect } from "@/i18n/navigation";
 
 /**
- * Fase 0 home placeholder. Localized via next-intl (no hard-coded copy). The
- * marketing/app layout and richer content land in later units.
+ * Root entry point. CustomerSpeed is an authenticated CRM, so the index simply
+ * forwards to the app: `/dashboard` renders for an authenticated user, or the
+ * `(app)` guard redirects an anonymous visitor to `/login`. Keeping the redirect
+ * here (rather than a bare scaffold placeholder) means opening the app always
+ * lands on the product, never on a placeholder page.
  */
 export default async function HomePage({
   params,
@@ -21,13 +20,5 @@ export default async function HomePage({
   if (!hasLocale(routing.locales, locale)) {
     notFound();
   }
-  setRequestLocale(locale);
-  const t = await getTranslations("home");
-
-  return (
-    <main>
-      <h1>{t("title")}</h1>
-      <p>{t("subtitle")}</p>
-    </main>
-  );
+  redirect({ href: "/dashboard", locale });
 }
