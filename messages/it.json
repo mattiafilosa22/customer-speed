@@ -1,0 +1,990 @@
+{
+  "app": {
+    "name": "CustomerSpeed",
+    "description": "Piattaforma CRM multi-tenant"
+  },
+  "nav": {
+    "ariaLabel": "Navigazione principale",
+    "dashboard": "Dashboard",
+    "pipeline": "Pipeline",
+    "leads": "Lead",
+    "appointments": "Appuntamenti",
+    "settings": "Impostazioni"
+  },
+  "drawer": {
+    "open": "Apri il menu di navigazione",
+    "close": "Chiudi il menu"
+  },
+  "languageSwitcher": {
+    "label": "Lingua",
+    "it": "Italiano",
+    "en": "Inglese"
+  },
+  "home": {
+    "title": "CustomerSpeed",
+    "subtitle": "Scaffold attivo — Fase 0."
+  },
+  "pages": {
+    "dashboard": {
+      "title": "Dashboard",
+      "description": "Qui arriveranno i KPI e la panoramica del tenant."
+    },
+    "pipeline": {
+      "title": "Pipeline",
+      "description": "Qui arriverà la board kanban degli stage."
+    },
+    "leads": {
+      "title": "Lead",
+      "description": "Qui arriverà l'elenco dei lead con filtri e ricerca."
+    },
+    "appointments": {
+      "title": "Appuntamenti",
+      "description": "Qui arriverà l'agenda degli appuntamenti."
+    },
+    "settings": {
+      "title": "Impostazioni",
+      "description": "Qui arriverà la configurazione, incluso il pannello \"Aspetto & brand\"."
+    }
+  },
+  "account": {
+    "loggedInAs": "Hai effettuato l'accesso come",
+    "logout": "Esci"
+  },
+  "auth": {
+    "fields": {
+      "name": "Nome",
+      "email": "Email",
+      "password": "Password",
+      "newPassword": "Nuova password",
+      "currentPassword": "Password attuale",
+      "passwordHint": "Almeno 10 caratteri, con una lettera e un numero."
+    },
+    "errors": {
+      "invalidCredentials": "Credenziali non valide. Controlla email e password.",
+      "couldNotComplete": "Non è stato possibile completare la richiesta. Riprova.",
+      "rateLimited": "Troppi tentativi. Attendi qualche minuto e riprova.",
+      "generic": "Si è verificato un errore. Riprova più tardi.",
+      "fields": {
+        "name": "Inserisci un nome valido.",
+        "email": "Inserisci un indirizzo email valido.",
+        "password": "La password non rispetta i requisiti.",
+        "newPassword": "La nuova password non rispetta i requisiti.",
+        "currentPassword": "Password attuale non corretta.",
+        "token": "Link non valido o scaduto.",
+        "consentPrivacy": "Devi accettare l'informativa sulla privacy.",
+        "consentTerms": "Devi accettare i termini di servizio.",
+        "organizationSlug": "Organizzazione non valida."
+      }
+    },
+    "login": {
+      "title": "Accedi",
+      "description": "Inserisci le tue credenziali per accedere.",
+      "submit": "Accedi",
+      "submitting": "Accesso in corso…",
+      "forgotLink": "Password dimenticata?",
+      "noAccount": "Non hai un account?",
+      "registerLink": "Registrati"
+    },
+    "register": {
+      "title": "Crea un account",
+      "description": "Compila i campi per registrarti.",
+      "submit": "Registrati",
+      "submitting": "Registrazione in corso…",
+      "success": "Registrazione completata. Controlla la tua email per confermare l'indirizzo.",
+      "haveAccount": "Hai già un account?",
+      "loginLink": "Accedi",
+      "consent": {
+        "privacy": "Ho letto e accetto l'<link>informativa sulla privacy</link>.",
+        "terms": "Accetto i <link>termini di servizio</link>."
+      }
+    },
+    "verifyEmail": {
+      "title": "Verifica email",
+      "description": "Stiamo confermando il tuo indirizzo email.",
+      "verifying": "Verifica in corso…",
+      "success": "Email verificata con successo. Ora puoi accedere.",
+      "failed": "Verifica non riuscita. Il link potrebbe essere scaduto.",
+      "missingToken": "Token mancante. Usa il link ricevuto via email.",
+      "goToLogin": "Vai al login"
+    },
+    "forgotPassword": {
+      "title": "Recupera la password",
+      "description": "Inserisci la tua email: se l'account esiste riceverai un link per reimpostare la password.",
+      "submit": "Invia il link",
+      "submitting": "Invio in corso…",
+      "success": "Se l'indirizzo è associato a un account, riceverai un'email con le istruzioni.",
+      "backToLogin": "Torna al login"
+    },
+    "resetPassword": {
+      "title": "Reimposta la password",
+      "description": "Scegli una nuova password per il tuo account.",
+      "submit": "Reimposta la password",
+      "submitting": "Salvataggio in corso…",
+      "success": "Password reimpostata. Ora puoi accedere con la nuova password.",
+      "missingToken": "Token mancante o non valido. Richiedi un nuovo link.",
+      "backToLogin": "Vai al login"
+    },
+    "changePassword": {
+      "title": "Cambio password",
+      "description": "Per cambiare la password inserisci quella attuale e poi la nuova. Le altre sessioni verranno disconnesse.",
+      "submit": "Aggiorna la password",
+      "submitting": "Aggiornamento in corso…",
+      "success": "Password aggiornata con successo.",
+      "errors": {
+        "unauthorized": "Impossibile cambiare la password. Verifica la password attuale."
+      }
+    }
+  },
+  "legal": {
+    "versionLabel": "Versione",
+    "privacy": {
+      "title": "Informativa sulla privacy",
+      "intro": "La presente informativa descrive come trattiamo i dati personali degli utenti della piattaforma. Documento di base, personalizzabile per ciascun tenant.",
+      "sections": [
+        {
+          "heading": "Titolare del trattamento",
+          "body": "Il titolare del trattamento dei dati dei lead è il cliente che utilizza la piattaforma; il fornitore del servizio agisce come responsabile del trattamento ai sensi dell'art. 28 GDPR."
+        },
+        {
+          "heading": "Dati trattati e finalità",
+          "body": "Trattiamo i dati di account (nome, email) per l'autenticazione e l'erogazione del servizio, e i dati inseriti dagli utenti per la gestione della relazione con i lead. I dati sono minimizzati e conservati secondo la policy di retention."
+        },
+        {
+          "heading": "Base giuridica",
+          "body": "Il trattamento si fonda sull'esecuzione del contratto, su obblighi legali e, ove previsto, sul consenso dell'interessato."
+        },
+        {
+          "heading": "Sub-responsabili",
+          "body": "Per erogare il servizio ci avvaliamo di fornitori infrastrutturali (hosting, database, email transazionale, reCAPTCHA di Google). L'elenco aggiornato è disponibile su richiesta."
+        },
+        {
+          "heading": "Diritti dell'interessato",
+          "body": "Hai diritto di accesso, rettifica, cancellazione, limitazione, portabilità e opposizione, oltre alla revoca del consenso. Puoi esercitare i tuoi diritti contattando il titolare."
+        }
+      ]
+    },
+    "cookie": {
+      "title": "Cookie policy",
+      "intro": "Questa pagina descrive i cookie utilizzati dalla piattaforma e come gestire le tue preferenze, in linea con le Linee guida del Garante.",
+      "sections": [
+        {
+          "heading": "Cookie tecnici (necessari)",
+          "body": "Sono indispensabili al funzionamento del servizio (ad esempio il cookie di sessione di autenticazione e quello che memorizza le tue scelte sui cookie). Non richiedono consenso e sono sempre attivi."
+        },
+        {
+          "heading": "Cookie analitici",
+          "body": "Eventuali cookie analitici di terze parti vengono installati solo previo tuo consenso e ci aiutano a capire come viene utilizzata la piattaforma."
+        },
+        {
+          "heading": "reCAPTCHA di Google",
+          "body": "Sulle pagine di autenticazione utilizziamo Google reCAPTCHA per proteggere i moduli da abusi automatizzati. Google può raccogliere dati secondo la propria informativa."
+        },
+        {
+          "heading": "Gestione delle preferenze",
+          "body": "Puoi accettare o rifiutare i cookie non necessari tramite il banner. Non ti verrà richiesto nuovamente per 180 giorni, salvo cambiamenti delle condizioni."
+        }
+      ]
+    },
+    "terms": {
+      "title": "Termini di servizio",
+      "intro": "I presenti termini regolano l'utilizzo della piattaforma. Documento di base, da validare con un legale prima della vendita.",
+      "sections": [
+        {
+          "heading": "Oggetto del servizio",
+          "body": "La piattaforma è un CRM multi-tenant fornito in modalità SaaS. L'utilizzo è soggetto all'accettazione dei presenti termini."
+        },
+        {
+          "heading": "Account e sicurezza",
+          "body": "L'utente è responsabile della riservatezza delle proprie credenziali e delle attività svolte tramite il proprio account."
+        },
+        {
+          "heading": "Uso consentito",
+          "body": "È vietato utilizzare il servizio per finalità illecite o in violazione dei diritti di terzi. Il fornitore può sospendere gli account in caso di abuso."
+        },
+        {
+          "heading": "Limitazione di responsabilità",
+          "body": "Il servizio è fornito \"così com'è\". Nei limiti consentiti dalla legge, il fornitore non risponde di danni indiretti derivanti dall'uso del servizio."
+        }
+      ]
+    }
+  },
+  "cookie": {
+    "regionLabel": "Avviso sui cookie",
+    "title": "Rispettiamo la tua privacy",
+    "body": "Utilizziamo cookie tecnici necessari e, previo consenso, cookie analitici. Puoi accettare, rifiutare o gestire le tue preferenze.",
+    "policyLink": "Leggi la cookie policy",
+    "acceptAll": "Accetta tutti",
+    "rejectAll": "Rifiuta tutto",
+    "manage": "Gestisci preferenze",
+    "savePreferences": "Salva le preferenze",
+    "close": "Chiudi senza accettare",
+    "manageTitle": "Preferenze cookie",
+    "manageDescription": "Scegli quali categorie di cookie consentire. I cookie necessari sono sempre attivi.",
+    "categories": {
+      "necessary": "Cookie necessari (sempre attivi)",
+      "analytics": "Cookie analitici"
+    },
+    "managePage": {
+      "title": "Gestisci o revoca il consenso",
+      "body": "Puoi revisionare o ritirare in qualsiasi momento il consenso ai cookie non necessari. Revocare è semplice quanto concedere: il banner riapparirà per una nuova scelta.",
+      "cta": "Rivedi le preferenze cookie",
+      "pending": "Aggiornamento…",
+      "done": "Preferenze azzerate: il banner riapparirà."
+    }
+  },
+  "enum": {
+    "leadStage": {
+      "TO_HANDLE": "Da gestire",
+      "TAKEN": "Preso in carico",
+      "CALL_SCHEDULED": "Call schedulata",
+      "WAITING_DOCS": "Attesa documenti",
+      "PRESENTATION_CALL": "Call presentazione",
+      "WAITING_DECISION": "Attesa decisione",
+      "WAITING_PAYMENT": "Attesa pagamento",
+      "WON": "Vinta",
+      "LOST": "Persa"
+    },
+    "capitalBracket": {
+      "B_0_50K": "0–50k",
+      "B_50_100K": "50–100k",
+      "B_100_250K": "100–250k",
+      "B_250_500K": "250–500k",
+      "B_500K_1M": "500k–1 mln",
+      "B_OVER_1M": "> 1 mln"
+    },
+    "appointmentStatus": {
+      "PENDING": "In attesa",
+      "DONE": "Fatto",
+      "CANCELED": "Annullato"
+    }
+  },
+  "common": {
+    "optional": "(opzionale)",
+    "required": "Obbligatorio"
+  },
+  "leads": {
+    "title": "I miei lead",
+    "subtitle": "Gestisci i tuoi contatti e la pipeline",
+    "count": "{count, plural, =0 {Nessun lead} one {# lead} other {# lead}}",
+    "search": {
+      "label": "Cerca",
+      "placeholder": "Cerca per nome, email o telefono"
+    },
+    "filters": {
+      "period": "Periodo",
+      "allYear": "Tutto l'anno",
+      "year": "Anno",
+      "month": "Mese",
+      "sort": "Ordina",
+      "source": "Provenienza",
+      "allSources": "Tutte le provenienze"
+    },
+    "sort": {
+      "default": "Predefinito",
+      "daysAsc": "↑ Giorni asc.",
+      "daysDesc": "↓ Giorni desc.",
+      "over25": "Oltre 25gg",
+      "over30": "Oltre 30gg"
+    },
+    "tabs": {
+      "all": "Tutti",
+      "allWithCount": "Tutti ({count})"
+    },
+    "table": {
+      "name": "Nome",
+      "contact": "Contatto",
+      "source": "Provenienza",
+      "days": "Giorni",
+      "stage": "Stage"
+    },
+    "days": "{count, plural, one {# giorno} other {# giorni}}",
+    "daysInStageLabel": "{count} giorni nello stage",
+    "notesCount": "{count, plural, =0 {Nessuna nota} one {# nota} other {# note}}",
+    "empty": {
+      "title": "Nessun lead trovato",
+      "description": "Modifica i filtri o crea un nuovo lead.",
+      "cta": "Nuovo lead"
+    },
+    "loading": "Caricamento lead…",
+    "open": "Apri",
+    "openLead": "Apri il lead {name}",
+    "pagination": {
+      "previous": "Precedente",
+      "next": "Successivo",
+      "page": "Pagina {page} di {total}"
+    },
+    "new": {
+      "title": "Nuovo lead",
+      "cta": "Nuovo lead",
+      "description": "Inserisci i dati di contatto del lead."
+    },
+    "create": {
+      "submit": "Crea lead",
+      "submitting": "Creazione in corso…",
+      "success": "Lead creato con successo."
+    },
+    "update": {
+      "success": "Modifiche salvate."
+    },
+    "delete": {
+      "success": "Lead eliminato.",
+      "cta": "Elimina lead",
+      "confirmTitle": "Eliminare questo lead?",
+      "confirmBody": "Il lead verrà rimosso dalle liste. L'operazione è reversibile solo da un amministratore.",
+      "confirm": "Elimina"
+    },
+    "cancel": "Annulla",
+    "save": "Salva",
+    "saving": "Salvataggio…",
+    "stage": {
+      "success": "Stage aggiornato."
+    },
+    "errors": {
+      "unauthorized": "Non hai i permessi per questa operazione.",
+      "notFound": "Lead non trovato.",
+      "generic": "Si è verificato un errore. Riprova.",
+      "fields": {
+        "firstName": "Inserisci un nome valido.",
+        "lastName": "Inserisci un cognome valido.",
+        "email": "Inserisci un'email valida.",
+        "phone": "Inserisci un telefono valido.",
+        "lossReasonId": "Seleziona il motivo della perdita.",
+        "form": "Controlla i dati inseriti."
+      }
+    },
+    "fields": {
+      "firstName": "Nome",
+      "lastName": "Cognome",
+      "email": "Email",
+      "phone": "Telefono",
+      "source": "Provenienza",
+      "capital": "Capitale"
+    }
+  },
+  "leadDetail": {
+    "contact": {
+      "title": "Contatto",
+      "email": "Email",
+      "phone": "Telefono",
+      "createdAt": "Data creazione",
+      "adminNotes": "Note admin"
+    },
+    "capital": {
+      "title": "Capitale",
+      "placeholder": "Seleziona una fascia",
+      "none": "Non impostato"
+    },
+    "summary": {
+      "title": "Scheda riassuntiva",
+      "stage": "Stage attuale",
+      "stageDate": "Data stage",
+      "capital": "Capitale",
+      "source": "Provenienza",
+      "sourcePlaceholder": "Seleziona una provenienza",
+      "sourceNone": "Nessuna provenienza"
+    },
+    "updateStage": {
+      "cta": "Aggiorna stage",
+      "title": "Aggiorna lo stage",
+      "stageLabel": "Nuovo stage",
+      "lossReasonLabel": "Motivo della perdita",
+      "lossReasonPlaceholder": "Seleziona un motivo"
+    },
+    "timeline": {
+      "title": "Cronologia stage",
+      "empty": "Nessun cambio di stage registrato.",
+      "entry": "Da {from} a {to}",
+      "initial": "Creato in {to}"
+    },
+    "externalRefs": {
+      "title": "Aggiornamento dati",
+      "empty": "Nessun dato alternativo registrato. Usa \"Aggiungi\" se questo cliente è presente nel CRM esterno con nome o email diversi.",
+      "add": "Aggiungi",
+      "altName": "Nome alternativo",
+      "altEmail": "Email alternativa",
+      "source": "Sorgente esterna",
+      "delete": "Rimuovi"
+    },
+    "back": "Torna ai lead"
+  },
+  "gdpr": {
+    "export": {
+      "cta": "Esporta dati",
+      "pending": "Esportazione…"
+    },
+    "erase": {
+      "cta": "Cancella dati",
+      "confirmTitle": "Cancella i dati personali",
+      "confirmBody": "Questa azione anonimizza in modo irreversibile i dati personali di questo lead (nome, contatti, note, riferimenti esterni). Le fatture collegate vengono conservate per obblighi di legge. Vuoi procedere?",
+      "confirm": "Conferma cancellazione",
+      "cancel": "Annulla",
+      "pending": "Cancellazione…",
+      "success": "Dati personali cancellati."
+    },
+    "errors": {
+      "unauthorized": "Non hai i permessi per questa operazione.",
+      "notFound": "Lead non trovato.",
+      "generic": "Operazione non riuscita. Riprova.",
+      "fields": {
+        "form": "Dati non validi."
+      }
+    }
+  },
+  "notes": {
+    "title": "Note",
+    "add": "Aggiungi nota",
+    "placeholder": "Scrivi una nota…",
+    "empty": "Nessuna nota.",
+    "edit": "Modifica",
+    "deleteLabel": "Elimina",
+    "save": "Salva nota",
+    "cancel": "Annulla",
+    "create": {
+      "success": "Nota aggiunta."
+    },
+    "update": {
+      "success": "Nota aggiornata."
+    },
+    "delete": {
+      "success": "Nota eliminata."
+    },
+    "errors": {
+      "fields": {
+        "body": "Scrivi un testo per la nota."
+      }
+    }
+  },
+  "externalRefs": {
+    "create": {
+      "success": "Dato alternativo aggiunto."
+    },
+    "delete": {
+      "success": "Dato alternativo rimosso."
+    },
+    "errors": {
+      "fields": {
+        "form": "Inserisci almeno un valore."
+      }
+    }
+  },
+  "pipeline": {
+    "title": "Pipeline Kanban",
+    "hint": "Trascina le card per spostare i lead tra gli stage, oppure usa il menu \"Sposta in…\".",
+    "configureCta": "Configura stage",
+    "boardLabel": "Board kanban della pipeline",
+    "empty": {
+      "title": "Nessuno stage visibile",
+      "description": "Nessuno stage della pipeline è attualmente visibile. Configura gli stage per vedere la board."
+    },
+    "period": {
+      "year": "Anno",
+      "month": "Mese",
+      "allYear": "Tutto l'anno",
+      "months": {
+        "jan": "Gennaio",
+        "feb": "Febbraio",
+        "mar": "Marzo",
+        "apr": "Aprile",
+        "may": "Maggio",
+        "jun": "Giugno",
+        "jul": "Luglio",
+        "aug": "Agosto",
+        "sep": "Settembre",
+        "oct": "Ottobre",
+        "nov": "Novembre",
+        "dec": "Dicembre"
+      }
+    },
+    "column": {
+      "label": "{stage}, {count} lead",
+      "empty": "Nessun lead",
+      "more": "+{count} altri"
+    },
+    "card": {
+      "label": "Lead {name}, stage {stage}",
+      "dragHandle": "Trascina il lead {name} per spostarlo di stage"
+    },
+    "moveMenu": {
+      "label": "Sposta in un altro stage",
+      "placeholder": "Sposta in…"
+    },
+    "lossReason": {
+      "title": "Motivo della perdita",
+      "label": "Perché il lead è stato perso?",
+      "placeholder": "Seleziona un motivo"
+    },
+    "announce": {
+      "moved": "{name} spostato in {stage}.",
+      "failed": "Impossibile spostare {name}: {reason}",
+      "regionLabel": "Aggiornamenti della pipeline"
+    },
+    "errors": {
+      "invalid": "Dati non validi.",
+      "notFound": "Elemento non trovato.",
+      "unauthorized": "Non hai i permessi per questa operazione.",
+      "generic": "Si è verificato un errore. Riprova.",
+      "lossReasonRequired": "Seleziona un motivo della perdita.",
+      "config": {
+        "terminalHide": "Gli stage Vinta e Persa non possono essere nascosti.",
+        "hideWithLeads": "Non puoi nascondere uno stage che contiene lead. Spostali prima in un altro stage.",
+        "terminalNotLast": "Gli stage Vinta e Persa devono restare alla fine della pipeline."
+      }
+    }
+  },
+  "pipelineConfig": {
+    "title": "Configurazione pipeline",
+    "description": "Mostra o nascondi gli stage, riordinali e personalizza i colori. Gli stage Vinta e Persa restano sempre visibili e in fondo.",
+    "back": "← Torna alla pipeline",
+    "listLabel": "Stage della pipeline",
+    "leadCount": "{count, plural, =0 {Nessun lead} one {# lead} other {# lead}}",
+    "moveUp": "Sposta {stage} in alto",
+    "moveDown": "Sposta {stage} in basso",
+    "visibilityLabel": "Mostra lo stage {stage} nella pipeline",
+    "terminalLocked": "Gli stage terminali non possono essere nascosti",
+    "colorLegend": "Colore dello stage {stage}",
+    "colorOption": "Colore {token}",
+    "terminalNote": "Gli stage Vinta e Persa sono terminali: non possono essere nascosti e restano in fondo."
+  },
+  "dashboard": {
+    "greeting": "Ciao {name}!",
+    "subtitle": "Ecco il tuo riepilogo",
+    "kpis": {
+      "regionLabel": "Indicatori principali",
+      "totals": "Lead totali",
+      "won": "Vinte",
+      "lost": "Perse",
+      "convRate": "Conv. rate",
+      "netRevenue": "Fatturato netto"
+    },
+    "distribution": {
+      "title": "Distribuzione pipeline",
+      "empty": "Nessuno stage visibile."
+    },
+    "invoices": {
+      "title": "Riepilogo fatture",
+      "empty": "Nessuna fattura nel periodo",
+      "count": "Fatture",
+      "totalGross": "Totale lordo",
+      "totalNet": "Totale netto"
+    },
+    "lost": {
+      "title": "Vendite perse",
+      "empty": "Nessuna vendita persa nel periodo.",
+      "unspecified": "Non specificato"
+    },
+    "active": {
+      "title": "Lead totali",
+      "empty": "Nessun lead attivo al momento."
+    }
+  },
+  "invoices": {
+    "title": "Fatture",
+    "add": "Aggiungi fattura",
+    "empty": "Nessuna fattura registrata.",
+    "form": {
+      "number": "Numero (opzionale)",
+      "grossAmount": "Importo lordo (€)",
+      "netAmount": "Importo netto (€)",
+      "issuedAt": "Data emissione",
+      "submit": "Salva fattura",
+      "saving": "Salvataggio…"
+    },
+    "row": {
+      "gross": "Lordo",
+      "delete": "Elimina"
+    },
+    "create": {
+      "success": "Fattura aggiunta."
+    },
+    "delete": {
+      "success": "Fattura eliminata."
+    },
+    "errors": {
+      "unauthorized": "Non hai i permessi per questa operazione.",
+      "notFound": "Fattura non trovata.",
+      "leadNotWon": "Puoi aggiungere una fattura solo a un lead vinto.",
+      "generic": "Si è verificato un errore. Riprova.",
+      "fields": {
+        "number": "Inserisci un numero valido.",
+        "grossAmount": "Inserisci un importo lordo valido.",
+        "netAmount": "Inserisci un importo netto valido (non superiore al lordo).",
+        "issuedAt": "Inserisci una data valida.",
+        "leadId": "Lead non valido.",
+        "form": "Controlla i dati inseriti."
+      }
+    }
+  },
+  "appointments": {
+    "title": "Appuntamenti",
+    "count": "{count, plural, =0 {Nessun appuntamento} one {# appuntamento} other {# appuntamenti}}",
+    "dayFilter": "Giorno: {date}",
+    "clearDayFilter": "Mostra tutti",
+    "filters": {
+      "label": "Filtra appuntamenti per stato",
+      "all": "Tutti",
+      "todo": "Da fare",
+      "done": "Fatti"
+    },
+    "table": {
+      "date": "Data e ora",
+      "reason": "Motivo",
+      "lead": "Lead",
+      "status": "Stato",
+      "actions": "Azioni"
+    },
+    "row": {
+      "markDone": "✓ Fatto",
+      "reopen": "Riapri",
+      "cancel": "Annulla",
+      "edit": "Modifica",
+      "delete": "Elimina"
+    },
+    "new": {
+      "cta": "Nuovo appuntamento",
+      "title": "Nuovo appuntamento",
+      "description": "Inserisci data, ora e motivo. Puoi collegare l'appuntamento a un lead."
+    },
+    "edit": {
+      "title": "Modifica appuntamento",
+      "description": "Aggiorna data, ora, motivo o lead collegato."
+    },
+    "form": {
+      "startAt": "Data e ora",
+      "reason": "Motivo",
+      "lead": "Lead collegato",
+      "noLead": "Nessun lead",
+      "submit": "Salva appuntamento",
+      "saving": "Salvataggio…"
+    },
+    "delete": {
+      "confirmTitle": "Eliminare l'appuntamento?",
+      "confirmBody": "L'operazione non è reversibile.",
+      "confirm": "Elimina",
+      "cancel": "Annulla",
+      "success": "Appuntamento eliminato."
+    },
+    "empty": {
+      "title": "Nessun appuntamento",
+      "description": "Crea il tuo primo appuntamento con \"Nuovo appuntamento\"."
+    },
+    "pagination": {
+      "previous": "Precedente",
+      "next": "Successivo",
+      "page": "Pagina {page} di {total}"
+    },
+    "calendar": {
+      "title": "Mini-calendario",
+      "previousMonth": "Mese precedente",
+      "nextMonth": "Mese successivo",
+      "today": "Oggi",
+      "todayLabel": "oggi",
+      "hasAppointments": "ci sono appuntamenti"
+    },
+    "lead": {
+      "title": "Appuntamenti",
+      "add": "+ Aggiungi appuntamento",
+      "empty": "Nessun appuntamento per questo lead."
+    },
+    "create": {
+      "success": "Appuntamento creato."
+    },
+    "update": {
+      "success": "Appuntamento aggiornato."
+    },
+    "status": {
+      "success": "Stato aggiornato."
+    },
+    "errors": {
+      "unauthorized": "Non hai i permessi per questa operazione.",
+      "notFound": "Appuntamento non trovato.",
+      "generic": "Si è verificato un errore. Riprova.",
+      "fields": {
+        "startAt": "Inserisci una data e ora valide.",
+        "reason": "Inserisci un motivo.",
+        "leadId": "Lead non valido.",
+        "form": "Controlla i dati inseriti."
+      }
+    }
+  },
+  "integrations": {
+    "title": "Integrazioni calendario",
+    "description": "Collega il tuo calendario per sincronizzare gli appuntamenti.",
+    "manageLink": "Gestisci le integrazioni",
+    "providersHeading": "Provider disponibili",
+    "empty": "Nessun provider disponibile.",
+    "notConfiguredHint": "Configurazione non ancora disponibile.",
+    "state": {
+      "connected": "Collegato",
+      "notConnected": "Non collegato",
+      "notConfigured": "Non configurato"
+    },
+    "actions": {
+      "connect": "Collega",
+      "disconnect": "Scollega"
+    },
+    "providers": {
+      "google": {
+        "name": "Google Calendar",
+        "description": "Sincronizzazione bidirezionale degli appuntamenti con il tuo Google Calendar."
+      },
+      "calendly": {
+        "name": "Calendly",
+        "description": "Importa automaticamente gli appuntamenti prenotati su Calendly."
+      }
+    },
+    "statusBanner": {
+      "connected": "Collegamento completato.",
+      "denied": "Collegamento annullato.",
+      "invalid_state": "Verifica di sicurezza non riuscita. Riprova.",
+      "not_configured": "Integrazione non ancora configurata."
+    }
+  },
+  "appearance": {
+    "title": "Aspetto & brand",
+    "description": "Personalizza l'identità della piattaforma. Le modifiche aggiornano l'anteprima in tempo reale; premi \"Salva tema\" per applicarle.",
+    "manageLink": "Personalizza aspetto & brand",
+    "sections": {
+      "brand": "Brand",
+      "themeColors": "Tema & colori",
+      "components": "Componenti",
+      "preview": "Anteprima"
+    },
+    "brand": {
+      "appName": "Nome piattaforma",
+      "appNameHint": "Mostrato nella barra laterale e nella pagina di accesso.",
+      "logo": "Logo",
+      "logoHint": "PNG o SVG. In assenza di logo viene usata la sigla.",
+      "logoAlt": "Logo della piattaforma",
+      "favicon": "Favicon",
+      "faviconHint": "PNG o SVG quadrata.",
+      "faviconAlt": "Favicon",
+      "mark": "Sigla (fallback)",
+      "markHint": "Massimo 3 caratteri, usata se manca il logo.",
+      "upload": "Carica file",
+      "remove": "Rimuovi",
+      "poweredBy": "Mostra \"powered by\""
+    },
+    "theme": {
+      "primaryColor": "Colore primario",
+      "primaryColorHint": "Colore delle azioni principali.",
+      "presets": "Preset palette",
+      "mode": "Modalità",
+      "modeLight": "Chiara",
+      "modeDark": "Scura",
+      "modeAuto": "Auto",
+      "typography": "Tipografia",
+      "presetNames": {
+        "indigo": "Indigo",
+        "coral": "Corallo",
+        "teal": "Teal",
+        "blue": "Blu",
+        "violet": "Viola",
+        "gold": "Oro",
+        "near-black": "Quasi nero"
+      },
+      "fontPairs": {
+        "bebas-montserrat": "Bebas Neue + Montserrat",
+        "inter": "Inter",
+        "manrope": "Manrope",
+        "system": "System UI"
+      }
+    },
+    "components": {
+      "radius": "Stondatura",
+      "radiusHint": "Raggio degli angoli, da 0 a 22 px.",
+      "buttonStyle": "Stile bottoni",
+      "buttonFilled": "Pieno",
+      "buttonSquared": "Squadrato",
+      "density": "Densità interfaccia",
+      "densityComfortable": "Comoda",
+      "densityCompact": "Compatta",
+      "softShadows": "Ombre morbide"
+    },
+    "preview": {
+      "heading": "Anteprima live",
+      "description": "Esempio di interfaccia con il tema corrente.",
+      "kpiLabel": "Lead attivi",
+      "kpiValue": "128",
+      "sampleButton": "Azione primaria",
+      "sampleGhost": "Secondaria",
+      "sampleInputLabel": "Nome lead",
+      "sampleInputPlaceholder": "Mario Rossi",
+      "sampleStage": "In trattativa",
+      "announced": "Anteprima aggiornata."
+    },
+    "contrast": {
+      "title": "Controllo contrasto (WCAG AA)",
+      "passText": "Tutte le combinazioni superano il contrasto AA.",
+      "warningIntro": "Avvisi di contrasto:",
+      "errorIntro": "Contrasto insufficiente: correggi prima di salvare.",
+      "ratio": "rapporto {ratio}:1 (richiesto {required}:1)",
+      "pairs": {
+        "ink-on-panel": "Testo su superficie",
+        "ink-on-bg": "Testo su sfondo",
+        "white-on-accent": "Testo su colore primario",
+        "accent-on-bg": "Colore primario su sfondo",
+        "muted-on-panel": "Testo secondario su superficie"
+      }
+    },
+    "actions": {
+      "save": "Salva tema",
+      "saving": "Salvataggio...",
+      "reset": "Ripristina default"
+    },
+    "status": {
+      "saved": "Tema salvato.",
+      "unsaved": "Modifiche non salvate."
+    },
+    "errors": {
+      "invalid": "Valori non validi. Controlla i campi.",
+      "contrast": "Il tema non supera il contrasto AA minimo.",
+      "unauthorized": "Non hai i permessi per modificare l'aspetto.",
+      "generic": "Si è verificato un errore. Riprova."
+    }
+  },
+  "admin": {
+    "brand": "CustomerSpeed Admin",
+    "brandSub": "Console cross-tenant",
+    "meta": {
+      "title": "CustomerSpeed Admin — Console cross-tenant"
+    },
+    "nav": {
+      "label": "Navigazione admin",
+      "dashboard": "Metriche",
+      "tenants": "Tenant"
+    },
+    "errors": {
+      "invalid": "Dati non validi. Controlla i campi e riprova.",
+      "contrast": "Contrasto insufficiente: scegli colori più leggibili (WCAG AA).",
+      "unauthorized": "Non sei autorizzato a eseguire questa operazione.",
+      "notFound": "Risorsa non trovata.",
+      "generic": "Si è verificato un errore. Riprova.",
+      "slug.taken": "Questo identificativo (slug) è già in uso.",
+      "email.taken": "Questa email è già registrata per questo tenant.",
+      "organization.conflict": "Conflitto: identificativo o dominio già in uso."
+    },
+    "dashboard": {
+      "title": "Metriche globali",
+      "subtitle": "Riepilogo aggregato su tutti i tenant.",
+      "tenants": "Tenant",
+      "users": "Utenti totali",
+      "leads": "Lead totali",
+      "won": "Vinte",
+      "convRate": "Conv. rate",
+      "netRevenue": "Fatturato netto"
+    },
+    "tenants": {
+      "title": "Tenant",
+      "subtitle": "{count, plural, =0 {Nessun tenant} one {# tenant} other {# tenant}}",
+      "create": "Nuovo tenant",
+      "empty": "Nessun tenant presente.",
+      "table": {
+        "name": "Nome",
+        "slug": "Slug",
+        "users": "Utenti",
+        "leads": "Lead",
+        "status": "Stato",
+        "created": "Creato",
+        "actions": "Azioni",
+        "configure": "Configura"
+      },
+      "status": {
+        "active": "Attivo",
+        "suspended": "Sospeso"
+      },
+      "actions": {
+        "suspend": "Sospendi",
+        "activate": "Riattiva"
+      },
+      "pagination": {
+        "label": "Paginazione tenant",
+        "prev": "Precedente",
+        "next": "Successivo",
+        "status": "Pagina {page} di {totalPages}"
+      }
+    },
+    "create": {
+      "title": "Nuovo tenant",
+      "subtitle": "Crea un'organizzazione e il suo primo utente proUser.",
+      "sections": {
+        "org": "Organizzazione",
+        "owner": "Utente proprietario",
+        "ownerHint": "Riceverà un'email per impostare la password."
+      },
+      "fields": {
+        "name": "Nome organizzazione",
+        "slug": "Identificativo (slug)",
+        "slugHint": "Lettere minuscole, numeri e trattini. Usato per il routing.",
+        "appName": "Nome piattaforma",
+        "ownerName": "Nome del proprietario",
+        "ownerEmail": "Email del proprietario"
+      },
+      "submit": "Crea tenant",
+      "submitting": "Creazione…"
+    },
+    "detail": {
+      "back": "Torna all'elenco",
+      "sections": {
+        "settings": "Impostazioni",
+        "flags": "Funzionalità",
+        "users": "Utenti",
+        "appearance": "Aspetto & brand"
+      }
+    },
+    "settings": {
+      "title": "Impostazioni tenant",
+      "name": "Nome organizzazione",
+      "appName": "Nome piattaforma",
+      "slug": "Identificativo (slug)",
+      "customDomain": "Dominio personalizzato",
+      "customDomainPlaceholder": "crm.esempio.it",
+      "save": "Salva impostazioni",
+      "saving": "Salvataggio…",
+      "saved": "Impostazioni salvate."
+    },
+    "flags": {
+      "title": "Funzionalità",
+      "hint": "Abilita o disabilita i moduli per questo tenant.",
+      "modules": {
+        "leads": "Lead",
+        "pipeline": "Pipeline",
+        "dashboard": "Dashboard",
+        "appointments": "Appuntamenti",
+        "invoices": "Fatture",
+        "calendarIntegrations": "Integrazioni calendario"
+      },
+      "save": "Salva funzionalità",
+      "saving": "Salvataggio…",
+      "saved": "Funzionalità salvate."
+    },
+    "roles": {
+      "proUser": "Utente Pro",
+      "baseUser": "Utente Base"
+    },
+    "users": {
+      "title": "Utenti del tenant",
+      "empty": "Nessun utente.",
+      "invite": {
+        "name": "Nome",
+        "email": "Email",
+        "role": "Ruolo",
+        "submit": "Invita utente"
+      },
+      "table": {
+        "name": "Utente",
+        "role": "Ruolo",
+        "status": "Stato",
+        "actions": "Azioni"
+      },
+      "status": {
+        "active": "Attivo",
+        "inactive": "Disattivo"
+      },
+      "actions": {
+        "activate": "Attiva",
+        "deactivate": "Disattiva",
+        "resetPassword": "Reset password"
+      }
+    }
+  }
+}

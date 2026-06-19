@@ -38,7 +38,7 @@ Regole d'uso:
   --bg:#f7f7f9;            /* sfondo app */
   --panel:#ffffff;         /* card / superfici */
   --ink:#1c1c22;           /* testo principale */
-  --muted:#8c8c97;         /* testo secondario */
+  --muted:#6e6e79;         /* testo secondario — AA su panel (5.04:1) e bg (4.71:1) */
   --line:#ececef;          /* bordi */
   --line2:#f3f3f5;         /* bordi tenui / separatori tabella */
 
@@ -60,7 +60,7 @@ Regole d'uso:
 ```
 
 ### Colori stage pipeline
-Gli stage del CRM riusano la logica "pill soft" del wireframe (sfondo a bassa saturazione + testo nel colore pieno). Token dedicati, allineati ai colori degli screenshot:
+Gli stage del CRM riusano la logica "pill soft" del wireframe (sfondo a bassa saturazione + testo nella stessa tinta). Per WCAG AA (testo piccolo ≥4.5:1) il testo del pill è la tinta **scurita verso il nero** di `--pill-ink-darken` (light 45%, dark 0%) sul fondo soft al 12% — derivata dallo stesso token `--stage-*`/semantico, quindi resta theme-driven e ricolorabile per tenant. Token dedicati, allineati ai colori degli screenshot:
 ```css
 --stage-to-handle:#8c8c97;        /* grigio (muted) */
 --stage-taken:#5b5bd6;            /* indigo accent */
@@ -115,7 +115,7 @@ Ogni preset deve superare il contrasto AA per testo e componenti; definirli nel 
 ## 5.6 Accessibilità (WCAG 2.1 AA)
 
 Requisiti vincolanti:
-- **Contrasto**: testo ≥ 4.5:1 (≥ 3:1 testo grande/componenti). Validare ogni tema scelto. Attenzione: il `--muted` (#8c8c97) su bianco è ~3.5:1 → usarlo solo per testo grande/secondario non essenziale, mai per testo critico piccolo.
+- **Contrasto**: testo ≥ 4.5:1 (≥ 3:1 testo grande/componenti). Validare ogni tema scelto. `--muted` è `#6e6e79` → AA su panel (5.04:1) e bg (4.71:1), utilizzabile anche per testo piccolo (label di form, testo secondario). I pill stage/tone scuriscono il testo (`--pill-ink-darken`) per restare ≥4.5:1 sul fondo soft. La validazione del tema (`validateThemeContrast`) tratta `muted-on-panel`/`muted-on-bg` come errori bloccanti.
 - **Tastiera**: ogni interazione (incluso lo spostamento stage in pipeline) operabile da tastiera; ordine focus logico; **focus visibile** sempre (il wireframe usa `all:unset` su bottoni/nav → ripristinare esplicitamente outline/focus ring).
 - **Drag & drop**: alternativa accessibile (menu "Sposta in…") + ARIA live region.
 - **Form**: ogni campo con `<label>` associata (non solo stile mono uppercase), errori via `aria-describedby`, stato non solo a colore.

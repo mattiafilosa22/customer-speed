@@ -1,0 +1,153 @@
+@import "tailwindcss";
+@import "./tokens.css";
+
+/*
+ * Tailwind 4 is CSS-first. The `@theme inline` block below maps Tailwind's
+ * design-token namespaces onto our runtime CSS variables (tokens.css). Because
+ * we use `inline`, the generated utilities reference `var(--token)` directly —
+ * so overriding a token at runtime (per-tenant injection on <html>) updates
+ * every utility (`bg-accent`, `text-ink`, `rounded`, `font-display`, ...)
+ * without rebuilding CSS. NO style value is hard-coded in components.
+ */
+@theme inline {
+  /* Colors: drive text / bg / border utilities */
+  --color-accent: var(--accent);
+  --color-accent-ink: var(--accent-ink);
+  --color-accent-soft: var(--accent-soft);
+  --color-bg: var(--bg);
+  --color-panel: var(--panel);
+  --color-ink: var(--ink);
+  --color-muted: var(--muted);
+  --color-line: var(--line);
+  --color-line2: var(--line2);
+  --color-ok: var(--ok);
+  --color-ok-soft: var(--ok-soft);
+  --color-ok-ink: var(--ok-ink);
+  --color-warn: var(--warn);
+  --color-warn-soft: var(--warn-soft);
+  --color-warn-ink: var(--warn-ink);
+  --color-doc: var(--doc);
+  --color-doc-soft: var(--doc-soft);
+  --color-doc-ink: var(--doc-ink);
+  --color-exec: var(--exec);
+  --color-exec-soft: var(--exec-soft);
+  --color-exec-ink: var(--exec-ink);
+  --color-ring: var(--ring);
+
+  /* Stage colors → bg-stage-* / text-stage-* / border-stage-* */
+  --color-stage-to-handle: var(--stage-to-handle);
+  --color-stage-taken: var(--stage-taken);
+  --color-stage-call-scheduled: var(--stage-call-scheduled);
+  --color-stage-waiting-docs: var(--stage-waiting-docs);
+  --color-stage-presentation: var(--stage-presentation);
+  --color-stage-waiting-decision: var(--stage-waiting-decision);
+  --color-stage-waiting-payment: var(--stage-waiting-payment);
+  --color-stage-won: var(--stage-won);
+  --color-stage-lost: var(--stage-lost);
+
+  /* Radius → rounded / rounded-input / rounded-control / rounded-pill */
+  --radius-DEFAULT: var(--radius);
+  --radius-input: var(--radius-input);
+  --radius-control: var(--radius-control);
+  --radius-pill: var(--radius-pill);
+
+  /* Fonts → font-display / font-body / font-mono.
+     The actual family values come from next/font (layout.tsx). */
+  --font-display: var(--f-display);
+  --font-body: var(--f-body);
+  --font-mono: var(--f-mono);
+
+  /* Shadows → shadow-sm / shadow */
+  --shadow-sm: var(--sh-sm);
+  --shadow-DEFAULT: var(--sh);
+
+  /* Layout */
+  --spacing-sidebar: var(--sidebar);
+}
+
+/*
+ * Base layer — typography rules (docs/05 §5.2). Body is the default; display
+ * is used for headings/KPIs/brand; mono uppercase for labels/breadcrumbs/table
+ * headers/tags (applied via utilities or the `.label-mono` helper).
+ */
+@layer base {
+  html {
+    -webkit-text-size-adjust: 100%; /* allow user resize up to 200% */
+  }
+
+  body {
+    font-family: var(--f-body);
+    font-size: 13.5px;
+    line-height: 1.55;
+    color: var(--ink);
+    background-color: var(--bg);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  h1,
+  h2,
+  h3 {
+    font-family: var(--f-display);
+    font-weight: 400;
+    letter-spacing: 0.03em;
+    color: var(--ink);
+  }
+
+  h1 {
+    font-size: 1.6875rem; /* ~27px */
+    line-height: 1.15;
+  }
+
+  h2 {
+    font-size: 1.25rem;
+    line-height: 1.2;
+  }
+
+  h3 {
+    font-size: 1rem; /* ~16px */
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+
+  /*
+   * Focus ring: always visible. The wireframe resets controls with
+   * `all: unset`, so we re-establish a visible, accessible focus indicator
+   * globally on keyboard focus.
+   */
+  :focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: 2px;
+    border-radius: 2px;
+  }
+
+  /* Respect users who prefer reduced motion (docs/05 §5.6). */
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+}
+
+@layer utilities {
+  /*
+   * Mono uppercase label — form labels, breadcrumbs, table headers, tags.
+   * Typography ONLY: the color is intentionally NOT set here so a `text-*`
+   * utility on the same element wins (this utility used to hard-code
+   * `color: var(--muted)`, which overrode `text-white`/`text-accent-ink` on
+   * accent surfaces and produced real WCAG color-contrast failures — see the
+   * dashboard hero tile and active tabs). Callers add `text-muted` (or another
+   * AA-valid token) explicitly.
+   */
+  .label-mono {
+    font-family: var(--f-mono);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.055em;
+  }
+}

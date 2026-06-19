@@ -74,8 +74,17 @@ model Organization {
 
   // Personalizzazione white-label
   appName       String                       // nome piattaforma mostrato
-  theme         Json                         // design tokens (vedi 05)
+  theme         Json                         // design tokens (vedi 05); include anche
+                                             //   i controlli "Componenti" (buttonStyle,
+                                             //   density, softShadows) — vedi Fase 7
   featureFlags  Json     @default("{}")       // { calendar: false, invoices: true, ... }
+
+  // Asset di brand (pannello "Aspetto & brand", Fase 7). Storage attuale: data URL
+  // (PNG/SVG) in TEXT — niente blob storage in questa fase (TODO infra: object storage).
+  logoUrl       String?  @db.Text             // logo PNG/SVG (data URL o URL)
+  markFallback  String?                       // sigla testuale fallback, max 3 char (Zod)
+  faviconUrl    String?  @db.Text             // favicon (data URL o URL)
+  poweredBy     Boolean  @default(true)       // mostra/nasconde la dicitura "powered by"
 
   users         User[]
   leads         Lead[]
@@ -285,6 +294,16 @@ model AuditLog {                               // GDPR / sicurezza
 }
 ```
 
+## 3.3.1 Scostamenti rispetto alla bozza (schema implementato — Fase 0)
+
+Lo schema reale in `prisma/schema.prisma` **estende** la bozza §3.3 per soddisfare gli standard DB (`docs/00` §3) e l'isolamento tenant a livello dati. Differenze:
+
+- **`organizationId` su tutte le entità di dominio.** Oltre a quelle già previste, sono stati aggiunti `organizationId` + relazione a `Organization` (con back-relation) anche a: `StageHistory`, `Note`, `ExternalCrmRef`, `CalendarConnection`, `Consent`. Motivo: la Prisma Client extension che forza il filtro tenant inietta `organizationId` su un elenco esplicito di model "tenant-scoped"; entità raggiungibili solo via `leadId`/`userId` resterebbero filtrabili solo indirettamente. Avere la colonna rende l'isolamento diretto e indicizzabile, ed è il prerequisito per un'eventuale RLS.
+- **`deletedAt DateTime?` su `Lead`** (soft delete, §3.4) con indice `@@index([organizationId, deletedAt])`.
+- **Prisma 7**: la `datasource` non contiene più `url` (spostata in `prisma.config.ts`); il runtime usa un **driver adapter** (`@prisma/adapter-pg`). Il client è generato dal generator `prisma-client` in `src/generated/prisma` (gitignored, rigenerato da `postinstall`).
+- **`onDelete` espliciti**: `Organization → *` = `Cascade`; `Lead.owner/source/lossReason` = `SetNull`; `Appointment.lead` = `SetNull`; `Note/Invoice/ExternalCrmRef/StageHistory → Lead` = `Cascade`; `AuditLog → Organization` = `SetNull` (l'audit sopravvive alla cancellazione del tenant).
+- **Indici aggiuntivi** modellati sui pattern reali (vedi §3.4 "Indicizzazione").
+
 ## 3.4 Note di modellazione
 
 - **Calcolo "giorni"**: `now - stageChangedAt` (in giorni interi). Aggiornare `stageChangedAt` ad ogni cambio stage e registrare la riga in `StageHistory`.
@@ -293,4 +312,32 @@ model AuditLog {                               // GDPR / sicurezza
 - **Soft delete**: valutare un campo `deletedAt` su `Lead` invece di hard delete, per audit e GDPR (e per il diritto alla cancellazione gestire una vera erasure su richiesta — vedi `06`).
 - **Isolamento**: nessuna query senza `organizationId` salvo contesto `superAdmin`. Forzare via Prisma extension/middleware.
 - **Provenienza**: `LeadSource` è una lista per tenant (come `LossReason`), gestibile da Settings. Seed di default per ogni nuovo tenant: **Funnel, Instagram, Referenza, Google**. Mantenere il riferimento via FK (`sourceId`) invece di un enum, così ogni cliente personalizza le proprie sorgenti senza migrazioni.
-- **Seed**: creare un `superAdmin`, un tenant demo e il tenant **Fabio** (proUser) con i lead di esempio degli screenshot, le sorgenti di default (Funnel/Instagram/Referenza/Google) e `featureFlags.calendar = false`.
+- **Seed**: creare un `superAdmin`, un tenant demo e il tenant **Fabio** (proUser) con i lead di esempio degli screenshot, le sorgenti di default (Funnel/Instagram/Referenza/Google) e `featureFlags.calendar = false`. In **Fase 0** il seed crea SOLO il tenant demo **CustomerSpeed** (tema Indigo, feature flags, 4 sorgenti default, 9 `PipelineStageConfig`); superAdmin/Fabio + utenti con password arrivano in Fase 1 (serve hashing). Il seed è **idempotente** (upsert su `slug`, `[organizationId,label]`, `[organizationId,stage]`).
+
+### Indicizzazione (pattern reali → indici)
+
+Tutti gli indici composti sono **prefissati da `organizationId`** (multi-tenant). Elenco e motivo:
+
+| Model | Indice | Pattern servito |
+|---|---|---|
+| User | `[organizationId, email]` (unique) | login/lookup per email nel tenant |
+| User | `[organizationId, role]`, `[organizationId, isActive]` | liste utenti filtrate (Settings) |
+| Lead | `[organizationId, stage]` | colonne kanban / pipeline |
+| Lead | `[organizationId, stageChangedAt]` | "giorni nello stage", ordinamento anzianità |
+| Lead | `[organizationId, createdAt]` | lista lead default + paginazione |
+| Lead | `[organizationId, ownerId]` | "i miei lead" / per consulente |
+| Lead | `[organizationId, sourceId]` | KPI/filtro per provenienza |
+| Lead | `[organizationId, deletedAt]` | esclusione soft-deleted nelle liste attive |
+| StageHistory | `[leadId, changedAt]` | timeline del singolo lead |
+| StageHistory | `[organizationId, changedAt]` | funnel/conversioni per periodo |
+| Note | `[leadId, createdAt]` | note del lead ordinate |
+| Appointment | `[organizationId, startAt]` | agenda per data |
+| Appointment | `[organizationId, status, startAt]` | agenda filtrata per stato |
+| Appointment | `[organizationId, provider, externalEventId]` | idempotenza sync provider |
+| Invoice | `[organizationId, issuedAt]` | KPI fatturato per periodo (aggregate) |
+| LeadSource | `[organizationId, sortOrder]` | select sorgenti ordinato |
+| PipelineStageConfig | `[organizationId, sortOrder]` | ordinamento colonne kanban |
+| Consent | `[organizationId, userId, type]` | storico consensi |
+| AuditLog | `[organizationId, createdAt]`, `[organizationId, entity, entityId]` | audit trail / per entità |
+
+> KPI dashboard (fatturato netto, conversion rate, lead per stage) si calcolano con `aggregate`/`groupBy`/`count` **lato DB**, mai caricando i record. Le liste sono **sempre paginate**. I `select` non includono mai `passwordHash`/token.
