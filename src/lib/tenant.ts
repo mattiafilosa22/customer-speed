@@ -127,6 +127,21 @@ export async function requireTenantContext(): Promise<TenantContext> {
 }
 
 /**
+ * Convenience: resolve the context and assert it is the SUPERADMIN
+ * (cross-tenant) shape — the only valid context for the `(admin)/` area. Throws
+ * `UnauthorizedError` if a tenant user reaches an admin route/action. Use this
+ * AFTER the layout guard as defense-in-depth: every admin Server Action must
+ * re-check server-side, never trusting that the layout already gated the page.
+ */
+export async function requireSuperAdminContext(): Promise<SuperAdminContext> {
+  const ctx = await getTenantContext();
+  if (!isSuperAdminContext(ctx)) {
+    throw new UnauthorizedError("SuperAdmin context required");
+  }
+  return ctx;
+}
+
+/**
  * Returns the per-request, tenant-bound Prisma client for the CURRENT session.
  * This is the client domain code MUST use for tenant-scoped access — it forces
  * `organizationId` and the soft-delete default at the data layer.

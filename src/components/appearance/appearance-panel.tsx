@@ -10,6 +10,7 @@ import { FONT_PAIRS, type FontPairId, fontPairIdOf } from "@/lib/theme-fonts";
 import { validateThemeContrast } from "@/lib/contrast";
 import type { ThemePreset } from "@/lib/theme";
 import type { OrganizationBranding } from "@/server/organization";
+import type { UpdateThemeInput, UpdateBrandingInput } from "@/server/organization";
 import {
   updateBrandingAction,
   updateThemeAction,
@@ -33,9 +34,27 @@ import { ImageUploadField } from "@/components/appearance/image-upload-field";
  * is enforced server-side in the actions; this panel is only rendered for allowed
  * roles. No business logic beyond UI state — persistence + rules live in the use
  * cases.
+ *
+ * Reuse: the SAVE callbacks are injected so the same panel serves BOTH the
+ * tenant's own "Aspetto & brand" page (default: the `settings.tenant` Server
+ * Actions) AND the superAdmin admin area (which passes admin actions bound to a
+ * TARGET tenant). The panel itself is identical in both contexts — only the
+ * persistence boundary differs (Dependency Inversion at the UI edge).
  */
 
-export function AppearancePanel({ initial }: { initial: OrganizationBranding }) {
+export interface AppearancePanelProps {
+  initial: OrganizationBranding;
+  /** Persist the theme. Defaults to the tenant `settings.tenant` action. */
+  onSaveTheme?: (input: UpdateThemeInput) => Promise<unknown>;
+  /** Persist branding. Defaults to the tenant `settings.tenant` action. */
+  onSaveBranding?: (input: UpdateBrandingInput) => Promise<unknown>;
+}
+
+export function AppearancePanel({
+  initial,
+  onSaveTheme = updateThemeAction,
+  onSaveBranding = updateBrandingAction,
+}: AppearancePanelProps) {
   const t = useTranslations("appearance");
   const tt = useTranslations("appearance.theme");
   const tc = useTranslations("appearance.components");
@@ -73,8 +92,8 @@ export function AppearancePanel({ initial }: { initial: OrganizationBranding }) 
 
   const contrast = useMemo(() => validateThemeContrast(theme), [theme]);
 
-  const themeMutation = useMutation({ mutationFn: updateThemeAction });
-  const brandingMutation = useMutation({ mutationFn: updateBrandingAction });
+  const themeMutation = useMutation({ mutationFn: onSaveTheme });
+  const brandingMutation = useMutation({ mutationFn: onSaveBranding });
 
   // ── Theme field updaters (pure draft updates; preview reacts) ──────────────
   const patchTheme = useCallback((patch: Partial<Theme>) => {

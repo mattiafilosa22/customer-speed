@@ -811,5 +811,147 @@
       "unauthorized": "Non hai i permessi per modificare l'aspetto.",
       "generic": "Si è verificato un errore. Riprova."
     }
+  },
+  "admin": {
+    "brand": "CustomerSpeed Admin",
+    "brandSub": "Console cross-tenant",
+    "nav": {
+      "label": "Navigazione admin",
+      "dashboard": "Metriche",
+      "tenants": "Tenant"
+    },
+    "errors": {
+      "invalid": "Dati non validi. Controlla i campi e riprova.",
+      "contrast": "Contrasto insufficiente: scegli colori più leggibili (WCAG AA).",
+      "unauthorized": "Non sei autorizzato a eseguire questa operazione.",
+      "notFound": "Risorsa non trovata.",
+      "generic": "Si è verificato un errore. Riprova.",
+      "slug.taken": "Questo identificativo (slug) è già in uso.",
+      "email.taken": "Questa email è già registrata per questo tenant.",
+      "organization.conflict": "Conflitto: identificativo o dominio già in uso."
+    },
+    "dashboard": {
+      "title": "Metriche globali",
+      "subtitle": "Riepilogo aggregato su tutti i tenant.",
+      "tenants": "Tenant",
+      "users": "Utenti totali",
+      "leads": "Lead totali",
+      "won": "Vinte",
+      "convRate": "Conv. rate",
+      "netRevenue": "Fatturato netto"
+    },
+    "tenants": {
+      "title": "Tenant",
+      "subtitle": "{count, plural, =0 {Nessun tenant} one {# tenant} other {# tenant}}",
+      "create": "Nuovo tenant",
+      "empty": "Nessun tenant presente.",
+      "table": {
+        "name": "Nome",
+        "slug": "Slug",
+        "users": "Utenti",
+        "leads": "Lead",
+        "status": "Stato",
+        "created": "Creato",
+        "actions": "Azioni",
+        "configure": "Configura"
+      },
+      "status": {
+        "active": "Attivo",
+        "suspended": "Sospeso"
+      },
+      "actions": {
+        "suspend": "Sospendi",
+        "activate": "Riattiva"
+      },
+      "pagination": {
+        "label": "Paginazione tenant",
+        "prev": "Precedente",
+        "next": "Successivo",
+        "status": "Pagina {page} di {totalPages}"
+      }
+    },
+    "create": {
+      "title": "Nuovo tenant",
+      "subtitle": "Crea un'organizzazione e il suo primo utente proUser.",
+      "sections": {
+        "org": "Organizzazione",
+        "owner": "Utente proprietario",
+        "ownerHint": "Riceverà un'email per impostare la password."
+      },
+      "fields": {
+        "name": "Nome organizzazione",
+        "slug": "Identificativo (slug)",
+        "slugHint": "Lettere minuscole, numeri e trattini. Usato per il routing.",
+        "appName": "Nome piattaforma",
+        "ownerName": "Nome del proprietario",
+        "ownerEmail": "Email del proprietario"
+      },
+      "submit": "Crea tenant",
+      "submitting": "Creazione…"
+    },
+    "detail": {
+      "back": "Torna all'elenco",
+      "sections": {
+        "settings": "Impostazioni",
+        "flags": "Funzionalità",
+        "users": "Utenti",
+        "appearance": "Aspetto & brand"
+      }
+    },
+    "settings": {
+      "title": "Impostazioni tenant",
+      "name": "Nome organizzazione",
+      "appName": "Nome piattaforma",
+      "slug": "Identificativo (slug)",
+      "customDomain": "Dominio personalizzato",
+      "customDomainPlaceholder": "crm.esempio.it",
+      "save": "Salva impostazioni",
+      "saving": "Salvataggio…",
+      "saved": "Impostazioni salvate."
+    },
+    "flags": {
+      "title": "Funzionalità",
+      "hint": "Abilita o disabilita i moduli per questo tenant.",
+      "modules": {
+        "leads": "Lead",
+        "pipeline": "Pipeline",
+        "dashboard": "Dashboard",
+        "appointments": "Appuntamenti",
+        "invoices": "Fatture",
+        "calendarIntegrations": "Integrazioni calendario"
+      },
+      "save": "Salva funzionalità",
+      "saving": "Salvataggio…",
+      "saved": "Funzionalità salvate."
+    },
+    "roles": {
+      "proUser": "Utente Pro",
+      "baseUser": "Utente Base"
+    },
+    "users": {
+      "title": "Utenti del tenant",
+      "empty": "Nessun utente.",
+      "invite": {
+        "name": "Nome",
+        "email": "Email",
+        "role": "Ruolo",
+        "submit": "Invita utente"
+      },
+      "table": {
+        "name": "Utente",
+        "role": "Ruolo",
+        "status": "Stato",
+        "actions": "Azioni"
+      },
+      "status": {
+        "active": "Attivo",
+        "inactive": "Disattivo"
+      },
+      "actions": {
+        "activate": "Attiva",
+        "deactivate": "Disattiva",
+        "resetPassword": "Reset password"
+      }
+    }
   }
 }

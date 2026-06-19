@@ -811,5 +811,147 @@
       "unauthorized": "You do not have permission to change appearance.",
       "generic": "Something went wrong. Please try again."
     }
+  },
+  "admin": {
+    "brand": "CustomerSpeed Admin",
+    "brandSub": "Cross-tenant console",
+    "nav": {
+      "label": "Admin navigation",
+      "dashboard": "Metrics",
+      "tenants": "Tenants"
+    },
+    "errors": {
+      "invalid": "Invalid data. Check the fields and try again.",
+      "contrast": "Insufficient contrast: pick more readable colors (WCAG AA).",
+      "unauthorized": "You are not authorized to perform this action.",
+      "notFound": "Resource not found.",
+      "generic": "Something went wrong. Please try again.",
+      "slug.taken": "This identifier (slug) is already in use.",
+      "email.taken": "This email is already registered for this tenant.",
+      "organization.conflict": "Conflict: identifier or domain already in use."
+    },
+    "dashboard": {
+      "title": "Global metrics",
+      "subtitle": "Aggregate summary across all tenants.",
+      "tenants": "Tenants",
+      "users": "Total users",
+      "leads": "Total leads",
+      "won": "Won",
+      "convRate": "Conv. rate",
+      "netRevenue": "Net revenue"
+    },
+    "tenants": {
+      "title": "Tenants",
+      "subtitle": "{count, plural, =0 {No tenants} one {# tenant} other {# tenants}}",
+      "create": "New tenant",
+      "empty": "No tenants yet.",
+      "table": {
+        "name": "Name",
+        "slug": "Slug",
+        "users": "Users",
+        "leads": "Leads",
+        "status": "Status",
+        "created": "Created",
+        "actions": "Actions",
+        "configure": "Configure"
+      },
+      "status": {
+        "active": "Active",
+        "suspended": "Suspended"
+      },
+      "actions": {
+        "suspend": "Suspend",
+        "activate": "Reactivate"
+      },
+      "pagination": {
+        "label": "Tenant pagination",
+        "prev": "Previous",
+        "next": "Next",
+        "status": "Page {page} of {totalPages}"
+      }
+    },
+    "create": {
+      "title": "New tenant",
+      "subtitle": "Create an organization and its first proUser.",
+      "sections": {
+        "org": "Organization",
+        "owner": "Owner user",
+        "ownerHint": "They will receive an email to set their password."
+      },
+      "fields": {
+        "name": "Organization name",
+        "slug": "Identifier (slug)",
+        "slugHint": "Lowercase letters, digits and hyphens. Used for routing.",
+        "appName": "Platform name",
+        "ownerName": "Owner name",
+        "ownerEmail": "Owner email"
+      },
+      "submit": "Create tenant",
+      "submitting": "Creating…"
+    },
+    "detail": {
+      "back": "Back to list",
+      "sections": {
+        "settings": "Settings",
+        "flags": "Features",
+        "users": "Users",
+        "appearance": "Appearance & brand"
+      }
+    },
+    "settings": {
+      "title": "Tenant settings",
+      "name": "Organization name",
+      "appName": "Platform name",
+      "slug": "Identifier (slug)",
+      "customDomain": "Custom domain",
+      "customDomainPlaceholder": "crm.example.com",
+      "save": "Save settings",
+      "saving": "Saving…",
+      "saved": "Settings saved."
+    },
+    "flags": {
+      "title": "Features",
+      "hint": "Enable or disable modules for this tenant.",
+      "modules": {
+        "leads": "Leads",
+        "pipeline": "Pipeline",
+        "dashboard": "Dashboard",
+        "appointments": "Appointments",
+        "invoices": "Invoices",
+        "calendarIntegrations": "Calendar integrations"
+      },
+      "save": "Save features",
+      "saving": "Saving…",
+      "saved": "Features saved."
+    },
+    "roles": {
+      "proUser": "Pro User",
+      "baseUser": "Base User"
+    },
+    "users": {
+      "title": "Tenant users",
+      "empty": "No users.",
+      "invite": {
+        "name": "Name",
+        "email": "Email",
+        "role": "Role",
+        "submit": "Invite user"
+      },
+      "table": {
+        "name": "User",
+        "role": "Role",
+        "status": "Status",
+        "actions": "Actions"
+      },
+      "status": {
+        "active": "Active",
+        "inactive": "Inactive"
+      },
+      "actions": {
+        "activate": "Activate",
+        "deactivate": "Deactivate",
+        "resetPassword": "Reset password"
+      }
+    }
   }
 }
