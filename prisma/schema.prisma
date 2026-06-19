@@ -185,6 +185,13 @@ model Lead {
   // Soft delete (audit/GDPR). Filtro di default iniettato dall'extension.
   deletedAt DateTime?
 
+  // GDPR erasure (diritto all'oblio, docs/06 §6.5). Quando valorizzato, i dati
+  // personali del lead (nome, contatti, note, riferimenti esterni) sono stati
+  // ANONIMIZZATI in modo irreversibile su richiesta dell'interessato. La riga
+  // sopravvive (anonima) per preservare gli aggregati storici e i vincoli di
+  // conservazione contabile delle fatture collegate (vedi src/server/privacy).
+  anonymizedAt DateTime?
+
   notes        Note[]
   appointments Appointment[]
   invoices     Invoice[]

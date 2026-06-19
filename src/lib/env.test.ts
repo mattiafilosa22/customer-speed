@@ -52,4 +52,45 @@ describe("parseEnv", () => {
       parseEnv({ ...validEnv, RECAPTCHA_MIN_SCORE: "2" } as unknown as NodeJS.ProcessEnv),
     ).toThrowError(/RECAPTCHA_MIN_SCORE/);
   });
+
+  it("defaults the rate-limit backend to memory and the kill-switch to false", () => {
+    const result = parseEnv(validEnv as unknown as NodeJS.ProcessEnv);
+    expect(result.RATE_LIMIT_BACKEND).toBe("memory");
+    expect(result.RATE_LIMIT_DISABLED).toBe(false);
+  });
+
+  it("parses the rate-limit kill-switch from a string flag", () => {
+    const result = parseEnv({
+      ...validEnv,
+      RATE_LIMIT_DISABLED: "true",
+    } as unknown as NodeJS.ProcessEnv);
+    expect(result.RATE_LIMIT_DISABLED).toBe(true);
+  });
+
+  it("REJECTS disabling the rate limiter in production (fail-safe)", () => {
+    expect(() =>
+      parseEnv({
+        ...validEnv,
+        NODE_ENV: "production",
+        RATE_LIMIT_DISABLED: "true",
+      } as unknown as NodeJS.ProcessEnv),
+    ).toThrowError(/RATE_LIMIT_DISABLED/);
+  });
+
+  it("allows the prod-build kill-switch ONLY with the explicit E2E signal", () => {
+    const result = parseEnv({
+      ...validEnv,
+      NODE_ENV: "production",
+      RATE_LIMIT_DISABLED: "true",
+      E2E: "true",
+    } as unknown as NodeJS.ProcessEnv);
+    expect(result.RATE_LIMIT_DISABLED).toBe(true);
+    expect(result.E2E).toBe(true);
+  });
+
+  it("treats SENTRY_DSN as optional (no DSN → observability off)", () => {
+    const result = parseEnv(validEnv as unknown as NodeJS.ProcessEnv);
+    expect(result.SENTRY_DSN).toBeUndefined();
+    expect(result.SENTRY_TRACES_SAMPLE_RATE).toBe(0);
+  });
 });

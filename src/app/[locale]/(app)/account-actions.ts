@@ -5,7 +5,9 @@ import { unstable_rethrow } from "next/navigation";
 import { signOut } from "@/lib/auth";
 import { asLocale } from "@/i18n/routing";
 import { redirect } from "@/i18n/navigation";
-import { requireTenantContext } from "@/lib/tenant";
+import { prisma } from "@/lib/prisma";
+import { getTenantContext, requireTenantContext } from "@/lib/tenant";
+import { createAuditLogger } from "@/server/audit/audit-log";
 import { buildAuthDeps, changePassword } from "@/server/auth";
 import {
   type ActionState,
@@ -66,6 +68,25 @@ export async function changePasswordAction(
 /** Sign the user out and return to the localized login page. */
 export async function logoutAction(formData: FormData): Promise<void> {
   const locale = asLocale(formData.get("locale") as string | null);
+
+  // Audit the logout BEFORE clearing the session (we still have the actor).
+  // Best-effort: a failure here must not block the user from signing out, so we
+  // swallow audit errors (the sign-out itself is the security-critical step).
+  try {
+    const meta = await getRequestMeta();
+    const ctx = await getTenantContext();
+    await createAuditLogger(prisma).record({
+      action: "auth.logout",
+      organizationId: ctx.kind === "tenant" ? ctx.organizationId : null,
+      actorId: ctx.userId,
+      entity: "User",
+      entityId: ctx.userId,
+      ip: meta.ip,
+    });
+  } catch {
+    // No active/valid session or audit write failed — proceed to sign out.
+  }
+
   await signOut({ redirect: false });
   redirect({ href: "/login", locale });
 }

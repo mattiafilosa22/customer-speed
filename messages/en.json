@@ -223,6 +223,13 @@
     "categories": {
       "necessary": "Necessary cookies (always on)",
       "analytics": "Analytics cookies"
+    },
+    "managePage": {
+      "title": "Manage or withdraw consent",
+      "body": "You can review or withdraw consent to non-necessary cookies at any time. Withdrawing is as easy as granting it: the banner will reappear for a fresh choice.",
+      "cta": "Review cookie preferences",
+      "pending": "Updating…",
+      "done": "Preferences reset: the banner will reappear."
     }
   },
   "enum": {
@@ -399,6 +406,29 @@
       "delete": "Remove"
     },
     "back": "Back to leads"
+  },
+  "gdpr": {
+    "export": {
+      "cta": "Export data",
+      "pending": "Exporting…"
+    },
+    "erase": {
+      "cta": "Erase data",
+      "confirmTitle": "Erase personal data",
+      "confirmBody": "This irreversibly anonymizes this lead's personal data (name, contacts, notes, external references). Linked invoices are retained for legal obligations. Do you want to proceed?",
+      "confirm": "Confirm erasure",
+      "cancel": "Cancel",
+      "pending": "Erasing…",
+      "success": "Personal data erased."
+    },
+    "errors": {
+      "unauthorized": "You do not have permission for this operation.",
+      "notFound": "Lead not found.",
+      "generic": "Operation failed. Please try again.",
+      "fields": {
+        "form": "Invalid data."
+      }
+    }
   },
   "notes": {
     "title": "Notes",

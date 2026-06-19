@@ -1,6 +1,7 @@
 import { getTranslations } from "next-intl/server";
 
 import { LegalDocument } from "@/components/legal/legal-document";
+import { ManageConsentButton } from "@/components/cookie/manage-consent-button";
 import { COOKIE_POLICY_VERSION } from "@/server/consent/consent-types";
 
 interface Section {
@@ -20,6 +21,8 @@ export default async function CookiePolicyPage() {
       versionLabel={t("versionLabel")}
       intro={tc("intro")}
       sections={sections}
-    />
+    >
+      <ManageConsentButton />
+    </LegalDocument>
   );
 }

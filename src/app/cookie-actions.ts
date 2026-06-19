@@ -97,6 +97,25 @@ export async function saveCookieConsentAction(analyticsAllowed: boolean): Promis
   }
 }
 
+/**
+ * Withdraw cookie consent (GDPR art. 7(3): revoking must be as easy as giving).
+ *
+ * It records the withdrawal as authoritative proof (analytics revoked) and
+ * CLEARS the client mirror cookie, so the Garante banner re-appears on the next
+ * render and the visitor can make a fresh choice. Exposed from the public Cookie
+ * Policy page so consent can always be revised.
+ *
+ * Implemented by re-running the save flow with `analytics=false` (which writes a
+ * fresh proof row showing analytics is now refused) and then deleting the mirror
+ * cookie so `shouldShowBanner` returns true again.
+ */
+export async function withdrawCookieConsentAction(): Promise<void> {
+  await saveCookieConsentAction(false);
+  const store = await cookies();
+  // Remove the mirror so the banner re-prompts for a fresh, explicit choice.
+  store.delete(COOKIE_CONSENT_NAME);
+}
+
 /** Resolve the neutral platform tenant id for anonymous consent; null if unresolved. */
 async function resolvePlatformOrgId(): Promise<string | null> {
   const org = await prisma.organization.findUnique({

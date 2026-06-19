@@ -26,6 +26,7 @@ import { ExternalRefsPanel } from "@/components/leads/detail/external-refs-panel
 import { StageTimeline } from "@/components/leads/detail/stage-timeline";
 import { UpdateStageDialog } from "@/components/leads/detail/update-stage-dialog";
 import { DeleteLeadButton } from "@/components/leads/detail/delete-lead-button";
+import { GdprActions } from "@/components/leads/detail/gdpr-actions";
 import { InvoicesPanel } from "@/components/leads/detail/invoices-panel";
 import { AppointmentsPanel } from "@/components/leads/detail/appointments-panel";
 
@@ -82,6 +83,8 @@ export default async function LeadDetailPage({
     canDelete: can(ctx.role, "lead.delete"),
     canInvoice: can(ctx.role, "invoice.create"),
     canManageAppointments: can(ctx.role, "appointment.manage"),
+    canExportData: can(ctx.role, "lead.exportData"),
+    canEraseData: can(ctx.role, "lead.eraseData"),
   };
 
   // Invoices are only relevant for WON leads (docs/02 §2.2/§2.5) and only for
@@ -138,6 +141,11 @@ export default async function LeadDetailPage({
             />
           ) : null}
           {perms.canDelete ? <DeleteLeadButton leadId={lead.id} /> : null}
+          <GdprActions
+            leadId={lead.id}
+            canExport={perms.canExportData}
+            canErase={perms.canEraseData}
+          />
         </div>
       </header>
 

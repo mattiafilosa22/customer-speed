@@ -18,8 +18,16 @@ import {
   updateNote,
 } from "@/server/leads";
 import {
+  buildErasureDeps,
+  buildExportDeps,
+  eraseLeadData,
+  exportLeadData,
+  type LeadDataExport,
+} from "@/server/privacy";
+import {
   type ActionState,
   type ErrorKeyMap,
+  fail,
   ok,
   toActionState,
 } from "@/server/actions/action-result";
@@ -304,5 +312,67 @@ export async function deleteExternalRefAction(
   } catch (error) {
     unstable_rethrow(error);
     return toActionState(error, errorKeys);
+  }
+}
+
+// ── GDPR Data Subject Requests (export / erasure) ──────────────────────────────
+
+const gdprErrorKeys: ErrorKeyMap = {
+  ...errorKeys,
+  fieldErrorKey: (field) => `gdpr.errors.fields.${field || "form"}`,
+};
+
+/**
+ * Discriminated result for the EXPORT action: on success it carries the
+ * structured JSON payload (so the client can offer it as a download) plus a
+ * suggested filename; on failure it reuses the form `ActionState` so the dialog
+ * can show a localized, non-revealing error.
+ */
+export type ExportLeadResult =
+  | { status: "success"; filename: string; data: LeadDataExport }
+  | (ActionState & { status: "error" });
+
+/**
+ * Export a lead's personal data (right of access/portability, docs/06 §6.5).
+ * Full chain: auth → RBAC (`lead.exportData`) → tenant-scoped deps → use case
+ * (audited) → typed payload. The actor is taken from the server context.
+ */
+export async function exportLeadDataAction(leadId: string): Promise<ExportLeadResult> {
+  try {
+    const ctx = await requireTenantContext();
+    requirePermission(ctx.role, "lead.exportData");
+    const deps = buildExportDeps(ctx);
+    const data = await exportLeadData(deps, leadId);
+    return { status: "success", filename: `lead-${leadId}-export.json`, data };
+  } catch (error) {
+    unstable_rethrow(error);
+    // `toActionState` always yields an error state here (we only reach this on a
+    // thrown domain error); narrow it for the discriminated return type.
+    const state = toActionState(error, gdprErrorKeys);
+    if (state.status === "error") return state;
+    return fail(gdprErrorKeys.generic) as ActionState & { status: "error" };
+  }
+}
+
+/**
+ * Erase / anonymize a lead's personal data (right to be forgotten, docs/06
+ * §6.5). Destructive → gated by the dedicated `lead.eraseData` capability and a
+ * client confirm dialog. Idempotent in the use case. Uses the form `ActionState`
+ * so the confirm dialog localizes success/error.
+ */
+export async function eraseLeadDataAction(
+  _prev: ActionState,
+  form: FormData,
+): Promise<ActionState> {
+  try {
+    const ctx = await requireTenantContext();
+    requirePermission(ctx.role, "lead.eraseData");
+    const deps = buildErasureDeps(ctx);
+    await eraseLeadData(deps, str(form, "leadId"));
+    leadPaths();
+    return ok("gdpr.erase.success");
+  } catch (error) {
+    unstable_rethrow(error);
+    return toActionState(error, gdprErrorKeys);
   }
 }
