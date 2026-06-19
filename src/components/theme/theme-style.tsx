@@ -1,9 +1,19 @@
 import type { CSSProperties, ReactNode } from "react";
 
-import { type Theme, themeDataAttributes, themeToCssVars } from "@/lib/theme";
+import {
+  type ResolvedMode,
+  type Theme,
+  themeDataAttributes,
+  themeToCssVars,
+} from "@/lib/theme";
 
 interface ThemeProviderProps {
   theme: Theme;
+  /**
+   * Effective light/dark mode (user toggle override resolved upstream). When
+   * omitted, the theme's own stored mode is used.
+   */
+  mode?: ResolvedMode;
   children: ReactNode;
 }
 
@@ -20,11 +30,11 @@ interface ThemeProviderProps {
  *
  * Presentation only — the Theme is resolved upstream (tenant context / DB).
  */
-export function ThemeProvider({ theme, children }: ThemeProviderProps) {
+export function ThemeProvider({ theme, mode, children }: ThemeProviderProps) {
   const cssVars = themeToCssVars(theme) as CSSProperties;
 
   return (
-    <div {...themeDataAttributes(theme)} style={cssVars} className="contents">
+    <div {...themeDataAttributes(theme, mode)} style={cssVars} className="contents">
       {children}
     </div>
   );

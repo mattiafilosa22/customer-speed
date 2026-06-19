@@ -46,7 +46,7 @@ export function DeleteLeadButton({ leadId }: { leadId: string }) {
       onOpenChange={setOpen}
       title={t("leads.delete.confirmTitle")}
       description={t("leads.delete.confirmBody")}
-      trigger={<Button variant="ghost">{t("leads.delete.cta")}</Button>}
+      trigger={<Button variant="danger">{t("leads.delete.cta")}</Button>}
     >
       <form action={formAction} noValidate className="flex flex-col gap-4">
         <input type="hidden" name="locale" value={locale} />
@@ -57,7 +57,7 @@ export function DeleteLeadButton({ leadId }: { leadId: string }) {
         ) : null}
 
         <div className="flex flex-wrap gap-2">
-          <SubmitButton pendingLabel={t("leads.saving")} className="w-auto">
+          <SubmitButton variant="danger" pendingLabel={t("leads.saving")} className="w-auto">
             {t("leads.delete.confirm")}
           </SubmitButton>
           <Button variant="ghost" onClick={() => setOpen(false)}>

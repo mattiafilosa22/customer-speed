@@ -55,7 +55,7 @@ export function DisconnectButton({
         {label}
       </Button>
       {error ? (
-        <span role="alert" className="font-body text-[11px] text-danger">
+        <span role="alert" className="font-body text-[11px] text-danger-ink">
           {label}
         </span>
       ) : null}

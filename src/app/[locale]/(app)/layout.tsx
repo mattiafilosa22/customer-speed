@@ -1,10 +1,12 @@
 import type { ReactNode } from "react";
+import { cookies } from "next/headers";
 import { hasLocale } from "next-intl";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { notFound, redirect as nextRedirect } from "next/navigation";
 
 import { asLocale, routing } from "@/i18n/routing";
 import { redirect } from "@/i18n/navigation";
+import { type ResolvedMode, resolveMode, THEME_MODE_COOKIE } from "@/lib/theme";
 import { ThemeProvider } from "@/components/theme/theme-style";
 import { Header } from "@/components/layout/header";
 import { Sidebar } from "@/components/layout/sidebar";
@@ -75,8 +77,16 @@ export default async function AppLayout({
   const flags = await getTenantFeatureFlags(user.organizationId);
   const enabledFeatures = enabledFeatureKeys(flags);
 
+  // Light/dark mode: the user's toggle choice (cookie) overrides the tenant's
+  // stored mode. Resolved server-side so the first paint matches (no FOUC).
+  const cookieMode = (await cookies()).get(THEME_MODE_COOKIE)?.value;
+  const mode: ResolvedMode = resolveMode(
+    branding.theme,
+    cookieMode === "light" || cookieMode === "dark" ? cookieMode : null,
+  );
+
   return (
-    <ThemeProvider theme={branding.theme}>
+    <ThemeProvider theme={branding.theme} mode={mode}>
       <div className="flex min-h-screen bg-bg">
         <Sidebar appName={appName} enabledFeatures={enabledFeatures} />
         <div className="flex min-w-0 flex-1 flex-col">
@@ -85,6 +95,7 @@ export default async function AppLayout({
             userName={user.name}
             locale={locale}
             enabledFeatures={enabledFeatures}
+            mode={mode}
           />
           <main className="min-w-0 flex-1 p-4 lg:p-6">{children}</main>
         </div>

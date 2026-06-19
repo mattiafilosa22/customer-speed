@@ -3,7 +3,7 @@ import { forwardRef, type ButtonHTMLAttributes } from "react";
 import { cn } from "@/lib/cn";
 
 /** Visual variants — mapped onto theme tokens, never hard-coded colors. */
-export type ButtonVariant = "default" | "ghost";
+export type ButtonVariant = "default" | "ghost" | "danger";
 export type ButtonSize = "md" | "sm";
 
 export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
@@ -22,6 +22,10 @@ const VARIANT_CLASSES: Readonly<Record<ButtonVariant, string>> = {
     "bg-accent text-white hover:bg-accent-ink active:bg-accent-ink disabled:opacity-50",
   ghost:
     "bg-transparent text-ink border border-line hover:bg-accent-soft disabled:opacity-50",
+  // Destructive actions (delete, erase). White text stays AA on --danger in
+  // both modes; hover dims slightly (mode-agnostic, no extra token needed).
+  danger:
+    "bg-danger text-white hover:opacity-90 active:opacity-90 disabled:opacity-50",
 };
 
 const SIZE_CLASSES: Readonly<Record<ButtonSize, string>> = {

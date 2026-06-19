@@ -32,6 +32,9 @@
   --color-exec: var(--exec);
   --color-exec-soft: var(--exec-soft);
   --color-exec-ink: var(--exec-ink);
+  --color-danger: var(--danger);
+  --color-danger-soft: var(--danger-soft);
+  --color-danger-ink: var(--danger-ink);
   --color-ring: var(--ring);
 
   /* Stage colors → bg-stage-* / text-stage-* / border-stage-* */

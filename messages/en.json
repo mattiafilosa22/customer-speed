@@ -20,6 +20,10 @@
     "it": "Italian",
     "en": "English"
   },
+  "theme": {
+    "switchToDark": "Switch to dark theme",
+    "switchToLight": "Switch to light theme"
+  },
   "home": {
     "title": "CustomerSpeed",
     "subtitle": "Scaffold active — Phase 0."
