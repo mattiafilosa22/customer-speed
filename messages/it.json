@@ -541,6 +541,10 @@
         "hideWithLeads": "Non puoi nascondere uno stage che contiene lead. Spostali prima in un altro stage.",
         "terminalNotLast": "Gli stage Vinta e Persa devono restare alla fine della pipeline."
       }
+    },
+    "filters": {
+      "source": "Provenienza",
+      "allSources": "Tutte le provenienze"
     }
   },
   "pipelineConfig": {

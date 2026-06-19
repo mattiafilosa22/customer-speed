@@ -541,6 +541,10 @@
         "hideWithLeads": "You cannot hide a stage that contains leads. Move them to another stage first.",
         "terminalNotLast": "The Won and Lost stages must stay at the end of the pipeline."
       }
+    },
+    "filters": {
+      "source": "Source",
+      "allSources": "All sources"
     }
   },
   "pipelineConfig": {

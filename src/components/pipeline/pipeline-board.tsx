@@ -60,6 +60,18 @@ export function PipelineBoard({
   const stageLabel = useLeadStageLabel();
 
   const [columns, setColumns] = useState<readonly PipelineColumn[]>(board.columns);
+  // The server board is the source of truth: when a URL filter (period, source)
+  // changes, the RSC re-renders with a fresh `board` prop. Adopt it by resetting
+  // the optimistic local state DURING render (React's "reset state on prop
+  // change" pattern), tracked by reference so optimistic moves between
+  // navigations are preserved. Without this, `useState`'s initial value would
+  // ignore every subsequent server board and the filters would not take effect.
+  const [lastBoard, setLastBoard] = useState(board);
+  if (board !== lastBoard) {
+    setLastBoard(board);
+    setColumns(board.columns);
+  }
+
   const [activeCard, setActiveCard] = useState<PipelineCard | null>(null);
   const [announcement, setAnnouncement] = useState("");
   // Drag-triggered LOST: remember which lead is pending a reason.

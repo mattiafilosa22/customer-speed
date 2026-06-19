@@ -83,6 +83,86 @@ describe("getBoard", () => {
     expect(april.columns.find((c) => c.stage === LeadStage.TO_HANDLE)?.count).toBe(0);
   });
 
+  it("filters cards AND counts by sourceId", async () => {
+    const store = new LeadStore();
+    store.seedStageConfigs(ORG_A);
+    const funnel = store.addSource({ organizationId: ORG_A, label: "Funnel" });
+    const referral = store.addSource({ organizationId: ORG_A, label: "Referral" });
+    store.addLead({ organizationId: ORG_A, stage: LeadStage.TO_HANDLE, sourceId: funnel.id });
+    store.addLead({ organizationId: ORG_A, stage: LeadStage.TO_HANDLE, sourceId: funnel.id });
+    store.addLead({ organizationId: ORG_A, stage: LeadStage.TO_HANDLE, sourceId: referral.id });
+    store.addLead({ organizationId: ORG_A, stage: LeadStage.TO_HANDLE, sourceId: null });
+    const { deps } = buildFakePipelineDeps(store, ORG_A, USER_A);
+
+    const { columns } = await getBoard(deps, { sourceId: funnel.id });
+
+    const toHandle = columns.find((c) => c.stage === LeadStage.TO_HANDLE);
+    // Both the DB-side count AND the returned cards are restricted to the source.
+    expect(toHandle?.count).toBe(2);
+    expect(toHandle?.cards).toHaveLength(2);
+    expect(toHandle?.cards.every((card) => card.source?.id === funnel.id)).toBe(true);
+  });
+
+  it("returns an empty board for a sourceId of another tenant (cross-tenant)", async () => {
+    const store = new LeadStore();
+    store.seedStageConfigs(ORG_A);
+    store.seedStageConfigs(ORG_B);
+    const foreignSource = store.addSource({ organizationId: ORG_B, label: "Funnel B" });
+    // Lead in A, but we filter by a source that belongs to B → no rows for A.
+    store.addLead({ organizationId: ORG_A, stage: LeadStage.TO_HANDLE });
+    const { deps } = buildFakePipelineDeps(store, ORG_A, USER_A);
+
+    const { columns } = await getBoard(deps, { sourceId: foreignSource.id });
+
+    expect(columns.every((c) => c.count === 0)).toBe(true);
+    expect(columns.every((c) => c.cards.length === 0)).toBe(true);
+  });
+
+  it("returns an empty board for a non-existent sourceId", async () => {
+    const store = new LeadStore();
+    store.seedStageConfigs(ORG_A);
+    store.addLead({ organizationId: ORG_A, stage: LeadStage.TO_HANDLE });
+    const { deps } = buildFakePipelineDeps(store, ORG_A, USER_A);
+
+    const { columns } = await getBoard(deps, { sourceId: "src_does_not_exist" });
+
+    expect(columns.every((c) => c.count === 0)).toBe(true);
+  });
+
+  it("combines period and source filters (both must match)", async () => {
+    const store = new LeadStore();
+    store.seedStageConfigs(ORG_A);
+    const funnel = store.addSource({ organizationId: ORG_A, label: "Funnel" });
+    // Matches both filters.
+    store.addLead({
+      organizationId: ORG_A,
+      stage: LeadStage.TO_HANDLE,
+      sourceId: funnel.id,
+      createdAt: new Date("2026-03-15T00:00:00.000Z"),
+    });
+    // Right source, wrong period.
+    store.addLead({
+      organizationId: ORG_A,
+      stage: LeadStage.TO_HANDLE,
+      sourceId: funnel.id,
+      createdAt: new Date("2025-03-15T00:00:00.000Z"),
+    });
+    // Right period, wrong source.
+    store.addLead({
+      organizationId: ORG_A,
+      stage: LeadStage.TO_HANDLE,
+      sourceId: null,
+      createdAt: new Date("2026-03-15T00:00:00.000Z"),
+    });
+    const { deps } = buildFakePipelineDeps(store, ORG_A, USER_A);
+
+    const { columns } = await getBoard(deps, { year: "2026", month: "3", sourceId: funnel.id });
+
+    const toHandle = columns.find((c) => c.stage === LeadStage.TO_HANDLE);
+    expect(toHandle?.count).toBe(1);
+    expect(toHandle?.cards).toHaveLength(1);
+  });
+
   it("rejects an invalid period (out-of-range month)", async () => {
     const store = new LeadStore();
     store.seedStageConfigs(ORG_A);
