@@ -3,6 +3,7 @@ import createMiddleware from "next-intl/middleware";
 
 import { routing } from "@/i18n/routing";
 import { applySecurityHeaders, buildCsp, generateNonce } from "@/lib/security-headers";
+import { basicAuthGate } from "@/lib/basic-auth";
 
 /**
  * Composed middleware: next-intl (locale resolution/rewrite) + a fast auth
@@ -56,6 +57,13 @@ function isProtected(pathname: string): boolean {
 }
 
 export default function middleware(request: NextRequest): NextResponse {
+  // Temporary site-wide gate (enabled only when BASIC_AUTH_* env vars are set):
+  // demand HTTP Basic credentials BEFORE anything else, so a reserved/staging
+  // deployment isn't reachable (or indexable) by strangers. The app's own
+  // login/RBAC/tenant isolation remain the real per-user security underneath.
+  const gate = basicAuthGate(request);
+  if (gate) return gate;
+
   const nonce = generateNonce();
   const csp = buildCsp(nonce, process.env.NODE_ENV !== "production");
   const { pathname } = request.nextUrl;
