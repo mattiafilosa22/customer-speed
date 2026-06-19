@@ -34,6 +34,20 @@ import { Prisma, PrismaClient } from "../src/generated/prisma/client";
 const DEMO_SLUG = "customerspeed";
 const FABIO_SLUG = "fabio";
 
+/**
+ * Dedicated, READ-ONLY tenant for the dashboard KPI e2e (`tests/dashboard.spec.ts`).
+ *
+ * Rationale (Fase 8 hardening — e2e data isolation): the dashboard KPI assertions
+ * depend on EXACT lead/invoice counts (4 leads, 1 won, 25% conversion, 5.000 €).
+ * Fabio is mutated by the leads/pipeline/appointments specs (which create leads
+ * and move stages), so asserting absolute KPIs against Fabio is order-dependent
+ * and pollutes across a shared DB. This tenant owns the same fixed dataset as
+ * Fabio's baseline but is touched by NO mutating spec, so the KPI assertions are
+ * deterministic regardless of execution order or parallelism.
+ */
+const KPI_SLUG = "kpidemo";
+const KPI_EMAIL = "kpi@kpidemo.local";
+
 // Argon2id variant id (see src/lib/password.ts).
 const ARGON2ID = 2;
 
@@ -307,6 +321,72 @@ async function upsertTenant(
   return organization;
 }
 
+/**
+ * Idempotently seeds the example leads + the WON-lead invoice for a tenant.
+ * Extracted so the Fabio tenant and the read-only KPI tenant share the EXACT
+ * same baseline dataset (4 leads — 1 WON, 1 LOST, 2 active — + 1 invoice with
+ * net 5.000 €), guaranteeing identical dashboard KPIs.
+ */
+async function seedLeadsAndInvoice(
+  prisma: PrismaClient,
+  organizationId: string,
+  ownerId: string,
+): Promise<void> {
+  const sources = await prisma.leadSource.findMany({
+    where: { organizationId },
+    select: { id: true, label: true },
+  });
+  const sourceByLabel = new Map(sources.map((s) => [s.label, s.id]));
+
+  for (const lead of FABIO_LEADS) {
+    const existing = await prisma.lead.findFirst({
+      where: { organizationId, email: lead.email },
+      select: { id: true },
+    });
+    if (existing) {
+      continue;
+    }
+    await prisma.lead.create({
+      data: {
+        organizationId,
+        ownerId,
+        firstName: lead.firstName,
+        lastName: lead.lastName,
+        email: lead.email,
+        phone: lead.phone,
+        stage: lead.stage,
+        capitalBracket: lead.capitalBracket,
+        sourceId: sourceByLabel.get(lead.sourceLabel) ?? null,
+        adminNotes: lead.adminNotes,
+      },
+    });
+  }
+
+  const wonLead = await prisma.lead.findFirst({
+    where: { organizationId, email: FABIO_INVOICE.leadEmail },
+    select: { id: true },
+  });
+  if (wonLead) {
+    const existingInvoice = await prisma.invoice.findFirst({
+      where: { organizationId, leadId: wonLead.id, number: FABIO_INVOICE.number },
+      select: { id: true },
+    });
+    if (!existingInvoice) {
+      await prisma.invoice.create({
+        data: {
+          organizationId,
+          leadId: wonLead.id,
+          number: FABIO_INVOICE.number,
+          grossAmount: new Prisma.Decimal(FABIO_INVOICE.grossAmount),
+          netAmount: new Prisma.Decimal(FABIO_INVOICE.netAmount),
+          // Issued today so the current-year default period includes it.
+          issuedAt: new Date(),
+        },
+      });
+    }
+  }
+}
+
 /** Upserts a user with a hashed password and verified email. */
 async function upsertUser(
   prisma: PrismaClient,
@@ -379,61 +459,26 @@ async function main(): Promise<void> {
       passwordHash: fabioPassword,
     });
 
-    // 3) Example leads for Fabio (idempotent by [orgId, email]).
-    const sources = await prisma.leadSource.findMany({
-      where: { organizationId: fabioOrg.id },
-      select: { id: true, label: true },
-    });
-    const sourceByLabel = new Map(sources.map((s) => [s.label, s.id]));
+    // 3) Example leads for Fabio + the WON-lead invoice (idempotent).
+    await seedLeadsAndInvoice(prisma, fabioOrg.id, fabio.id);
 
-    for (const lead of FABIO_LEADS) {
-      const existing = await prisma.lead.findFirst({
-        where: { organizationId: fabioOrg.id, email: lead.email },
-        select: { id: true },
-      });
-      if (existing) {
-        continue;
-      }
-      await prisma.lead.create({
-        data: {
-          organizationId: fabioOrg.id,
-          ownerId: fabio.id,
-          firstName: lead.firstName,
-          lastName: lead.lastName,
-          email: lead.email,
-          phone: lead.phone,
-          stage: lead.stage,
-          capitalBracket: lead.capitalBracket,
-          sourceId: sourceByLabel.get(lead.sourceLabel) ?? null,
-          adminNotes: lead.adminNotes,
-        },
-      });
-    }
-
-    // 4) Example invoice on the WON lead (idempotent by lead + number).
-    const wonLead = await prisma.lead.findFirst({
-      where: { organizationId: fabioOrg.id, email: FABIO_INVOICE.leadEmail },
-      select: { id: true },
+    // 3b) Read-only KPI tenant: same baseline dataset as Fabio, but touched by
+    //     NO mutating spec → deterministic dashboard KPIs for the e2e (Fase 8
+    //     e2e data isolation). proUser, calendar integrations OFF (irrelevant).
+    const kpiOrg = await upsertTenant(prisma, {
+      name: "KPI Demo",
+      slug: KPI_SLUG,
+      appName: "CustomerSpeed",
+      featureFlags: { ...FEATURE_FLAGS, calendarIntegrations: false },
     });
-    if (wonLead) {
-      const existingInvoice = await prisma.invoice.findFirst({
-        where: { organizationId: fabioOrg.id, leadId: wonLead.id, number: FABIO_INVOICE.number },
-        select: { id: true },
-      });
-      if (!existingInvoice) {
-        await prisma.invoice.create({
-          data: {
-            organizationId: fabioOrg.id,
-            leadId: wonLead.id,
-            number: FABIO_INVOICE.number,
-            grossAmount: new Prisma.Decimal(FABIO_INVOICE.grossAmount),
-            netAmount: new Prisma.Decimal(FABIO_INVOICE.netAmount),
-            // Issued today so the current-year default period includes it.
-            issuedAt: new Date(),
-          },
-        });
-      }
-    }
+    const kpiUser = await upsertUser(prisma, {
+      organizationId: kpiOrg.id,
+      email: KPI_EMAIL,
+      name: "KPI Demo",
+      role: Role.proUser,
+      passwordHash: fabioPassword,
+    });
+    await seedLeadsAndInvoice(prisma, kpiOrg.id, kpiUser.id);
 
     // 5) Example appointments for Fabio (idempotent by [orgId, leadEmail, reason]).
     for (const appt of FABIO_APPOINTMENTS) {
@@ -467,6 +512,7 @@ async function main(): Promise<void> {
       `Seed completed:\n` +
         `  - demo tenant "${DEMO_SLUG}" + superAdmin (${superAdminEmail})\n` +
         `  - tenant "${FABIO_SLUG}" + proUser Fabio + ${FABIO_LEADS.length} example leads\n` +
+        `  - read-only tenant "${KPI_SLUG}" (${KPI_EMAIL}) + ${FABIO_LEADS.length} KPI leads\n` +
         `  - ${FABIO_APPOINTMENTS.length} example appointments`,
     );
   } finally {

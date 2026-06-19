@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import type { Metadata } from "next";
 import { Bebas_Neue, IBM_Plex_Mono, Montserrat } from "next/font/google";
 import { NextIntlClientProvider } from "next-intl";
 import { getMessages, getLocale } from "next-intl/server";
@@ -9,6 +10,17 @@ import { getTranslations } from "next-intl/server";
 import { getSessionUser } from "@/server/auth/guards";
 
 import "@/styles/globals.css";
+
+/**
+ * Page <title> for the non-localized admin shell (WCAG 2.4.2 — a non-empty
+ * document title is required for every page). Unlike `[locale]/layout.tsx`, this
+ * tree has no `generateMetadata`, so without this the admin pages shipped with no
+ * <title> (axe `document-title`, serious). Copy is centralized under `admin.meta`.
+ */
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations("admin");
+  return { title: t("meta.title") };
+}
 
 /**
  * Cross-tenant admin area shell. It lives OUTSIDE `[locale]` (not localized via

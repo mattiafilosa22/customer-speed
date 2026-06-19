@@ -1,4 +1,6 @@
-import { expect, test, type BrowserContext, type Page } from "@playwright/test";
+import { expect, test } from "@playwright/test";
+
+import { FABIO_PASSWORD, STORAGE_STATE } from "./support/auth";
 
 /**
  * E2E for the Phase-5 critical flows (docs/08 roadmap, docs/00 §5):
@@ -7,52 +9,26 @@ import { expect, test, type BrowserContext, type Page } from "@playwright/test";
  *
  * Runs against the seeded Fabio tenant (proUser, `appointments:true`). Seed
  * (prisma/seed.ts) gives Fabio two example appointments (one PENDING, one DONE)
- * linked to existing leads. Credentials come from env (the seed password) so
- * nothing secret is committed; the suite skips when unset.
- *
- * We log in ONCE (the dev login is rate-limited per IP) and reuse the
- * authenticated context across the serial tests.
+ * linked to existing leads. The authenticated session comes from the `setup`
+ * project (storageState) — no per-spec login (Fase 8 e2e hardening). Appointment
+ * mutations don't touch the lead/invoice KPI baseline, so they don't pollute the
+ * dashboard spec (which runs against a separate read-only tenant).
  */
 
-const EMAIL = process.env.E2E_FABIO_EMAIL ?? "fabio@fabio.local";
-const PASSWORD = process.env.E2E_FABIO_PASSWORD ?? process.env.SEED_FABIO_PASSWORD ?? "";
-
-async function dismissCookieBanner(page: Page): Promise<void> {
-  const reject = page.getByRole("button", { name: /rifiuta tutto|reject all/i });
-  if (await reject.isVisible().catch(() => false)) {
-    await reject.click();
-    await reject.waitFor({ state: "hidden" });
-  }
-}
+test.skip(FABIO_PASSWORD.length === 0, "Set E2E_FABIO_PASSWORD / SEED_FABIO_PASSWORD to run.");
+test.use({ storageState: STORAGE_STATE.fabio });
 
 test.describe("appointments — create + status + mini-calendar", () => {
-  test.skip(PASSWORD.length === 0, "Set E2E_FABIO_PASSWORD / SEED_FABIO_PASSWORD to run.");
   test.describe.configure({ mode: "serial" });
 
-  let context: BrowserContext;
-  let page: Page;
-
-  test.beforeAll(async ({ browser }) => {
-    context = await browser.newContext();
-    page = await context.newPage();
-    await page.goto("/login?org=fabio");
-    await dismissCookieBanner(page);
-    await page.getByLabel(/email/i).fill(EMAIL);
-    await page.getByLabel(/password/i).fill(PASSWORD);
-    await page.getByRole("button", { name: /accedi|sign in/i }).click();
-    await page.waitForURL(/\/dashboard/);
-  });
-
-  test.afterAll(async () => {
-    await context.close();
-  });
-
-  test("the appointments nav item is present (feature flag on for Fabio)", async () => {
+  test("the appointments nav item is present (feature flag on for Fabio)", async ({ page }) => {
     await page.goto("/appointments");
-    await expect(page.getByRole("heading", { level: 1 })).toContainText(/appuntamenti|appointments/i);
+    await expect(page.getByRole("heading", { level: 1 })).toContainText(
+      /appuntamenti|appointments/i,
+    );
   });
 
-  test("creates a new appointment and shows it in the list", async () => {
+  test("creates a new appointment and shows it in the list", async ({ page }) => {
     await page.goto("/appointments");
 
     const unique = `E2E-${Date.now()}`;
@@ -79,14 +55,12 @@ test.describe("appointments — create + status + mini-calendar", () => {
     await expect(page.getByText(unique).first()).toBeVisible();
   });
 
-  test("changes a pending appointment to done (Da fare → Fatto)", async () => {
+  test("changes a pending appointment to done (Da fare → Fatto)", async ({ page }) => {
     // Filter to "Da fare" so we act on a pending row.
     await page.goto("/appointments?filter=todo");
     await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
 
-    const markDone = page
-      .getByRole("button", { name: /✓\s*fatto|✓\s*done/i })
-      .first();
+    const markDone = page.getByRole("button", { name: /✓\s*fatto|✓\s*done/i }).first();
     await expect(markDone).toBeVisible();
     await markDone.click();
 
@@ -95,7 +69,7 @@ test.describe("appointments — create + status + mini-calendar", () => {
     await expect(page.getByText(/^(fatto|done)$/i).first()).toBeVisible();
   });
 
-  test("the mini-calendar highlights a day with appointments", async () => {
+  test("the mini-calendar highlights a day with appointments", async ({ page }) => {
     await page.goto("/appointments");
 
     const calendar = page.getByRole("grid").first();

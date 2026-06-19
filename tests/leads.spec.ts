@@ -1,4 +1,6 @@
-import { expect, test, type BrowserContext, type Page } from "@playwright/test";
+import { expect, test } from "@playwright/test";
+
+import { FABIO_PASSWORD, STORAGE_STATE } from "./support/auth";
 
 /**
  * E2E for the two CRITICAL Phase-2 flows (docs/08 roadmap, docs/00 §5):
@@ -6,49 +8,21 @@ import { expect, test, type BrowserContext, type Page } from "@playwright/test";
  *   2. moving a lead's stage (incl. the LOST-requires-reason rule, which is the
  *      accessible keyboard alternative to kanban drag&drop — docs/02 §2.3).
  *
- * Runs against the seeded Fabio tenant (proUser). Credentials come from env (the
- * seed password) so nothing secret is committed; the suite skips when unset.
- *
- * We log in ONCE (the dev login is rate-limited per IP — docs/06 §6.1 — so one
- * UI login per spec) and reuse the authenticated storage state across tests.
+ * Runs against the seeded Fabio tenant (proUser). The authenticated session is
+ * provided by the `setup` project (storageState) — no per-spec UI login — so the
+ * suite never re-hits the rate-limited login form (Fase 8 e2e hardening). This
+ * spec MUTATES Fabio (creates a lead, moves stages); the dashboard KPI spec runs
+ * against a separate read-only tenant so those mutations can't pollute it.
  */
 
-const EMAIL = process.env.E2E_FABIO_EMAIL ?? "fabio@fabio.local";
-const PASSWORD = process.env.E2E_FABIO_PASSWORD ?? process.env.SEED_FABIO_PASSWORD ?? "";
-
-async function dismissCookieBanner(page: Page): Promise<void> {
-  const reject = page.getByRole("button", { name: /rifiuta tutto|reject all/i });
-  if (await reject.isVisible().catch(() => false)) {
-    await reject.click();
-    await reject.waitFor({ state: "hidden" });
-  }
-}
+test.skip(FABIO_PASSWORD.length === 0, "Set E2E_FABIO_PASSWORD / SEED_FABIO_PASSWORD to run.");
+test.use({ storageState: STORAGE_STATE.fabio });
 
 test.describe("leads — create + stage move", () => {
-  test.skip(PASSWORD.length === 0, "Set E2E_FABIO_PASSWORD / SEED_FABIO_PASSWORD to run.");
+  // Serial: the stage-move tests act on "the first lead" and must not race.
   test.describe.configure({ mode: "serial" });
 
-  // Single UI login → one shared authenticated context+page reused across the
-  // serial tests (the dev login is IP rate-limited, so we log in exactly once).
-  let context: BrowserContext;
-  let page: Page;
-
-  test.beforeAll(async ({ browser }) => {
-    context = await browser.newContext();
-    page = await context.newPage();
-    await page.goto("/login?org=fabio");
-    await dismissCookieBanner(page);
-    await page.getByLabel(/email/i).fill(EMAIL);
-    await page.getByLabel(/password/i).fill(PASSWORD);
-    await page.getByRole("button", { name: /accedi|sign in/i }).click();
-    await page.waitForURL(/\/dashboard/);
-  });
-
-  test.afterAll(async () => {
-    await context.close();
-  });
-
-  test("creates a new lead and shows it in the list", async () => {
+  test("creates a new lead and shows it in the list", async ({ page }) => {
     await page.goto("/leads");
     await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
 
@@ -80,7 +54,7 @@ test.describe("leads — create + stage move", () => {
     await expect(page.getByText(`${firstName} ${lastName}`).first()).toBeVisible();
   });
 
-  test("moves a lead's stage from the detail page", async () => {
+  test("moves a lead's stage from the detail page", async ({ page }) => {
     await page.goto("/leads");
     await page
       .getByRole("link", { name: /apri il lead|open lead/i })
@@ -97,7 +71,9 @@ test.describe("leads — create + stage move", () => {
     await expect(page.getByText(/attesa documenti|waiting for documents/i).first()).toBeVisible();
   });
 
-  test("requires a loss reason when moving to LOST (accessible alternative to drag&drop)", async () => {
+  test("requires a loss reason when moving to LOST (accessible alternative to drag&drop)", async ({
+    page,
+  }) => {
     await page.goto("/leads");
     await page
       .getByRole("link", { name: /apri il lead|open lead/i })

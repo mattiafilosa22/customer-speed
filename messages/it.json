@@ -845,6 +845,9 @@
   "admin": {
     "brand": "CustomerSpeed Admin",
     "brandSub": "Console cross-tenant",
+    "meta": {
+      "title": "CustomerSpeed Admin — Console cross-tenant"
+    },
     "nav": {
       "label": "Navigazione admin",
       "dashboard": "Metriche",
