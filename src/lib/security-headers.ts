@@ -8,18 +8,23 @@ import type { NextResponse } from "next/server";
  *  - Google reCAPTCHA (`https://www.google.com`, `https://www.gstatic.com`) for
  *    the v3 script + its frame/connect.
  *
- * Pragmatic notes (Fase 1):
- *  - `script-src` includes a per-request nonce AND `'strict-dynamic'`; for the
- *    reCAPTCHA bootstrap we also allow the Google origins. Next.js/React inject
- *    some inline bootstrap; with `'strict-dynamic'` modern browsers trust
- *    scripts loaded by nonce'd scripts, which covers Next's runtime.
- *  - `style-src` still allows `'unsafe-inline'`: Tailwind v4 + Next inject inline
- *    styles and styled nonces are not wired yet. Tightening style-src to a nonce
- *    is tracked for Fase 8.
- *  - HSTS is emitted always; it is only honored over HTTPS, so it is harmless in
- *    local HTTP dev.
- *
- * See `FASE 8` notes in the function body for the remaining hardening backlog.
+ * Hardening status (Fase 8):
+ *  - `script-src` carries a per-request nonce + `'strict-dynamic'` and NO
+ *    `'unsafe-inline'`: with `'strict-dynamic'` a browser trusts scripts loaded
+ *    by a nonce'd script, which covers Next's runtime and the reCAPTCHA loader
+ *    (the Google origins are listed only as a fallback for non-strict-dynamic
+ *    browsers, which ignore them when a nonce is present). `'unsafe-eval'` is
+ *    added ONLY in dev (React Fast Refresh); production stays strict.
+ *  - `style-src` keeps `'unsafe-inline'` DELIBERATELY: Next.js injects inline
+ *    `<style>` for its CSS runtime / Fast Refresh and does NOT expose a hook to
+ *    attach our per-request nonce to those tags (there is no public
+ *    style-nonce API in the App Router today). Using a nonce here would break
+ *    styling. The residual risk is low — a style-only injection cannot exfiltrate
+ *    data or run code, and `script-src` (the XSS-relevant directive) is strict.
+ *    Tracked to revisit if/when Next exposes a style nonce. (See RESIDUAL RISK.)
+ *  - `upgrade-insecure-requests` is added in PRODUCTION so any stray http://
+ *    subresource is fetched over https; omitted in dev (local http).
+ *  - HSTS is emitted always; honored only over HTTPS, harmless in local HTTP dev.
  */
 
 export function generateNonce(): string {
@@ -47,7 +52,9 @@ export function buildCsp(nonce: string, isDev = false): string {
       "https://www.gstatic.com",
       ...devScript,
     ],
-    // FASE 8: replace 'unsafe-inline' with nonces/hashes for styles.
+    // 'unsafe-inline' kept deliberately for Next's runtime inline styles — see
+    // the module docblock (RESIDUAL RISK). script-src stays strict (the
+    // XSS-relevant directive); style-only injection cannot run code.
     "style-src": ["'self'", "'unsafe-inline'"],
     "img-src": ["'self'", "data:", "https://www.gstatic.com", "https://www.google.com"],
     "font-src": ["'self'", "data:"],
@@ -70,13 +77,17 @@ export function buildCsp(nonce: string, isDev = false): string {
       "https://auth.calendly.com",
     ],
     "object-src": ["'none'"],
-    // FASE 8: add `upgrade-insecure-requests` and a report endpoint
-    // (report-to / report-uri) once a reporting sink exists.
+    // TODO (infra): add a report endpoint (report-to / report-uri) once a
+    // reporting sink exists (e.g. Sentry CSP reporting).
   };
 
-  return Object.entries(directives)
+  const serialized = Object.entries(directives)
     .map(([key, values]) => `${key} ${values.join(" ")}`)
     .join("; ");
+
+  // Valueless directive: force any stray http:// subresource onto https in
+  // production. Omitted in dev (local http) so the dev server is not upgraded.
+  return isDev ? serialized : `${serialized}; upgrade-insecure-requests`;
 }
 
 /**

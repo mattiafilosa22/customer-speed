@@ -30,6 +30,32 @@ describe("buildCsp", () => {
     expect(csp).toContain("frame-ancestors 'none'");
     expect(csp).toContain("object-src 'none'");
   });
+
+  it("never allows 'unsafe-inline' on script-src (XSS-relevant directive)", () => {
+    // Isolate the script-src directive and assert it carries no unsafe-inline.
+    const scriptSrc = csp.split("; ").find((d) => d.startsWith("script-src "));
+    expect(scriptSrc).toBeDefined();
+    expect(scriptSrc).not.toContain("'unsafe-inline'");
+    expect(scriptSrc).toContain("'strict-dynamic'");
+  });
+
+  it("never allows 'unsafe-eval' on script-src in production", () => {
+    const prodCsp = buildCsp("N", false);
+    const scriptSrc = prodCsp.split("; ").find((d) => d.startsWith("script-src "));
+    expect(scriptSrc).not.toContain("'unsafe-eval'");
+  });
+
+  it("adds upgrade-insecure-requests in production but not in dev", () => {
+    expect(buildCsp("N", false)).toContain("upgrade-insecure-requests");
+    expect(buildCsp("N", true)).not.toContain("upgrade-insecure-requests");
+  });
+
+  it("keeps 'unsafe-inline' on style-src deliberately (documented residual)", () => {
+    // Next injects runtime inline <style> with no nonce hook; style-only
+    // injection cannot execute code. If Next exposes a style nonce, tighten this.
+    const styleSrc = csp.split("; ").find((d) => d.startsWith("style-src "));
+    expect(styleSrc).toContain("'unsafe-inline'");
+  });
 });
 
 describe("applySecurityHeaders", () => {

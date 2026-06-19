@@ -223,6 +223,13 @@
     "categories": {
       "necessary": "Cookie necessari (sempre attivi)",
       "analytics": "Cookie analitici"
+    },
+    "managePage": {
+      "title": "Gestisci o revoca il consenso",
+      "body": "Puoi revisionare o ritirare in qualsiasi momento il consenso ai cookie non necessari. Revocare è semplice quanto concedere: il banner riapparirà per una nuova scelta.",
+      "cta": "Rivedi le preferenze cookie",
+      "pending": "Aggiornamento…",
+      "done": "Preferenze azzerate: il banner riapparirà."
     }
   },
   "enum": {
@@ -399,6 +406,29 @@
       "delete": "Rimuovi"
     },
     "back": "Torna ai lead"
+  },
+  "gdpr": {
+    "export": {
+      "cta": "Esporta dati",
+      "pending": "Esportazione…"
+    },
+    "erase": {
+      "cta": "Cancella dati",
+      "confirmTitle": "Cancella i dati personali",
+      "confirmBody": "Questa azione anonimizza in modo irreversibile i dati personali di questo lead (nome, contatti, note, riferimenti esterni). Le fatture collegate vengono conservate per obblighi di legge. Vuoi procedere?",
+      "confirm": "Conferma cancellazione",
+      "cancel": "Annulla",
+      "pending": "Cancellazione…",
+      "success": "Dati personali cancellati."
+    },
+    "errors": {
+      "unauthorized": "Non hai i permessi per questa operazione.",
+      "notFound": "Lead non trovato.",
+      "generic": "Operazione non riuscita. Riprova.",
+      "fields": {
+        "form": "Dati non validi."
+      }
+    }
   },
   "notes": {
     "title": "Note",

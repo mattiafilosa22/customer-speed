@@ -33,6 +33,9 @@ export const CAPABILITIES = [
   "lead.delete",
   "lead.setCapital",
   "lead.note", // notes & per-lead data
+  // GDPR Data Subject Requests on a lead (docs/06 §6.5).
+  "lead.exportData", // export the lead's personal data (access/portability)
+  "lead.eraseData", // erasure / anonymization (right to be forgotten)
   // Invoices
   "invoice.create",
   // Appointments & calendar
@@ -69,6 +72,8 @@ const ROLE_CAPABILITIES: Readonly<Record<Role, ReadonlySet<Capability>>> = {
     "lead.delete",
     "lead.setCapital",
     "lead.note",
+    "lead.exportData",
+    "lead.eraseData",
     "invoice.create",
     "appointment.manage",
     "calendar.integrations",
@@ -86,6 +91,8 @@ const ROLE_CAPABILITIES: Readonly<Record<Role, ReadonlySet<Capability>>> = {
     "lead.delete",
     "lead.setCapital",
     "lead.note",
+    "lead.exportData",
+    "lead.eraseData",
     "invoice.create",
     "appointment.manage",
     "calendar.integrations",
@@ -101,9 +108,11 @@ const ROLE_CAPABILITIES: Readonly<Record<Role, ReadonlySet<Capability>>> = {
     "lead.update",
     "lead.setCapital",
     "lead.note",
-    // NOT granted: lead.delete, pipeline.configureStages, invoice.create,
-    // appointment.manage, calendar.integrations, settings.tenant, users.manage,
-    // admin.tenants
+    // NOT granted: lead.delete, lead.exportData, lead.eraseData,
+    // pipeline.configureStages, invoice.create, appointment.manage,
+    // calendar.integrations, settings.tenant, users.manage, admin.tenants.
+    // DSR (export/erasure) are privacy-sensitive operations reserved to the
+    // tenant operator (proUser) / superAdmin (docs/02 §2.1, docs/06 §6.5).
   ]),
 };
 

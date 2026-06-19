@@ -86,6 +86,64 @@ const envSchema = z.object({
   CALENDLY_REDIRECT_URI: z.string().url().optional(),
   // Calendly webhook signing key (verifies `Calendly-Webhook-Signature`).
   CALENDLY_WEBHOOK_SIGNING_KEY: z.string().min(1).optional(),
+
+  // ── Rate limiting (Fase 8 hardening, docs/06 §6.1) ───────────────────
+  // Backend selector for the shared auth rate limiter. `memory` is the default
+  // (process-local fixed window — fine for a single instance / dev). `redis`
+  // is reserved for a distributed store (Upstash/Redis): the `RateLimiter`
+  // port is already in place, so swapping the backend needs no call-site
+  // changes. The redis backend is NOT implemented yet; selecting it without a
+  // concrete adapter falls back to memory with a startup warning (see
+  // `src/lib/rate-limit.ts`).
+  RATE_LIMIT_BACKEND: z.enum(["memory", "redis"]).default("memory"),
+  // Connection URL for the future Redis/Upstash backend (unused until wired).
+  RATE_LIMIT_REDIS_URL: z.string().url().optional(),
+  // Hard kill-switch: when `true`, the limiter ALLOWS everything (a no-op
+  // limiter is used). This exists so the e2e suite can hammer the login form
+  // without tripping the per-IP limit. It MUST stay `false`/unset in
+  // production; `parseEnv` rejects `RATE_LIMIT_DISABLED=true` when
+  // `NODE_ENV=production` (fail-safe — see refinement below).
+  RATE_LIMIT_DISABLED: z
+    .union([z.boolean(), z.enum(["true", "false", "1", "0"])])
+    .optional()
+    .transform((v) => v === true || v === "true" || v === "1"),
+
+  // Explicit end-to-end test signal. The e2e harness runs a PRODUCTION BUILD
+  // (so `NODE_ENV=production` under `next start`) but still needs the rate-limit
+  // kill-switch. This flag is the ONLY thing that lets `RATE_LIMIT_DISABLED`
+  // through the production fail-safe below — a real deployment must NEVER set it.
+  E2E: z
+    .union([z.boolean(), z.enum(["true", "false", "1", "0"])])
+    .optional()
+    .transform((v) => v === true || v === "true" || v === "1"),
+
+  // ── Observability (Fase 8 — optional, no-op when absent) ─────────────
+  // Sentry DSN for error/performance monitoring. When UNSET the Sentry layer
+  // initializes as a NO-OP (no network, no crash) so the app boots without an
+  // infra account. Set it (+ the public mirror for the browser SDK) at infra
+  // setup time to activate reporting. See `src/lib/observability.ts` and the
+  // infra checklist in docs/06 §6.4 / README.
+  SENTRY_DSN: z.string().url().optional(),
+  NEXT_PUBLIC_SENTRY_DSN: z.string().url().optional(),
+  // Trace sample rate (0..1) — keep low in prod to control volume/cost.
+  SENTRY_TRACES_SAMPLE_RATE: z.coerce.number().min(0).max(1).default(0),
+  // Logical environment label attached to events (defaults to NODE_ENV).
+  SENTRY_ENVIRONMENT: z.string().min(1).optional(),
+}).superRefine((value, ctx) => {
+  // Fail-safe: the rate-limit kill-switch must NEVER be active in a real
+  // production deployment. Disabling brute-force/enumeration protection in prod
+  // would be a security regression, so we reject it at startup — UNLESS the
+  // explicit e2e signal (`E2E=true`) is present, which the Playwright harness
+  // sets because it runs a production BUILD locally/in CI. A real deployment
+  // never sets `E2E`, so prod stays protected.
+  if (value.NODE_ENV === "production" && value.RATE_LIMIT_DISABLED && !value.E2E) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ["RATE_LIMIT_DISABLED"],
+      message:
+        "RATE_LIMIT_DISABLED must not be true in production (set E2E=true only for the e2e harness)",
+    });
+  }
 });
 
 /** Inferred, single source of truth for the shape of validated env. */
@@ -128,5 +186,11 @@ export const env: Env =
         DEFAULT_ORG_SLUG: "customerspeed",
         RECAPTCHA_MIN_SCORE: 0.5,
         EMAIL_FROM: "CustomerSpeed <no-reply@example.com>",
+        // Rate limiting OFF in the unit-test shape so any code reading `env`
+        // does not throttle; e2e drives this via the real `RATE_LIMIT_DISABLED`.
+        RATE_LIMIT_BACKEND: "memory",
+        RATE_LIMIT_DISABLED: true,
+        E2E: false,
+        SENTRY_TRACES_SAMPLE_RATE: 0,
       } as Env)
     : parseEnv();

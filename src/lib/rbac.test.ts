@@ -26,6 +26,15 @@ describe("rbac", () => {
     expect(can("baseUser", "dashboard.view")).toBe(true);
   });
 
+  it("reserves GDPR DSR (export/erasure) to proUser/superAdmin, not baseUser", () => {
+    expect(can("superAdmin", "lead.exportData")).toBe(true);
+    expect(can("superAdmin", "lead.eraseData")).toBe(true);
+    expect(can("proUser", "lead.exportData")).toBe(true);
+    expect(can("proUser", "lead.eraseData")).toBe(true);
+    expect(can("baseUser", "lead.exportData")).toBe(false);
+    expect(can("baseUser", "lead.eraseData")).toBe(false);
+  });
+
   it("reserves admin.tenants for superAdmin only", () => {
     expect(can("superAdmin", "admin.tenants")).toBe(true);
     expect(can("proUser", "admin.tenants")).toBe(false);

@@ -10,6 +10,8 @@
  * Fixed-window counter: simple, predictable, good enough for auth throttling.
  */
 
+import { env } from "@/lib/env";
+
 export interface RateLimitResult {
   /** Whether the action is allowed under the limit. */
   readonly allowed: boolean;
@@ -94,11 +96,80 @@ export class InMemoryRateLimiter implements RateLimiter {
   }
 }
 
+/**
+ * No-op limiter: ALWAYS allows. Used only when the kill-switch
+ * `RATE_LIMIT_DISABLED` is set (test/e2e), so the suite can drive the login
+ * form repeatedly without tripping the per-IP limit. The env layer forbids the
+ * switch in production (`parseEnv` refinement), so this can never weaken prod.
+ */
+export class NoopRateLimiter implements RateLimiter {
+  async consume(): Promise<RateLimitResult> {
+    return { allowed: true, remaining: Number.POSITIVE_INFINITY, retryAfterSeconds: 0 };
+  }
+  async reset(): Promise<void> {
+    /* nothing to clear */
+  }
+}
+
 /** Default tuning for auth flows: 5 attempts / 15 minutes. */
 export const AUTH_RATE_LIMIT: RateLimitOptions = {
   limit: 5,
   windowMs: 15 * 60 * 1000,
 };
 
-/** Shared default limiter for auth flows (process-local). */
-export const authRateLimiter: RateLimiter = new InMemoryRateLimiter(AUTH_RATE_LIMIT);
+/** Backend selector — mirrors `RATE_LIMIT_BACKEND` in env. */
+export type RateLimitBackend = "memory" | "redis";
+
+export interface RateLimiterConfig {
+  /** Hard kill-switch: when true, returns a {@link NoopRateLimiter}. */
+  readonly disabled: boolean;
+  /** Which concrete store to use when not disabled. */
+  readonly backend: RateLimitBackend;
+  /** Window/limit tuning for the limiter. */
+  readonly options: RateLimitOptions;
+  /**
+   * Optional sink for diagnostics (e.g. "redis selected but not implemented").
+   * Defaults to `console.warn`; injectable so tests can assert without noise.
+   */
+  readonly warn?: (message: string) => void;
+}
+
+/**
+ * Build a {@link RateLimiter} from configuration (Dependency Inversion: call
+ * sites depend on the `RateLimiter` port, this factory owns backend selection).
+ *
+ *  - `disabled` → {@link NoopRateLimiter} (test/e2e only; forbidden in prod by env).
+ *  - `backend: "memory"` → {@link InMemoryRateLimiter} (default, process-local).
+ *  - `backend: "redis"` → reserved for a distributed store. The adapter is NOT
+ *    implemented yet, so this currently WARNS and falls back to in-memory rather
+ *    than failing the boot — the swap is a drop-in once the adapter exists.
+ */
+export function createRateLimiter(config: RateLimiterConfig): RateLimiter {
+  if (config.disabled) {
+    return new NoopRateLimiter();
+  }
+  if (config.backend === "redis") {
+    const warn = config.warn ?? ((m: string) => console.warn(m));
+    warn(
+      "[rate-limit] RATE_LIMIT_BACKEND=redis selected but no Redis adapter is " +
+        "wired yet; falling back to in-memory (NOT shared across instances). " +
+        "Implement a RateLimiter over Upstash/Redis to enable distributed limits.",
+    );
+    return new InMemoryRateLimiter(config.options);
+  }
+  return new InMemoryRateLimiter(config.options);
+}
+
+/**
+ * Shared default limiter for auth flows, configured from validated env.
+ *
+ * It reads `env` once at module load. Under `NODE_ENV=test` the env shape sets
+ * `RATE_LIMIT_DISABLED=true`, so unit tests get a no-op limiter; e2e and
+ * dev/prod read the real flag. Use cases receive THIS via `buildAuthDeps`, never
+ * constructing a limiter themselves.
+ */
+export const authRateLimiter: RateLimiter = createRateLimiter({
+  disabled: env.RATE_LIMIT_DISABLED,
+  backend: env.RATE_LIMIT_BACKEND,
+  options: AUTH_RATE_LIMIT,
+});
