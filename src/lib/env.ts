@@ -61,10 +61,31 @@ const envSchema = z.object({
   RESEND_API_KEY: z.string().min(1).optional(),
   EMAIL_FROM: z.string().min(1).default("CustomerSpeed <no-reply@example.com>"),
 
-  // ── Future variables (declared, not yet required) ────────────────────
-  // ENCRYPTION_KEY: z.string().min(1).optional(),   // token di terze parti (Fase calendario)
-  // GOOGLE_CLIENT_ID / GOOGLE_CLIENT_SECRET
-  // CALENDLY_CLIENT_ID / CALENDLY_CLIENT_SECRET / CALENDLY_WEBHOOK_SIGNING_KEY
+  // ── Calendar integrations (Fase 6 — optional, gated by feature flag) ──
+  // The whole module is OFF for Fabio (`calendarIntegrations:false`) and stays
+  // dormant until real OAuth credentials are provisioned in infra. All vars are
+  // OPTIONAL: a tenant with the flag ON but missing keys degrades gracefully
+  // (the settings panel shows a "not configured" message, no crash — docs/08
+  // Fase 6, docs/06 §6.4).
+  //
+  // ENCRYPTION_KEY: 32-byte key for AES-256-GCM at-rest encryption of third-party
+  // tokens (`CalendarConnection.accessToken/refreshToken`, docs/06 §6.4). Provided
+  // as base64 (preferred) or hex; the crypto layer decodes + validates it MUST be
+  // exactly 32 bytes. Required at runtime only when the encryption layer is used;
+  // declared optional here so the rest of the app boots without it.
+  ENCRYPTION_KEY: z.string().min(1).optional(),
+
+  // Google Calendar OAuth2 (web app credentials).
+  GOOGLE_CLIENT_ID: z.string().min(1).optional(),
+  GOOGLE_CLIENT_SECRET: z.string().min(1).optional(),
+  GOOGLE_REDIRECT_URI: z.string().url().optional(),
+
+  // Calendly OAuth + webhook signing.
+  CALENDLY_CLIENT_ID: z.string().min(1).optional(),
+  CALENDLY_CLIENT_SECRET: z.string().min(1).optional(),
+  CALENDLY_REDIRECT_URI: z.string().url().optional(),
+  // Calendly webhook signing key (verifies `Calendly-Webhook-Signature`).
+  CALENDLY_WEBHOOK_SIGNING_KEY: z.string().min(1).optional(),
 });
 
 /** Inferred, single source of truth for the shape of validated env. */

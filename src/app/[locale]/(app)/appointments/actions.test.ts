@@ -12,7 +12,15 @@ import { ForbiddenError } from "@/lib/rbac";
 
 const requireTenantContext = vi.fn();
 const requirePermission = vi.fn();
-const buildAppointmentDeps = vi.fn((..._a: unknown[]) => ({ kind: "appt" }));
+const appointmentFindUnique = vi.fn(() => Promise.resolve(null));
+// Deps include a minimal `prisma` because the delete action reads the linked
+// external event id before deleting (Fase 6). The use-case assertions below use
+// `expect.objectContaining` so this extra field does not break them.
+const FAKE_DEPS = {
+  kind: "appt",
+  prisma: { appointment: { findUnique: appointmentFindUnique } },
+};
+const buildAppointmentDeps = vi.fn((..._a: unknown[]) => FAKE_DEPS);
 const createAppointment = vi.fn((...args: unknown[]): unknown => args);
 const updateAppointment = vi.fn((...args: unknown[]): unknown => args);
 const changeAppointmentStatus = vi.fn((...args: unknown[]): unknown => args);
@@ -33,6 +41,14 @@ vi.mock("@/server/appointments", () => ({
   deleteAppointment: (...a: unknown[]) => deleteAppointment(...a),
 }));
 vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }));
+// Fase 6 outbound sync: no-op in these unit tests (flag/provider gating is tested
+// in the calendar module). `buildOutboundDeps` returns null → push hooks skip.
+vi.mock("@/server/calendar", () => ({
+  buildOutboundDeps: vi.fn(() => Promise.resolve(null)),
+  pushCreatedAppointment: vi.fn(),
+  pushUpdatedAppointment: vi.fn(),
+  pushDeletedAppointment: vi.fn(),
+}));
 
 import {
   changeAppointmentStatusAction,
@@ -65,7 +81,7 @@ describe("createAppointmentAction", () => {
 
     expect(requirePermission).toHaveBeenCalledWith("proUser", "appointment.manage");
     expect(createAppointment).toHaveBeenCalledWith(
-      { kind: "appt" },
+      FAKE_DEPS,
       expect.objectContaining({ startAt: "2026-06-20T10:30", reason: "Call" }),
     );
     expect(res).toEqual({ status: "success", messageKey: "appointments.create.success" });
@@ -128,7 +144,7 @@ describe("changeAppointmentStatusAction", () => {
 
     expect(requirePermission).toHaveBeenCalledWith("proUser", "appointment.manage");
     expect(changeAppointmentStatus).toHaveBeenCalledWith(
-      { kind: "appt" },
+      FAKE_DEPS,
       "appt_1",
       { status: "DONE" },
     );
@@ -167,7 +183,7 @@ describe("updateAppointmentAction", () => {
     );
 
     expect(updateAppointment).toHaveBeenCalledWith(
-      { kind: "appt" },
+      FAKE_DEPS,
       "appt_1",
       expect.objectContaining({ reason: "x", leadId: "lead_1" }),
     );

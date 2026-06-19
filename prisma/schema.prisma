@@ -265,8 +265,11 @@ model Appointment {
   @@index([organizationId, status, startAt])
   // Appuntamenti di un lead nel dettaglio.
   @@index([leadId])
-  // Idempotenza/lookup sync provider esterno.
-  @@index([organizationId, provider, externalEventId])
+  // Idempotenza forte del sync provider esterno (Fase 6): un evento esterno
+  // (provider + externalEventId) mappa ad UN solo Appointment per tenant. In
+  // Postgres i NULL sono distinti, quindi gli appuntamenti manuali
+  // (externalEventId = null) NON sono vincolati e possono coesistere liberamente.
+  @@unique([organizationId, provider, externalEventId])
 }
 
 model Invoice {
@@ -371,11 +374,20 @@ model CalendarConnection {
   expiresAt    DateTime?
   scope        String?
 
+  // Id stabile dell'account presso il provider (es. Google "sub"/email, URI
+  // utente Calendly). Serve a mappare in modo SICURO un webhook in ingresso alla
+  // connessione che lo possiede (e quindi al tenant), senza fidarsi del payload
+  // per il tenant (docs/08 Fase 6 "mapping tenant sicuro"). Non è un segreto.
+  providerAccountId String?
+
   createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@unique([userId, provider]) // una connessione per provider per utente
   // Connessioni di un utente.
   @@index([organizationId, userId])
+  // Mapping sicuro webhook -> connessione (lookup per account provider).
+  @@index([provider, providerAccountId])
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
