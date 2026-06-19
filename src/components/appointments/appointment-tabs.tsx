@@ -58,7 +58,12 @@ export function AppointmentTabs({ counts }: { counts: AppointmentTabCounts }) {
             className={tabClasses(isActive)}
           >
             <span>{t(`filters.${filter}`)}</span>
-            <span className="label-mono text-muted">({counts[key]})</span>
+            {/* Count inherits the tab text color: accent-ink on the active
+                accent-soft tab (AA), muted on the bg for inactive (AA). A flat
+                text-muted would drop to ~4.45:1 on the active tint. */}
+            <span className={cn("label-mono", isActive ? "text-accent-ink" : "text-muted")}>
+              ({counts[key]})
+            </span>
           </Link>
         );
       })}

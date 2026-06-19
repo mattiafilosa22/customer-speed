@@ -33,7 +33,7 @@ export function ThemePreview({ theme }: { theme: Theme }) {
       <div className="mt-3 flex flex-col gap-3">
         <Card>
           <CardBody className="flex flex-col gap-1">
-            <span className="label-mono">{t("kpiLabel")}</span>
+            <span className="label-mono text-muted">{t("kpiLabel")}</span>
             <span className="font-display text-3xl text-ink">{t("kpiValue")}</span>
           </CardBody>
         </Card>

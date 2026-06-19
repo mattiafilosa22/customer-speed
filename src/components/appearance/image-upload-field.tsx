@@ -111,7 +111,7 @@ export function ImageUploadField({
         <p className="font-body text-[12px] text-muted">{description}</p>
       ) : null}
       {error ? (
-        <p id={errorId} className="font-body text-[12px] text-exec">
+        <p id={errorId} className="font-body text-[12px] text-exec-ink">
           {error}
         </p>
       ) : null}

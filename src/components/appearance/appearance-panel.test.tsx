@@ -55,11 +55,11 @@ describe("AppearancePanel", () => {
     expect(screen.getByRole("switch", { name: /powered by/i })).toBeInTheDocument();
   });
 
-  it("shows the advisory muted warning for the default theme (non-blocking)", () => {
+  it("shows no contrast issues for the default theme and allows save", () => {
     renderPanel();
-    // Indigo default passes critical AA but --muted is the documented advisory.
-    expect(screen.getByText(/Avvisi di contrasto/)).toBeInTheDocument();
-    // Save is NOT blocked by the advisory warning.
+    // After the a11y fix the Indigo default is fully AA-clean (no error/warning).
+    expect(screen.queryByText(/Avvisi di contrasto/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/Contrasto insufficiente/)).not.toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Salva tema" })).not.toBeDisabled();
   });
 

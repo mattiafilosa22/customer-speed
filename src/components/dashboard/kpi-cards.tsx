@@ -27,7 +27,7 @@ function KpiTile({ label, value, fill = false }: KpiTileProps) {
   return (
     <Card className={fill ? "border-accent bg-accent text-white" : undefined}>
       <CardBody className="flex flex-col gap-1">
-        <span className={fill ? "label-mono text-white/80" : "label-mono text-muted"}>
+        <span className={fill ? "label-mono text-white" : "label-mono text-muted"}>
           {label}
         </span>
         <span

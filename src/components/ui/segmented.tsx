@@ -39,7 +39,10 @@ export function Segmented<T extends string>({
 
   return (
     <div className={cn("flex flex-col gap-1", className)}>
-      <span id={`${groupId}-label`} className={cn("label-mono block", hideLabel && "sr-only")}>
+      <span
+        id={`${groupId}-label`}
+        className={cn("label-mono text-muted block", hideLabel && "sr-only")}
+      >
         {label}
       </span>
       <div

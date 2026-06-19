@@ -49,7 +49,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(function Input(
         {...props}
       />
       {hasError ? (
-        <p id={errorId} className="font-body text-[12px] text-exec">
+        <p id={errorId} className="font-body text-[12px] text-exec-ink">
           {error}
         </p>
       ) : null}

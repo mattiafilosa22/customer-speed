@@ -37,7 +37,7 @@ export async function InvoiceSummary({ summary }: { summary: InvoiceSummaryData 
             </div>
             <div className="flex flex-col gap-0.5">
               <dt className="label-mono text-muted">{t("totalNet")}</dt>
-              <dd className="font-display text-ok text-2xl leading-none">{net}</dd>
+              <dd className="font-display text-ok-ink text-2xl leading-none">{net}</dd>
             </div>
           </dl>
         )}

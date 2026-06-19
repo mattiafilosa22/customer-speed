@@ -274,8 +274,10 @@ export function MiniCalendar({ onNavigate }: MiniCalendarProps) {
                     className={cn(
                       "relative mx-auto flex h-8 w-8 items-center justify-center rounded-control font-body text-[12px]",
                       "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring",
-                      cell.inMonth ? "text-ink hover:bg-accent-soft" : "text-muted/50",
-                      isToday && "bg-accent text-accent-ink font-semibold",
+                      cell.inMonth ? "text-ink hover:bg-accent-soft" : "text-muted",
+                      // Today: --panel text on --accent is AA in both modes
+                      // (white-on-accent would fail the light dark-accent).
+                      isToday && "bg-accent text-panel font-semibold",
                     )}
                   >
                     <span>{cell.day}</span>
@@ -284,7 +286,7 @@ export function MiniCalendar({ onNavigate }: MiniCalendarProps) {
                         aria-hidden="true"
                         className={cn(
                           "absolute bottom-1 h-1 w-1 rounded-full",
-                          isToday ? "bg-accent-ink" : "bg-accent",
+                          isToday ? "bg-panel" : "bg-accent",
                         )}
                       />
                     ) : null}

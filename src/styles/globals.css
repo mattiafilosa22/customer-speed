@@ -22,12 +22,16 @@
   --color-line2: var(--line2);
   --color-ok: var(--ok);
   --color-ok-soft: var(--ok-soft);
+  --color-ok-ink: var(--ok-ink);
   --color-warn: var(--warn);
   --color-warn-soft: var(--warn-soft);
+  --color-warn-ink: var(--warn-ink);
   --color-doc: var(--doc);
   --color-doc-soft: var(--doc-soft);
+  --color-doc-ink: var(--doc-ink);
   --color-exec: var(--exec);
   --color-exec-soft: var(--exec-soft);
+  --color-exec-ink: var(--exec-ink);
   --color-ring: var(--ring);
 
   /* Stage colors → bg-stage-* / text-stage-* / border-stage-* */
@@ -131,12 +135,19 @@
 }
 
 @layer utilities {
-  /* Mono uppercase label — form labels, breadcrumbs, table headers, tags. */
+  /*
+   * Mono uppercase label — form labels, breadcrumbs, table headers, tags.
+   * Typography ONLY: the color is intentionally NOT set here so a `text-*`
+   * utility on the same element wins (this utility used to hard-code
+   * `color: var(--muted)`, which overrode `text-white`/`text-accent-ink` on
+   * accent surfaces and produced real WCAG color-contrast failures — see the
+   * dashboard hero tile and active tabs). Callers add `text-muted` (or another
+   * AA-valid token) explicitly.
+   */
   .label-mono {
     font-family: var(--f-mono);
     font-size: 11px;
     text-transform: uppercase;
     letter-spacing: 0.055em;
-    color: var(--muted);
   }
 }

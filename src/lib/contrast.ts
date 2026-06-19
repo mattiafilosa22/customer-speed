@@ -63,6 +63,36 @@ export function contrastRatio(a: string, b: string): number {
   return (lighter + 0.05) / (darker + 0.05);
 }
 
+/** Clamp a channel to the 0–255 byte range and round to an integer. */
+function clampByte(n: number): number {
+  return Math.max(0, Math.min(255, Math.round(n)));
+}
+
+/** Format 0–255 RGB channels back to a `#rrggbb` hex string. */
+function rgbToHex(r: number, g: number, b: number): string {
+  return `#${[r, g, b].map((c) => clampByte(c).toString(16).padStart(2, "0")).join("")}`;
+}
+
+/**
+ * Replicates CSS `color-mix(in srgb, <a> <pa>%, <b>)`: linear interpolation of
+ * the gamma-encoded sRGB channels (the same space the browser uses for the
+ * `srgb` interpolation method). `weightA` is the percentage [0–100] of `a`;
+ * `b` takes the remainder. Pure, so the pill tokens we build with `color-mix`
+ * in the DOM can be validated with the SAME WCAG math here — no drift between
+ * the rendered pill and the test that guards its contrast (docs/05 §5.6).
+ */
+export function mixSrgb(a: string, b: string, weightA: number): string {
+  const fa = Math.max(0, Math.min(100, weightA)) / 100;
+  const fb = 1 - fa;
+  const ca = hexToRgb(a);
+  const cb = hexToRgb(b);
+  return rgbToHex(
+    ca.r * fa + cb.r * fb,
+    ca.g * fa + cb.g * fb,
+    ca.b * fa + cb.b * fb,
+  );
+}
+
 /** Does the pair meet AA for normal text (≥ 4.5:1)? */
 export function meetsTextAA(foreground: string, background: string): boolean {
   return contrastRatio(foreground, background) >= AA_TEXT;
@@ -103,11 +133,13 @@ function round2(n: number): number {
  * because they carry the readable content; advisory pairs (`warning`) surface a
  * caution but never block.
  *
- *  - ink-on-panel / ink-on-bg : primary text on surfaces  → text AA (error)
- *  - white-on-accent          : button label on primary   → text AA (error)
- *  - accent-on-bg             : focus ring / accent UI     → large/UI AA (error)
- *  - muted-on-panel           : secondary text            → text AA (warning;
- *      docs/05 §5.6 documents --muted ≈ 3.5:1 → "large/secondary text only")
+ *  - ink-on-panel / ink-on-bg     : primary text on surfaces → text AA (error)
+ *  - white-on-accent              : button label on primary  → text AA (error)
+ *  - accent-on-bg                 : focus ring / accent UI    → large/UI AA (error)
+ *  - muted-on-panel / muted-on-bg : secondary text (form labels, small text) is
+ *      used at body size, so it MUST clear text AA on BOTH surfaces. Promoted to
+ *      `error` after the a11y audit (docs/05 §5.6): the previous --muted
+ *      (#8c8c97 ≈ 3.3:1) was a real WCAG failure for small text.
  */
 const PAIRS: ReadonlyArray<{
   pair: string;
@@ -120,7 +152,8 @@ const PAIRS: ReadonlyArray<{
   { pair: "ink-on-bg", fg: (c) => c.ink, bg: (c) => c.bg, required: AA_TEXT, severity: "error" },
   { pair: "white-on-accent", fg: () => "#ffffff", bg: (c) => c.accent, required: AA_TEXT, severity: "error" },
   { pair: "accent-on-bg", fg: (c) => c.accent, bg: (c) => c.bg, required: AA_LARGE, severity: "error" },
-  { pair: "muted-on-panel", fg: (c) => c.muted, bg: (c) => c.panel, required: AA_TEXT, severity: "warning" },
+  { pair: "muted-on-panel", fg: (c) => c.muted, bg: (c) => c.panel, required: AA_TEXT, severity: "error" },
+  { pair: "muted-on-bg", fg: (c) => c.muted, bg: (c) => c.bg, required: AA_TEXT, severity: "error" },
 ];
 
 /**

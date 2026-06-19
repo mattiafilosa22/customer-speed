@@ -50,7 +50,7 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(function Select
         {children}
       </select>
       {hasError ? (
-        <p id={errorId} className="font-body text-exec text-[12px]">
+        <p id={errorId} className="font-body text-exec-ink text-[12px]">
           {error}
         </p>
       ) : null}

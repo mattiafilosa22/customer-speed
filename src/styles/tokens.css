@@ -27,7 +27,7 @@
   --bg: #f7f7f9; /* app background */
   --panel: #ffffff; /* cards / surfaces */
   --ink: #1c1c22; /* primary text */
-  --muted: #8c8c97; /* secondary text — ~3.5:1 on white: large/secondary only */
+  --muted: #6e6e79; /* secondary text — AA on panel (5.04:1) and bg (4.71:1) */
   --line: #ececef; /* borders */
   --line2: #f3f3f5; /* faint borders / table separators */
 
@@ -41,8 +41,32 @@
   --ok-soft: color-mix(in srgb, var(--ok) 10%, #fff);
   --warn-soft: color-mix(in srgb, var(--warn) 10%, #fff);
 
+  /*
+   * Semantic INK variants — the hue darkened toward black by --pill-ink-darken
+   * for use as TEXT on light surfaces, where the full hue fails WCAG AA (e.g.
+   * --ok #16a34a ≈ 3.3:1, --warn #d97706 ≈ 3.2:1 on white). Each clears ≥4.5:1
+   * on panel/bg in light mode and resolves to the full hue in dark mode (the
+   * darken token is 0% there). Derived from the same base token → theme-driven,
+   * recolored per tenant. (docs/05 §5.6) */
+  --ok-ink: color-mix(in srgb, var(--ok), black var(--pill-ink-darken));
+  --warn-ink: color-mix(in srgb, var(--warn), black var(--pill-ink-darken));
+  --doc-ink: color-mix(in srgb, var(--doc), black var(--pill-ink-darken));
+  --exec-ink: color-mix(in srgb, var(--exec), black var(--pill-ink-darken));
+
   /* Focus ring — always visible, derived from accent */
   --ring: var(--accent);
+
+  /*
+   * Pill text darkening (WCAG AA — docs/05 §5.6). Stage/tone pills use a SOFT
+   * tint of the semantic hue as background and the SAME hue as text. On light
+   * surfaces the full hue on a ~12% tint is only ~2.4–3.8:1 (fails AA for the
+   * small mono label), so the pill text is darkened toward black by this amount
+   * — `color-mix(in srgb, <hue>, black var(--pill-ink-darken))`. Derived from
+   * the same `--stage-*`/semantic token, so it stays tenant-recolored and never
+   * hard-codes a hue. Light = 45% black mix (≥4.5:1 on the soft tint for all 9
+   * stages + 4 tones); dark mode resets it to 0% (the light hue on a dark tint
+   * already clears AA). */
+  --pill-ink-darken: 45%;
 
   /* ── Shape, shadows, layout ────────────────────────────────────────── */
   --radius: 12px; /* base radius — slider 0–22px */
@@ -113,6 +137,10 @@
   --warn-soft: color-mix(in srgb, var(--warn) 16%, #14141a);
 
   --ring: var(--accent);
+
+  /* On dark surfaces the light stage/tone hue on its dark soft tint already
+   * clears AA, so the pill text uses the full hue (no darkening). */
+  --pill-ink-darken: 0%;
 
   --sh-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
   --sh: 0 1px 2px rgba(0, 0, 0, 0.3), 0 4px 14px rgba(0, 0, 0, 0.45);
