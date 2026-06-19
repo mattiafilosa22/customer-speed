@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 import { hasLocale } from "next-intl";
 import { getTranslations, setRequestLocale } from "next-intl/server";
-import { notFound } from "next/navigation";
+import { notFound, redirect as nextRedirect } from "next/navigation";
 
 import { asLocale, routing } from "@/i18n/routing";
 import { redirect } from "@/i18n/navigation";
@@ -44,6 +44,21 @@ export default async function AppLayout({
     // redirect is not typed as `never`).
     redirect({ href: "/login", locale: asLocale(locale) });
     return null;
+  }
+
+  // The whole `(app)` tree is TENANT-SCOPED: every page resolves a
+  // `TenantContext`, which `requireTenantContext()` refuses for a superAdmin
+  // (they operate in the explicit cross-tenant `(admin)/` context — docs/01 §1.3,
+  // docs/02 §2.1). Login always lands users on `/dashboard`, so without this
+  // guard a superAdmin would hit a tenant-only page and get a 500
+  // ("Tenant context required"). Route them to their admin area instead — the
+  // symmetric counterpart of the `(admin)/` layout's "non-superAdmin → /dashboard"
+  // guard. `/admin` is non-localized (lives outside `[locale]`).
+  if (user.role === "superAdmin") {
+    // `/admin` is NON-localized (outside `[locale]`), so use the plain Next.js
+    // redirect — the locale-aware one would prefix it (e.g. `/en/admin`), which
+    // does not exist.
+    nextRedirect("/admin");
   }
 
   const t = await getTranslations("app");

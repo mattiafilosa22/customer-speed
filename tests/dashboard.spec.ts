@@ -1,56 +1,31 @@
-import { expect, test, type BrowserContext, type Page } from "@playwright/test";
+import { expect, test } from "@playwright/test";
+
+import { FABIO_PASSWORD, STORAGE_STATE } from "./support/auth";
 
 /**
  * E2E for the Phase-4 critical flow (docs/08 roadmap, docs/00 §5): the DASHBOARD
- * renders KPI tiles and the summary blocks coherently with the seeded Fabio
- * tenant.
+ * renders KPI tiles and the summary blocks coherently with the seed.
  *
- * Seed (prisma/seed.ts) for Fabio (current year): 4 leads — 1 WON, 1 LOST, 2
- * active — plus ONE invoice on the WON lead with net 5000,00 €. The default
- * period is the current year, so the dashboard must show:
- *   - Lead totali: 4, Vinte: 1, Perse: 1, Conv. rate: 25%,
- *   - Fatturato netto / Totale netto: 5.000,00 € (EUR, IT formatting),
- *   - the "Vendite perse" block (the LOST lead has a reason),
- *   - the active-leads list (2 non-terminal leads).
+ * DATA ISOLATION (Fase 8 e2e hardening): this spec asserts EXACT KPI figures
+ * (4 leads, 1 won, 1 lost, 25% conversion, 5.000 € net), so it runs against the
+ * dedicated READ-ONLY `kpidemo` tenant (prisma/seed.ts) — same baseline dataset
+ * as Fabio's seed, but mutated by NO spec. The leads/pipeline specs mutate Fabio
+ * (create a 5th lead, move stages); pointing the dashboard assertions at a tenant
+ * nobody mutates makes them deterministic regardless of execution order or
+ * parallelism, on a shared DB. The authenticated session comes from the `setup`
+ * project (storageState) — no per-spec login.
  *
- * Runs against the seeded Fabio tenant (proUser). Credentials come from env; the
- * suite skips when unset.
+ * Seed for the kpidemo tenant (current year): 4 leads — 1 WON, 1 LOST, 2 active —
+ * plus ONE invoice on the WON lead with net 5000,00 €. Default period = current
+ * year, so the dashboard must show: Lead totali 4, Vinte 1, Perse 1, Conv. 25%,
+ * Fatturato netto 5.000,00 €, the "Vendite perse" block and the active-leads list.
  */
 
-const EMAIL = process.env.E2E_FABIO_EMAIL ?? "fabio@fabio.local";
-const PASSWORD = process.env.E2E_FABIO_PASSWORD ?? process.env.SEED_FABIO_PASSWORD ?? "";
-
-async function dismissCookieBanner(page: Page): Promise<void> {
-  const reject = page.getByRole("button", { name: /rifiuta tutto|reject all/i });
-  if (await reject.isVisible().catch(() => false)) {
-    await reject.click();
-    await reject.waitFor({ state: "hidden" });
-  }
-}
+test.skip(FABIO_PASSWORD.length === 0, "Set E2E_FABIO_PASSWORD / SEED_FABIO_PASSWORD to run.");
+test.use({ storageState: STORAGE_STATE.kpi });
 
 test.describe("dashboard — KPIs coherent with the seed", () => {
-  test.skip(PASSWORD.length === 0, "Set E2E_FABIO_PASSWORD / SEED_FABIO_PASSWORD to run.");
-  test.describe.configure({ mode: "serial" });
-
-  let context: BrowserContext;
-  let page: Page;
-
-  test.beforeAll(async ({ browser }) => {
-    context = await browser.newContext();
-    page = await context.newPage();
-    await page.goto("/login?org=fabio");
-    await dismissCookieBanner(page);
-    await page.getByLabel(/email/i).fill(EMAIL);
-    await page.getByLabel(/password/i).fill(PASSWORD);
-    await page.getByRole("button", { name: /accedi|sign in/i }).click();
-    await page.waitForURL(/\/dashboard/);
-  });
-
-  test.afterAll(async () => {
-    await context.close();
-  });
-
-  test("greets the user and renders the KPI tiles", async () => {
+  test("greets the user and renders the KPI tiles", async ({ page }) => {
     await page.goto("/dashboard");
     await expect(page.getByRole("heading", { level: 1 })).toContainText(/ciao|hi/i);
 
@@ -62,7 +37,7 @@ test.describe("dashboard — KPIs coherent with the seed", () => {
     await expect(kpis.getByText(/fatturato netto|net revenue/i)).toBeVisible();
   });
 
-  test("shows KPI figures coherent with the seed (4 leads, 1 won, 25%)", async () => {
+  test("shows KPI figures coherent with the seed (4 leads, 1 won, 25%)", async ({ page }) => {
     await page.goto("/dashboard");
     const kpis = page.getByRole("region", { name: /indicatori principali|key indicators/i });
 
@@ -72,7 +47,7 @@ test.describe("dashboard — KPIs coherent with the seed", () => {
     await expect(kpis.getByText(/5[.,]?000/)).toBeVisible();
   });
 
-  test("renders the distribution, invoice summary, lost and active blocks", async () => {
+  test("renders the distribution, invoice summary, lost and active blocks", async ({ page }) => {
     await page.goto("/dashboard");
 
     await expect(
@@ -88,7 +63,7 @@ test.describe("dashboard — KPIs coherent with the seed", () => {
     await expect(page.getByRole("heading", { name: /^(lead totali|total leads)$/i })).toBeVisible();
   });
 
-  test("the period filter is present and updates the data", async () => {
+  test("the period filter is present and updates the data", async ({ page }) => {
     await page.goto("/dashboard");
     // Exact label so it matches the period <select> ("Mese"/"Month") and NOT the
     // sidebar mini-calendar's "Mese precedente/successivo" buttons.

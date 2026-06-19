@@ -33,6 +33,8 @@ next-env.d.ts
 /test-results/
 /.playwright-mcp/
 /.nyc_output
+# Per-role authenticated storageState produced by the Playwright `setup` project.
+/tests/.auth/
 
 # Logs
 *.log

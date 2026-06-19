@@ -6,6 +6,19 @@ const baseURL = `http://localhost:${PORT}`;
 /**
  * Playwright e2e config. Tests live in `tests/`. The web server is started by
  * Playwright itself against a production build so smoke checks are realistic.
+ *
+ * Project layout (Fase 8 e2e hardening):
+ *   - `setup` runs `auth.setup.ts` ONCE and persists a per-role authenticated
+ *     storageState (Fabio, the read-only KPI tenant, superAdmin). Functional
+ *     specs depend on it and reuse the session via `test.use({ storageState })`
+ *     instead of logging in repeatedly (avoids per-IP login pressure + cold-
+ *     server timeouts).
+ *   - `chromium` runs the desktop suite.
+ *   - `mobile` runs only the responsive specs (`*.mobile.spec.ts`) on a phone
+ *     viewport (drawer/cards). It also depends on `setup`.
+ *
+ * The login flow ITSELF is still exercised end-to-end by `auth-login.spec.ts`,
+ * which does not consume a stored state.
  */
 export default defineConfig({
   testDir: "./tests",
@@ -20,15 +33,27 @@ export default defineConfig({
   },
   projects: [
     {
+      name: "setup",
+      testMatch: /auth\.setup\.ts/,
+    },
+    {
       name: "chromium",
+      testIgnore: /\.mobile\.spec\.ts/,
       use: { ...devices["Desktop Chrome"] },
+      dependencies: ["setup"],
+    },
+    {
+      name: "mobile",
+      testMatch: /\.mobile\.spec\.ts/,
+      use: { ...devices["Pixel 7"] },
+      dependencies: ["setup"],
     },
   ],
   webServer: {
     command: "pnpm build && pnpm start",
     url: baseURL,
     reuseExistingServer: !process.env.CI,
-    timeout: 120_000,
+    timeout: 180_000,
     /**
      * Disable the auth rate limiter for the e2e run so the suite can submit the
      * login form repeatedly without tripping the per-IP limit (Fase 8 hardening,

@@ -1,32 +1,28 @@
 import { expect, test } from "@playwright/test";
 
+import {
+  FABIO_EMAIL,
+  FABIO_PASSWORD,
+  SUPERADMIN_EMAIL,
+  SUPERADMIN_PASSWORD,
+  dismissCookieBanner,
+  login,
+} from "./support/auth";
+
 /**
  * E2E: login flow against the seeded Fabio tenant (docs/08). Critical path per
  * CLAUDE.md. Credentials come from env (the seed passwords) so no secret is
  * committed.
  *
- * Tenant resolution: the default tenant is now the NEUTRAL platform tenant
+ * This spec exercises the REAL login UI end-to-end, so it deliberately does NOT
+ * consume the shared storageState (the rest of the suite reuses the `setup`
+ * project's authenticated session instead — Fase 8 e2e hardening).
+ *
+ * Tenant resolution: the default tenant is the NEUTRAL platform tenant
  * (`DEFAULT_ORG_SLUG=customerspeed`), so a CUSTOMER tenant like Fabio is reached
  * with an explicit slug — `/login?org=fabio`. This mirrors the future subdomain
  * routing seam (host → slug) without changing the form.
  */
-
-import type { Page } from "@playwright/test";
-
-const EMAIL = process.env.E2E_FABIO_EMAIL ?? "fabio@fabio.local";
-const PASSWORD = process.env.E2E_FABIO_PASSWORD ?? process.env.SEED_FABIO_PASSWORD ?? "";
-
-/**
- * Dismiss the Garante cookie banner (a real visitor must choose before
- * interacting). Reject all → proceeds without tracking and stops re-prompting.
- */
-async function dismissCookieBanner(page: Page): Promise<void> {
-  const reject = page.getByRole("button", { name: /rifiuta tutto|reject all/i });
-  if (await reject.isVisible().catch(() => false)) {
-    await reject.click();
-    await reject.waitFor({ state: "hidden" });
-  }
-}
 
 test.describe("login", () => {
   test("rejects invalid credentials with a generic, non-revealing message", async ({ page }) => {
@@ -44,19 +40,36 @@ test.describe("login", () => {
   });
 
   test("logs in with the seeded Fabio credentials and lands on the dashboard", async ({ page }) => {
-    test.skip(PASSWORD.length === 0, "Set E2E_FABIO_PASSWORD / SEED_FABIO_PASSWORD to run.");
+    test.skip(FABIO_PASSWORD.length === 0, "Set E2E_FABIO_PASSWORD / SEED_FABIO_PASSWORD to run.");
 
     // Fabio is a customer tenant → reach it with the explicit slug.
-    await page.goto("/login?org=fabio");
-    await dismissCookieBanner(page);
-    await page.getByLabel(/email/i).fill(EMAIL);
-    await page.getByLabel(/password/i).fill(PASSWORD);
-    await page.getByRole("button", { name: /accedi|sign in/i }).click();
-
-    await page.waitForURL(/\/dashboard/);
+    await login(page, FABIO_EMAIL, FABIO_PASSWORD, "fabio");
     await expect(page).toHaveURL(/\/dashboard/);
     // The header user menu shows the logout control once authenticated.
     await expect(page.getByRole("button", { name: /esci|sign out/i })).toBeVisible();
+  });
+
+  /**
+   * Regression (Fase 8): a superAdmin logging in must NOT crash on the
+   * tenant-scoped `/dashboard`. Login always redirects to `/dashboard`, but a
+   * superAdmin has NO tenant context, so the dashboard's `requireTenantContext()`
+   * threw `UnauthorizedError("Tenant context required")` → a 500 error page. The
+   * `(app)` layout now forwards a superAdmin to their cross-tenant `/admin` area.
+   * Expected: lands on a working `/admin` page (global metrics), never a 500.
+   */
+  test("a superAdmin signing in is routed to the working admin area (no 500)", async ({ page }) => {
+    test.skip(
+      SUPERADMIN_PASSWORD.length === 0,
+      "Set E2E_SUPERADMIN_PASSWORD / SEED_SUPERADMIN_PASSWORD to run.",
+    );
+
+    await login(page, SUPERADMIN_EMAIL, SUPERADMIN_PASSWORD, undefined, /\/admin/);
+    await expect(page).toHaveURL(/\/admin/);
+    await expect(
+      page.getByRole("heading", { name: /metriche globali|global metrics/i }),
+    ).toBeVisible();
+    // The crashing dashboard error page must NOT be shown.
+    await expect(page.getByText(/tenant context required/i)).toHaveCount(0);
   });
 });
 
@@ -65,22 +78,5 @@ test.describe("guards", () => {
     await page.goto("/dashboard");
     await page.waitForURL(/\/login/);
     await expect(page).toHaveURL(/\/login/);
-  });
-
-  test("redirects a non-superAdmin away from the admin area", async ({ page }) => {
-    test.skip(PASSWORD.length === 0, "Set E2E_FABIO_PASSWORD / SEED_FABIO_PASSWORD to run.");
-
-    // Log in as Fabio (proUser, customer tenant slug), then try to reach /admin.
-    await page.goto("/login?org=fabio");
-    await dismissCookieBanner(page);
-    await page.getByLabel(/email/i).fill(EMAIL);
-    await page.getByLabel(/password/i).fill(PASSWORD);
-    await page.getByRole("button", { name: /accedi|sign in/i }).click();
-    await page.waitForURL(/\/dashboard/);
-
-    await page.goto("/admin");
-    // proUser is bounced back to their own area (least-revealing default).
-    await page.waitForURL(/\/dashboard/);
-    await expect(page).toHaveURL(/\/dashboard/);
   });
 });
