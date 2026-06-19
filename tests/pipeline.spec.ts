@@ -9,10 +9,20 @@ import { FABIO_PASSWORD, STORAGE_STATE } from "./support/auth";
  * We drive the **keyboard-accessible alternative** to drag&drop (the "Sposta
  * in…" overflow "⋯" menu on each card — docs/02 §2.3, docs/05 §5.6, VINCOLANTE;
  * audit P0.3 replaced the old native select with this accessible menu) because
- * it is the WCAG-mandated path and is deterministic in headless Chromium (native
- * drag with dnd-kit pointer sensors is flaky to simulate). The optimistic move
- * persists via a Server Action; we reload and assert the board still renders to
- * confirm it stuck.
+ * it is the WCAG-mandated path and is deterministic in headless Chromium. The
+ * optimistic move persists via a Server Action; we reload and assert the board
+ * still renders to confirm it stuck.
+ *
+ * NOTE on the whole-card drag: the whole article is the mouse/touch drag surface
+ * (Trello-style). dnd-kit's PointerSensor needs a precise stream of pointer
+ * events (down → many small moves past the 6px activation distance → up) that is
+ * NOT reliably reproducible in headless Chromium — a single `mouse.move` to the
+ * target does not activate the sensor, and finer simulations are flaky. We
+ * therefore do NOT assert the drag here (a flaky test is worse than none); the
+ * real drag is verified manually in a browser (it moves the stage, persists
+ * across reload, and drops into empty columns). The menu test below exercises
+ * the SAME optimistic `moveLead` + Server Action path the drag uses, so the
+ * persistence logic is covered deterministically.
  *
  * Runs against the seeded Fabio tenant (proUser); the authenticated session comes
  * from the `setup` project (storageState) — no per-spec login.
@@ -70,15 +80,15 @@ test.describe("pipeline — kanban stage move (keyboard alternative)", () => {
   test("clicking a card body (not the menu) opens the lead detail", async ({ page }) => {
     await page.goto("/pipeline");
 
-    // The whole card is a stretched link: the lead NAME is the real link and an
-    // ::after overlay makes a click anywhere on the card navigate. We click the
-    // card body itself (NOT the "⋯" menu / drag handle, which sit above it).
+    // Trello-style: the whole card is the mouse drag surface AND a click target.
+    // A pointerdown→click WITHOUT movement (≤ 6px, below the drag threshold) is a
+    // real click and navigates to the lead via the article's `onClick`. We click
+    // the card body away from the name link and the "⋯" menu (which stop
+    // propagation) — proving "click on the card opens the detail".
     const card = page.locator("article[aria-label]").first();
     await expect(card).toBeVisible();
 
-    // Click the card body away from the name/handle/menu (bottom area, over the
-    // stage pill row). The stretched-link `::after` overlay covers the whole card,
-    // so this navigates to the lead — proving "click anywhere opens the detail".
+    // Click the card body over the stage pill row (bottom), not the name/menu.
     const box = await card.boundingBox();
     if (!box) throw new Error("card has no bounding box");
     await page.mouse.click(box.x + box.width / 2, box.y + box.height - 8);

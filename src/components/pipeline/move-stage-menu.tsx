@@ -59,7 +59,15 @@ export function MoveStageMenu({
   return (
     <>
       <DropdownMenu>
-        <OverflowTrigger size="sm" label={t("pipeline.moveMenu.label")} />
+        <OverflowTrigger
+          size="sm"
+          label={t("pipeline.moveMenu.label")}
+          // The card body is a drag surface AND a click-to-open target; the menu
+          // trigger must not trigger either: stop the pointerdown from starting a
+          // card drag and the click from navigating to the lead detail.
+          onPointerDown={(event) => event.stopPropagation()}
+          onClick={(event) => event.stopPropagation()}
+        />
         <DropdownMenuContent>
           {destinations.map((option) => (
             <DropdownMenuItem

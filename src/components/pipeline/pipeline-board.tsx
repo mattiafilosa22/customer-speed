@@ -4,7 +4,6 @@ import { useCallback, useMemo, useState } from "react";
 import {
   DndContext,
   DragOverlay,
-  KeyboardSensor,
   PointerSensor,
   closestCorners,
   useSensor,
@@ -12,7 +11,6 @@ import {
   type DragEndEvent,
   type DragStartEvent,
 } from "@dnd-kit/core";
-import { sortableKeyboardCoordinates } from "@dnd-kit/sortable";
 import { useMutation } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
 
@@ -38,8 +36,11 @@ import { DEFAULT_STAGE_TOKENS } from "@/components/pipeline/stage-tokens";
  * failure; on success the optimistic state stands (the RSC also revalidates).
  *
  * Accessibility (VINCOLANTE):
- *  - dnd-kit's `KeyboardSensor` makes the drag handle keyboard-operable, AND each
- *    card carries a "Sposta in…" `<select>` as a full alternative (docs/05 §5.6).
+ *  - The WHOLE card is the mouse/touch drag surface (Trello-style); there is no
+ *    keyboard drag handle by design (it would clash with the name link tab-stop),
+ *    so we use ONLY the `PointerSensor`. The fully keyboard-operable ALTERNATIVE
+ *    is the per-card "Sposta in…" ("⋯") menu, which covers the WCAG requirement
+ *    (docs/05 §5.6). Hence no `KeyboardSensor`.
  *  - an `aria-live="polite"` region announces every successful/failed move.
  *  - moving to LOST opens the loss-reason dialog first (a reason is required).
  */
@@ -82,10 +83,10 @@ export function PipelineBoard({
     [visibleStages, stageLabel],
   );
 
-  const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
-    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
-  );
+  // PointerSensor only: the whole card is the drag surface, and `distance: 6`
+  // separates a click (open detail) from a drag (move stage). Keyboard users move
+  // a lead via the per-card "Sposta in…" menu, not by dragging.
+  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 6 } }));
 
   /** Move a card between columns in the local state (pure, returns next state). */
   const applyLocalMove = useCallback(
