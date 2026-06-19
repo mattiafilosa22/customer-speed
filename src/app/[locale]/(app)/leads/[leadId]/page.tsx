@@ -31,11 +31,16 @@ import { InvoicesPanel } from "@/components/leads/detail/invoices-panel";
 import { AppointmentsPanel } from "@/components/leads/detail/appointments-panel";
 
 /**
- * Lead detail (docs/02 §2.5). Layout "Sintesi in alto + 2 colonne":
+ * Lead detail (docs/02 §2.5). Layout "Note colonna centrale Attività":
  *  - header (avatar + name + stage pill + primary/overflow actions),
  *  - "Sintesi" read-only key-fact strip (stage + days, capital, source, created),
- *  - main column (Contact, Dettagli lead = capital + source editors, Notes),
- *  - side column (Appointments, External data, Stage history, Invoices if WON).
+ *  - main/central column (the activity stream — most prominent): Notes first
+ *    ("diario attività" pattern), then Appointments, then Invoices (if WON),
+ *  - side/reference column: Contact, Dettagli lead (capital + source editors),
+ *    Aggiornamento dati (external refs), Stage history.
+ *
+ * The main column comes FIRST in the DOM so that, when the grid collapses to a
+ * single column on mobile/tablet, Notes land at the top right under "Sintesi".
  *
  * No fact is duplicated as an editor + a display in the same place: the summary
  * is read-only; the editable capital/source live once in "Dettagli lead".
@@ -172,9 +177,26 @@ export default async function LeadDetailPage({
         createdAt={await formatDateShort(lead.createdAt)}
       />
 
-      {/* Two columns on desktop (main wider), stacked on mobile/tablet. */}
+      {/* Two columns on desktop (main/central wider), stacked on mobile/tablet.
+          The main column is declared FIRST so it stacks above the reference
+          column on mobile → Notes sit right under "Sintesi". */}
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-[1.6fr_1fr]">
-        {/* Main column: contact + lead details (editors) + notes. */}
+        {/* Main/central column: the activity stream — Notes, Appointments,
+            Invoices (if WON). Notes are the most prominent block. */}
+        <div className="flex flex-col gap-4">
+          <NotesPanel
+            leadId={lead.id}
+            notes={lead.notes.map((n) => ({ id: n.id, body: n.body, createdAt: n.createdAt }))}
+            canNote={perms.canNote}
+          />
+          {showAppointments ? (
+            <AppointmentsPanel leadId={lead.id} appointments={appointments} />
+          ) : null}
+          {showInvoices ? <InvoicesPanel leadId={lead.id} invoices={invoices} /> : null}
+        </div>
+
+        {/* Side/reference column: contact + lead details (editors) + external
+            refs + stage history. */}
         <div className="flex flex-col gap-4">
           <ContactColumn email={lead.email} phone={lead.phone} adminNotes={lead.adminNotes} />
           <LeadDetails
@@ -186,18 +208,6 @@ export default async function LeadDetailPage({
             sources={sources}
             canUpdate={perms.canUpdate}
           />
-          <NotesPanel
-            leadId={lead.id}
-            notes={lead.notes.map((n) => ({ id: n.id, body: n.body, createdAt: n.createdAt }))}
-            canNote={perms.canNote}
-          />
-        </div>
-
-        {/* Side column: appointments + external refs + stage history + invoices. */}
-        <div className="flex flex-col gap-4">
-          {showAppointments ? (
-            <AppointmentsPanel leadId={lead.id} appointments={appointments} />
-          ) : null}
           <ExternalRefsPanel
             leadId={lead.id}
             refs={lead.externalRefs}
@@ -206,7 +216,6 @@ export default async function LeadDetailPage({
           {/* StageTimeline renders its own Card + heading — no outer wrapper, so
               there is a single "Cronologia stage" title (audit P1.2). */}
           <StageTimeline history={lead.stageHistory} createdAt={lead.createdAt} />
-          {showInvoices ? <InvoicesPanel leadId={lead.id} invoices={invoices} /> : null}
         </div>
       </div>
 
