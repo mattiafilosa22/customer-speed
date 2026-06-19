@@ -3,11 +3,12 @@ import { getTranslations } from "next-intl/server";
 
 import { requireTenantContext } from "@/lib/tenant";
 import { can } from "@/lib/rbac";
-import { buildLeadDeps, listLossReasons } from "@/server/leads";
+import { buildLeadDeps, listLeadSources, listLossReasons } from "@/server/leads";
 import { buildPipelineDeps, getBoard } from "@/server/pipeline";
 import { Card, CardBody } from "@/components/ui";
 import { Link } from "@/i18n/navigation";
 import { PeriodFilter } from "@/components/pipeline/period-filter";
+import { SourceFilter } from "@/components/pipeline/source-filter";
 import { PipelineQueryProvider } from "@/components/pipeline/query-provider";
 import { PipelineBoard } from "@/components/pipeline/pipeline-board";
 
@@ -41,9 +42,14 @@ export default async function PipelinePage({
   const pipelineDeps = buildPipelineDeps(ctx);
   const leadDeps = buildLeadDeps(ctx);
 
-  const [board, lossReasons] = await Promise.all([
-    getBoard(pipelineDeps, { year: flat("year"), month: flat("month") }),
+  const [board, lossReasons, sources] = await Promise.all([
+    getBoard(pipelineDeps, {
+      year: flat("year"),
+      month: flat("month"),
+      sourceId: flat("sourceId"),
+    }),
     listLossReasons(leadDeps),
+    listLeadSources(leadDeps),
   ]);
 
   const canMove = can(ctx.role, "pipeline.move");
@@ -70,7 +76,10 @@ export default async function PipelinePage({
 
       <Card>
         <CardBody>
-          <PeriodFilter currentYear={currentYear} />
+          <div className="flex flex-wrap items-end gap-3">
+            <PeriodFilter currentYear={currentYear} />
+            <SourceFilter sources={sources} />
+          </div>
         </CardBody>
       </Card>
 

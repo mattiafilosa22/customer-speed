@@ -14,14 +14,24 @@ import { MoveStageMenu, type StageOption } from "@/components/pipeline/move-stag
 /**
  * Kanban lead card (docs/02 §2.3, docs/05 §5.8).
  *
- * Drag handle: the whole card is a dnd-kit sortable; the listeners are attached
- * to an explicit, labelled drag-handle button so the rest of the card (the
- * "Apri" link, the "Sposta in…" menu) stays independently operable — and the
- * drag handle itself is keyboard-operable (dnd-kit's keyboard sensor). The
- * card NEVER relies on colour alone: the stage pill carries its localized text.
+ * Whole-card click → lead detail (accessible "stretched link" pattern): the
+ * lead NAME is the real, focusable `<Link>` and carries a full-card `::after`
+ * overlay (`after:absolute after:inset-0`) over the `relative` article, so a
+ * mouse click ANYWHERE on the card activates that single link — while keyboard
+ * users still reach exactly one focusable target (the name), with a descriptive
+ * aria-label. No redundant "Apri" link.
  *
- * `isOverlay` renders the lifted clone in the DragOverlay (no transform of its
- * own, slightly elevated).
+ * Drag handle: the whole card is a dnd-kit sortable; the listeners are attached
+ * to an explicit, labelled drag-handle button. The handle and the "Sposta in…"
+ * menu trigger sit ABOVE the stretched-link overlay (`relative z-10`) so they
+ * stay independently clickable/keyboard-operable and their clicks do NOT
+ * navigate (the overlay never covers them); the menu dropdown is in a portal,
+ * already above. The card NEVER relies on colour alone: the stage pill carries
+ * its localized text.
+ *
+ * `isOverlay` renders the lifted clone in the DragOverlay: it is a static,
+ * non-interactive preview, so it omits the stretched link, the handle and the
+ * menu (no navigation/drag from the clone, no duplicate focusable targets).
  */
 export function KanbanCard({
   card,
@@ -57,19 +67,19 @@ export function KanbanCard({
       style={style}
       aria-label={t("pipeline.card.label", { name: fullName, stage: stageLabel(card.stage) })}
       className={[
-        "bg-panel border-line flex flex-col gap-2 rounded-[calc(var(--radius)-4px)] border p-3 shadow-[var(--sh-sm)]",
+        "bg-panel border-line relative flex flex-col gap-2 rounded-[calc(var(--radius)-4px)] border p-3 shadow-[var(--sh-sm)] transition-colors",
+        isOverlay ? "shadow-[var(--sh)] rotate-1" : "hover:border-accent cursor-pointer",
         isDragging && !isOverlay ? "opacity-40" : "",
-        isOverlay ? "shadow-[var(--sh)] rotate-1" : "",
       ].join(" ")}
     >
       <div className="flex items-start gap-2">
-        {canMove ? (
+        {canMove && !isOverlay ? (
           <button
             type="button"
             {...attributes}
             {...listeners}
             aria-label={t("pipeline.card.dragHandle", { name: fullName })}
-            className="text-muted hover:text-ink focus-visible:ring-accent mt-0.5 cursor-grab touch-none rounded focus-visible:ring-2 focus-visible:outline-none"
+            className="text-muted hover:text-ink focus-visible:ring-accent relative z-10 mt-0.5 cursor-grab touch-none rounded focus-visible:ring-2 focus-visible:outline-none"
           >
             <span aria-hidden="true">⠿</span>
           </button>
@@ -83,11 +93,27 @@ export function KanbanCard({
         </span>
 
         <div className="min-w-0 flex-1">
-          <p className="text-ink truncate font-medium">{fullName}</p>
+          {isOverlay ? (
+            <p className="text-ink truncate font-medium">{fullName}</p>
+          ) : (
+            <Link
+              href={`/leads/${card.id}`}
+              aria-label={t("leads.openLead", { name: fullName })}
+              className="text-ink hover:text-accent focus-visible:ring-accent block truncate rounded font-medium after:absolute after:inset-0 after:content-[''] focus-visible:ring-2 focus-visible:outline-none"
+            >
+              {fullName}
+            </Link>
+          )}
           <p className="label-mono text-muted truncate">
             {t("leads.daysInStageLabel", { count: card.daysInStage })}
           </p>
         </div>
+
+        {canMove && !isOverlay ? (
+          <div className="relative z-10 -mt-0.5 -mr-1">
+            <MoveStageMenu leadId={card.id} currentStage={card.stage} stageOptions={stageOptions} />
+          </div>
+        ) : null}
       </div>
 
       <div className="flex flex-wrap items-center gap-2">
@@ -100,17 +126,6 @@ export function KanbanCard({
         {card.source ? (
           <span className="label-mono text-muted inline-flex items-center">{card.source.label}</span>
         ) : null}
-      </div>
-
-      <div className="flex items-center justify-between gap-2">
-        <Link
-          href={`/leads/${card.id}`}
-          aria-label={t("leads.openLead", { name: fullName })}
-          className="text-accent hover:text-accent-ink focus-visible:ring-accent rounded text-[13px] focus-visible:ring-2 focus-visible:outline-none"
-        >
-          {t("leads.open")}
-        </Link>
-        {canMove ? <MoveStageMenu leadId={card.id} currentStage={card.stage} stageOptions={stageOptions} /> : null}
       </div>
     </article>
   );

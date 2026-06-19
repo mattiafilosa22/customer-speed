@@ -28,10 +28,14 @@ import { pipelineCardSelect } from "@/server/pipeline/selectors";
 /** Hard cap on cards rendered per column (docs/00 §3 — never unbounded). */
 export const MAX_CARDS_PER_COLUMN = 50;
 
-/** Period filter, kept identical to the lead-list semantics (docs/02 §2.3). */
+/**
+ * Board query filters, kept identical to the lead-list semantics (docs/02 §2.3):
+ * the period (`year`/`month` on `createdAt`) and the lead source (`sourceId`).
+ */
 export const boardQuerySchema = z.object({
   year: z.coerce.number().int().min(2000).max(2100).optional(),
   month: z.coerce.number().int().min(1).max(12).optional(),
+  sourceId: z.string().optional(),
 });
 export type BoardQueryInput = z.infer<typeof boardQuerySchema>;
 
@@ -84,9 +88,14 @@ export async function getBoard(deps: PipelineDeps, input: unknown): Promise<Pipe
     return { columns: [] };
   }
 
+  // The SAME `where` drives the cards scan AND the counts `groupBy`, so every
+  // filter (period, source) is reflected consistently in both (docs/02 §2.3).
   const where: Prisma.LeadWhereInput = { stage: { in: visibleStages } };
   if (params.year) {
     where.createdAt = periodRange(params.year, params.month);
+  }
+  if (params.sourceId) {
+    where.sourceId = params.sourceId;
   }
 
   // One ordered scan (oldest `stageChangedAt` first → "most stuck" on top of each

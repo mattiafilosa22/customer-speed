@@ -67,6 +67,47 @@ test.describe("pipeline — kanban stage move (keyboard alternative)", () => {
     await expect(page.getByRole("heading", { name: /da gestire|to handle/i })).toBeVisible();
   });
 
+  test("clicking a card body (not the menu) opens the lead detail", async ({ page }) => {
+    await page.goto("/pipeline");
+
+    // The whole card is a stretched link: the lead NAME is the real link and an
+    // ::after overlay makes a click anywhere on the card navigate. We click the
+    // card body itself (NOT the "⋯" menu / drag handle, which sit above it).
+    const card = page.locator("article[aria-label]").first();
+    await expect(card).toBeVisible();
+
+    // Click the card body away from the name/handle/menu (bottom area, over the
+    // stage pill row). The stretched-link `::after` overlay covers the whole card,
+    // so this navigates to the lead — proving "click anywhere opens the detail".
+    const box = await card.boundingBox();
+    if (!box) throw new Error("card has no bounding box");
+    await page.mouse.click(box.x + box.width / 2, box.y + box.height - 8);
+
+    await expect(page).toHaveURL(/\/leads\/[^/]+$/);
+  });
+
+  test("the source filter narrows the board", async ({ page }) => {
+    await page.goto("/pipeline");
+
+    const sourceSelect = page.getByLabel(/provenienza|source/i);
+    await expect(sourceSelect).toBeVisible();
+
+    // Select the "Instagram" source (seeded on exactly one Fabio lead, in the
+    // WAITING_DECISION column). After filtering, only that lead's card remains.
+    await sourceSelect.selectOption({ label: "Instagram" });
+    await expect(page).toHaveURL(/sourceId=/);
+
+    // Exactly one card across the whole board carries the Instagram source.
+    const cards = page.locator("article[aria-label]");
+    await expect(cards).toHaveCount(1);
+    await expect(cards.first()).toContainText("Instagram");
+
+    // Resetting to "all sources" brings back more than one card.
+    await sourceSelect.selectOption({ value: "" });
+    await expect(page).not.toHaveURL(/sourceId=/);
+    await expect(page.locator("article[aria-label]").first()).toBeVisible();
+  });
+
   test("opens the loss-reason dialog when moving to LOST", async ({ page }) => {
     await page.goto("/pipeline");
 
