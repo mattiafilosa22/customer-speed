@@ -5,12 +5,12 @@ import { notFound } from "next/navigation";
 
 import { asLocale, routing } from "@/i18n/routing";
 import { redirect } from "@/i18n/navigation";
-import { INDIGO_THEME } from "@/lib/theme";
 import { ThemeProvider } from "@/components/theme/theme-style";
 import { Header } from "@/components/layout/header";
 import { Sidebar } from "@/components/layout/sidebar";
 import { getSessionUser } from "@/server/auth/guards";
 import { enabledFeatureKeys, getTenantFeatureFlags } from "@/server/tenant/feature-flags";
+import { getShellBranding } from "@/server/organization/get-shell-branding";
 
 /**
  * Authenticated app shell: themed wrapper + fixed sidebar (desktop) + header
@@ -47,7 +47,13 @@ export default async function AppLayout({
   }
 
   const t = await getTranslations("app");
-  const appName = t("name");
+
+  // Per-tenant white-label: theme (palette/radius/component style) + displayed
+  // name, resolved from the AUTHENTICATED user's organization. Applying the
+  // saved theme here is what makes the appearance panel take effect app-wide
+  // (server-injected CSS vars, no FOUC). Falls back to the i18n product name.
+  const branding = await getShellBranding(user.organizationId, t("name"));
+  const appName = branding.appName;
 
   // Per-tenant feature flags drive which modules appear in the shell (nav +
   // mini-calendar). Resolved from the AUTHENTICATED user's organization id.
@@ -55,7 +61,7 @@ export default async function AppLayout({
   const enabledFeatures = enabledFeatureKeys(flags);
 
   return (
-    <ThemeProvider theme={INDIGO_THEME}>
+    <ThemeProvider theme={branding.theme}>
       <div className="flex min-h-screen bg-bg">
         <Sidebar appName={appName} enabledFeatures={enabledFeatures} />
         <div className="flex min-w-0 flex-1 flex-col">

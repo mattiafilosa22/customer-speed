@@ -22,6 +22,14 @@ const hexColor = z
 export const themeModeSchema = z.enum(["light", "dark", "auto"]);
 export type ThemeMode = z.infer<typeof themeModeSchema>;
 
+/** Button shape (docs/05 §5.4): "filled" = themed radius, "squared" = radius 0. */
+export const buttonStyleSchema = z.enum(["filled", "squared"]);
+export type ButtonStyle = z.infer<typeof buttonStyleSchema>;
+
+/** Interface density (docs/05 §5.4): scales spacing. */
+export const densitySchema = z.enum(["comfortable", "compact"]);
+export type Density = z.infer<typeof densitySchema>;
+
 export const themePresetSchema = z.enum([
   "indigo",
   "coral",
@@ -75,6 +83,15 @@ export const themeSchema = z.object({
   fonts: themeFontsSchema,
   colors: themeColorsSchema,
   stageColors: themeStageColorsSchema,
+  /**
+   * Component-style options (docs/05 §5.4). Added in Fase 7. They are OPTIONAL
+   * with defaults so theme JSON written before Fase 7 (e.g. the original seed,
+   * which had none of these) still parses cleanly — backward compatible.
+   */
+  buttonStyle: buttonStyleSchema.default("filled"),
+  density: densitySchema.default("comfortable"),
+  /** Soft shadows on/off (docs/05 §5.4). */
+  softShadows: z.boolean().default(true),
 });
 
 export type Theme = z.infer<typeof themeSchema>;
@@ -121,6 +138,9 @@ export const INDIGO_THEME: Theme = themeSchema.parse({
     WON: "#16a34a",
     LOST: "#e5533b",
   },
+  buttonStyle: "filled",
+  density: "comfortable",
+  softShadows: true,
 });
 
 /** Maps a stage color key to its CSS custom-property name (tokens.css). */
@@ -167,7 +187,30 @@ export function themeToCssVars(theme: Theme): Readonly<Record<string, string>> {
     vars[cssVar] = theme.stageColors[key as keyof ThemeStageColors];
   }
 
+  // Soft shadows off → neutralize the shadow tokens (kept theme-driven; the
+  // utilities still reference --sh / --sh-sm, they just resolve to `none`).
+  if (!theme.softShadows) {
+    vars["--sh-sm"] = "none";
+    vars["--sh"] = "none";
+  }
+
   return vars;
+}
+
+/**
+ * Non-color theme switches surfaced as `data-*` attributes on the theming
+ * wrapper. tokens.css keys density spacing and button radius off these, so the
+ * mapping stays declarative (no per-component conditionals, no hard-coded
+ * style). Pure function — single source of truth for the attribute contract.
+ */
+export function themeDataAttributes(
+  theme: Theme,
+): Readonly<Record<`data-${string}`, string>> {
+  return {
+    "data-theme": theme.mode === "dark" ? "dark" : "light",
+    "data-button-style": theme.buttonStyle,
+    "data-density": theme.density,
+  };
 }
 
 /**

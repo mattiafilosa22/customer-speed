@@ -1,6 +1,6 @@
 import type { CSSProperties, ReactNode } from "react";
 
-import { type Theme, themeToCssVars } from "@/lib/theme";
+import { type Theme, themeDataAttributes, themeToCssVars } from "@/lib/theme";
 
 interface ThemeProviderProps {
   theme: Theme;
@@ -13,18 +13,18 @@ interface ThemeProviderProps {
  * its subtree. Because the vars are rendered server-side into the initial HTML,
  * there is no FOUC: the first paint already uses the tenant palette/radius.
  *
- * It also sets `data-theme` so the dark-mode token mirror in tokens.css can
- * activate when the tenant chooses "dark". ("auto" is resolved to a concrete
- * mode by the appearance layer in a later phase; here it falls back to light.)
+ * It also sets the non-color switches as `data-*` attributes (`data-theme` for
+ * light/dark, `data-button-style`, `data-density`) so tokens.css can key density
+ * spacing and button radius off them declaratively. ("auto" mode resolves to a
+ * concrete mode here; the OS-preference resolution lands client-side later.)
  *
  * Presentation only — the Theme is resolved upstream (tenant context / DB).
  */
 export function ThemeProvider({ theme, children }: ThemeProviderProps) {
   const cssVars = themeToCssVars(theme) as CSSProperties;
-  const dataTheme = theme.mode === "dark" ? "dark" : "light";
 
   return (
-    <div data-theme={dataTheme} style={cssVars} className="contents">
+    <div {...themeDataAttributes(theme)} style={cssVars} className="contents">
       {children}
     </div>
   );

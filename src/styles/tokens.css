@@ -66,6 +66,27 @@
 }
 
 /*
+ * Component-style switches (docs/05 §5.4), driven by data-* attributes set by
+ * ThemeProvider. Declarative: no per-component conditionals, no hard-coded style.
+ *
+ * Density scales a single spacing token consumed by dense layouts; the default
+ * (comfortable) is 1. Button style "squared" forces the control radius to 0 for
+ * any element opting into the themed control radius (.theme-control-radius and
+ * the Button primitive read --radius-control).
+ */
+:root {
+  --density-scale: 1;
+}
+
+[data-density="compact"] {
+  --density-scale: 0.75;
+}
+
+[data-button-style="squared"] {
+  --radius-control: 0px;
+}
+
+/*
  * Dark mode — speculative mirror tokens. Activated via [data-theme="dark"]
  * (set by the white-label panel / mode resolver). Accent and stage hues are
  * preserved; surfaces and text invert. Contrast targets WCAG AA on the dark bg.

@@ -708,5 +708,108 @@
       "invalid_state": "Security check failed. Please try again.",
       "not_configured": "Integration not configured yet."
     }
+  },
+  "appearance": {
+    "title": "Appearance & brand",
+    "description": "Customize the platform identity. Changes update the preview in real time; press \"Save theme\" to apply them.",
+    "manageLink": "Customize appearance & brand",
+    "sections": {
+      "brand": "Brand",
+      "themeColors": "Theme & colors",
+      "components": "Components",
+      "preview": "Preview"
+    },
+    "brand": {
+      "appName": "Platform name",
+      "appNameHint": "Shown in the sidebar and on the sign-in page.",
+      "logo": "Logo",
+      "logoHint": "PNG or SVG. The mark is used when no logo is set.",
+      "logoAlt": "Platform logo",
+      "favicon": "Favicon",
+      "faviconHint": "Square PNG or SVG.",
+      "faviconAlt": "Favicon",
+      "mark": "Mark (fallback)",
+      "markHint": "Up to 3 characters, used when no logo is set.",
+      "upload": "Upload file",
+      "remove": "Remove",
+      "poweredBy": "Show \"powered by\""
+    },
+    "theme": {
+      "primaryColor": "Primary color",
+      "primaryColorHint": "Color of primary actions.",
+      "presets": "Palette presets",
+      "mode": "Mode",
+      "modeLight": "Light",
+      "modeDark": "Dark",
+      "modeAuto": "Auto",
+      "typography": "Typography",
+      "presetNames": {
+        "indigo": "Indigo",
+        "coral": "Coral",
+        "teal": "Teal",
+        "blue": "Blue",
+        "violet": "Violet",
+        "gold": "Gold",
+        "near-black": "Near black"
+      },
+      "fontPairs": {
+        "bebas-montserrat": "Bebas Neue + Montserrat",
+        "inter": "Inter",
+        "manrope": "Manrope",
+        "system": "System UI"
+      }
+    },
+    "components": {
+      "radius": "Roundness",
+      "radiusHint": "Corner radius, from 0 to 22 px.",
+      "buttonStyle": "Button style",
+      "buttonFilled": "Filled",
+      "buttonSquared": "Squared",
+      "density": "Interface density",
+      "densityComfortable": "Comfortable",
+      "densityCompact": "Compact",
+      "softShadows": "Soft shadows"
+    },
+    "preview": {
+      "heading": "Live preview",
+      "description": "Sample interface with the current theme.",
+      "kpiLabel": "Active leads",
+      "kpiValue": "128",
+      "sampleButton": "Primary action",
+      "sampleGhost": "Secondary",
+      "sampleInputLabel": "Lead name",
+      "sampleInputPlaceholder": "John Doe",
+      "sampleStage": "In negotiation",
+      "announced": "Preview updated."
+    },
+    "contrast": {
+      "title": "Contrast check (WCAG AA)",
+      "passText": "All combinations pass AA contrast.",
+      "warningIntro": "Contrast warnings:",
+      "errorIntro": "Insufficient contrast: fix before saving.",
+      "ratio": "ratio {ratio}:1 (required {required}:1)",
+      "pairs": {
+        "ink-on-panel": "Text on surface",
+        "ink-on-bg": "Text on background",
+        "white-on-accent": "Text on primary color",
+        "accent-on-bg": "Primary color on background",
+        "muted-on-panel": "Secondary text on surface"
+      }
+    },
+    "actions": {
+      "save": "Save theme",
+      "saving": "Saving...",
+      "reset": "Reset to default"
+    },
+    "status": {
+      "saved": "Theme saved.",
+      "unsaved": "Unsaved changes."
+    },
+    "errors": {
+      "invalid": "Invalid values. Check the fields.",
+      "contrast": "The theme does not meet the minimum AA contrast.",
+      "unauthorized": "You do not have permission to change appearance.",
+      "generic": "Something went wrong. Please try again."
+    }
   }
 }

@@ -74,8 +74,17 @@ model Organization {
 
   // Personalizzazione white-label
   appName       String                       // nome piattaforma mostrato
-  theme         Json                         // design tokens (vedi 05)
+  theme         Json                         // design tokens (vedi 05); include anche
+                                             //   i controlli "Componenti" (buttonStyle,
+                                             //   density, softShadows) — vedi Fase 7
   featureFlags  Json     @default("{}")       // { calendar: false, invoices: true, ... }
+
+  // Asset di brand (pannello "Aspetto & brand", Fase 7). Storage attuale: data URL
+  // (PNG/SVG) in TEXT — niente blob storage in questa fase (TODO infra: object storage).
+  logoUrl       String?  @db.Text             // logo PNG/SVG (data URL o URL)
+  markFallback  String?                       // sigla testuale fallback, max 3 char (Zod)
+  faviconUrl    String?  @db.Text             // favicon (data URL o URL)
+  poweredBy     Boolean  @default(true)       // mostra/nasconde la dicitura "powered by"
 
   users         User[]
   leads         Lead[]
