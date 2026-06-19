@@ -370,7 +370,6 @@
       "title": "Contact",
       "email": "Email",
       "phone": "Phone",
-      "createdAt": "Created on",
       "adminNotes": "Admin notes"
     },
     "capital": {
@@ -386,12 +385,14 @@
     },
     "summary": {
       "title": "Summary",
-      "stage": "Current stage",
-      "stageDate": "Stage date",
+      "stage": "Stage",
       "capital": "Capital",
       "source": "Source",
-      "sourcePlaceholder": "Select a source",
+      "createdAt": "Created on",
       "sourceNone": "No source"
+    },
+    "details": {
+      "title": "Lead details"
     },
     "updateStage": {
       "cta": "Update stage",
