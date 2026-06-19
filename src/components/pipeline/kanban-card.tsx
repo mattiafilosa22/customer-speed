@@ -1,38 +1,48 @@
 "use client";
 
+import { useRef } from "react";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { useTranslations } from "next-intl";
 
 import type { PipelineCard } from "@/server/pipeline";
 import { Pill } from "@/components/ui";
-import { Link } from "@/i18n/navigation";
+import { Link, useRouter } from "@/i18n/navigation";
 import { stageToPill } from "@/components/leads/stage-pill";
 import { useLeadStageLabel } from "@/i18n/enum-labels";
 import { useCapitalDisplay } from "@/components/leads/capital-display";
 import { MoveStageMenu, type StageOption } from "@/components/pipeline/move-stage-menu";
 
+/** Max pointer travel (px) between pointerdown and click that still counts as a
+ * "click" rather than a drag — matches the PointerSensor `activationConstraint`
+ * distance, so a gesture that started a drag never also navigates. */
+const CLICK_DRAG_THRESHOLD_PX = 6;
+
 /**
  * Kanban lead card (docs/02 §2.3, docs/05 §5.8).
  *
- * Whole-card click → lead detail (accessible "stretched link" pattern): the
- * lead NAME is the real, focusable `<Link>` and carries a full-card `::after`
- * overlay (`after:absolute after:inset-0`) over the `relative` article, so a
- * mouse click ANYWHERE on the card activates that single link — while keyboard
- * users still reach exactly one focusable target (the name), with a descriptive
- * aria-label. No redundant "Apri" link.
+ * Trello-style interaction model — the WHOLE card is the mouse drag surface AND
+ * a click target, kept distinct:
+ *  - Drag: the `useSortable` `listeners` sit on the `<article>` (PointerSensor
+ *    with `activationConstraint.distance` distinguishes a click from a drag). We
+ *    deliberately do NOT spread `attributes` on the article: that would turn it
+ *    into a focusable keyboard handle, conflicting with the name `<Link>` and
+ *    adding a redundant tab-stop. Drag is therefore mouse/touch-only by design.
+ *  - Click → detail: an `onClick` on the article navigates to `/leads/{id}`
+ *    ONLY when the gesture was a real click — we record the `onPointerDown`
+ *    coordinates and bail out if the pointer travelled > threshold (it was a
+ *    drag) or if the event was already handled (`defaultPrevented`).
+ *  - Keyboard → detail: the lead NAME is a real, focusable `<Link>` (Tab → Enter)
+ *    and is the card's only navigation tab-stop. No stretched-link overlay (it
+ *    would swallow drag pointer events on the card body).
+ *  - Keyboard → move stage: the "Sposta in…" menu ("⋯") is the accessible
+ *    ALTERNATIVE to drag (WCAG, docs/05 §5.6). Its trigger stops propagation on
+ *    both pointerdown (so interacting with it never starts a card drag) and click
+ *    (so opening it never navigates).
  *
- * Drag handle: the whole card is a dnd-kit sortable; the listeners are attached
- * to an explicit, labelled drag-handle button. The handle and the "Sposta in…"
- * menu trigger sit ABOVE the stretched-link overlay (`relative z-10`) so they
- * stay independently clickable/keyboard-operable and their clicks do NOT
- * navigate (the overlay never covers them); the menu dropdown is in a portal,
- * already above. The card NEVER relies on colour alone: the stage pill carries
- * its localized text.
- *
- * `isOverlay` renders the lifted clone in the DragOverlay: it is a static,
- * non-interactive preview, so it omits the stretched link, the handle and the
- * menu (no navigation/drag from the clone, no duplicate focusable targets).
+ * `isOverlay` renders the lifted clone inside the DragOverlay: a static,
+ * non-interactive PREVIEW — no listeners, no onClick, no link, no menu (so the
+ * clone never drags, navigates, or duplicates a focusable target).
  */
 export function KanbanCard({
   card,
@@ -46,21 +56,74 @@ export function KanbanCard({
   canMove: boolean;
 }) {
   const t = useTranslations();
+  const router = useRouter();
   const capitalDisplay = useCapitalDisplay();
   const stageLabel = useLeadStageLabel();
 
-  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+  const { listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: card.id,
     data: { stage: card.stage },
     disabled: !canMove,
   });
 
+  // Pointer position at the start of a gesture, used to tell a click from a drag.
+  const pointerDownAt = useRef<{ x: number; y: number } | null>(null);
+
   const fullName = `${card.firstName} ${card.lastName}`;
   const initials = `${card.firstName.charAt(0)}${card.lastName.charAt(0)}`.toUpperCase();
+  const href = `/leads/${card.id}`;
 
   const style = isOverlay
     ? undefined
     : { transform: CSS.Translate.toString(transform), transition };
+
+  /**
+   * True only when the event's real DOM target is an actual DOM descendant of
+   * this article. The "⋯" menu (and the loss-reason dialog) render their content
+   * in a React PORTAL: it is a React child of this card, so React bubbles its
+   * pointerdown/click up to the article's handlers — but in the DOM it lives
+   * elsewhere, so `contains()` is false. This is what keeps a menu interaction
+   * from being mistaken for a press on the card body.
+   */
+  const isFromCardBody = (event: React.SyntheticEvent): boolean =>
+    event.currentTarget instanceof Node &&
+    event.target instanceof Node &&
+    event.currentTarget.contains(event.target);
+
+  const handlePointerDown = (event: React.PointerEvent<HTMLElement>) => {
+    // Ignore pointerdowns bubbling from a portal (the menu) — they are not a
+    // press on the card body and must not arm a click-to-open.
+    if (!isFromCardBody(event)) return;
+    pointerDownAt.current = { x: event.clientX, y: event.clientY };
+    // Forward to dnd-kit's PointerSensor activator so the drag can still start
+    // (our handler must NOT shadow `listeners.onPointerDown`).
+    listeners?.onPointerDown?.(event);
+  };
+
+  const handleClick = (event: React.MouseEvent<HTMLElement>) => {
+    // A nested interactive control (name link, menu) handled it, or a drag
+    // ended on this card — never navigate then.
+    if (event.defaultPrevented) return;
+    // A click bubbling from a portal (the menu/dialog) is not a card-body click.
+    if (!isFromCardBody(event)) return;
+    const start = pointerDownAt.current;
+    pointerDownAt.current = null;
+    // Navigate ONLY for a genuine card press: a pointerdown that landed on the
+    // card body (so `start` is set) and barely moved.
+    if (!start) return;
+    const moved = Math.hypot(event.clientX - start.x, event.clientY - start.y);
+    if (moved > CLICK_DRAG_THRESHOLD_PX) return; // it was a drag, not a click
+    router.push(href);
+  };
+
+  // Interactive (non-overlay) cards are the drag surface AND a click target.
+  // NOTE: spread `listeners` FIRST, then our `onPointerDown` (which itself
+  // forwards to `listeners.onPointerDown`) so dnd-kit still receives it; `onClick`
+  // is dnd-kit-free so it can be set directly.
+  const interactiveProps =
+    isOverlay || !canMove
+      ? {}
+      : { ...listeners, onPointerDown: handlePointerDown, onClick: handleClick };
 
   return (
     <article
@@ -69,23 +132,16 @@ export function KanbanCard({
       aria-label={t("pipeline.card.label", { name: fullName, stage: stageLabel(card.stage) })}
       className={[
         "bg-panel border-line relative flex flex-col gap-2 rounded-[calc(var(--radius)-4px)] border p-3 shadow-[var(--sh-sm)] transition-colors",
-        isOverlay ? "shadow-[var(--sh)] rotate-1" : "hover:border-accent cursor-pointer",
+        isOverlay
+          ? "shadow-[var(--sh)] rotate-1 cursor-grabbing"
+          : canMove
+            ? "hover:border-accent cursor-grab touch-none active:cursor-grabbing"
+            : "hover:border-accent cursor-pointer",
         isDragging && !isOverlay ? "opacity-40" : "",
       ].join(" ")}
+      {...interactiveProps}
     >
       <div className="flex items-start gap-2">
-        {canMove && !isOverlay ? (
-          <button
-            type="button"
-            {...attributes}
-            {...listeners}
-            aria-label={t("pipeline.card.dragHandle", { name: fullName })}
-            className="text-muted hover:text-ink focus-visible:ring-accent relative z-10 mt-0.5 cursor-grab touch-none rounded focus-visible:ring-2 focus-visible:outline-none"
-          >
-            <span aria-hidden="true">⠿</span>
-          </button>
-        ) : null}
-
         <span
           aria-hidden="true"
           className="bg-accent-soft text-accent-ink flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-[11px] font-semibold"
@@ -98,9 +154,14 @@ export function KanbanCard({
             <p className="text-ink truncate font-medium">{fullName}</p>
           ) : (
             <Link
-              href={`/leads/${card.id}`}
+              href={href}
               aria-label={t("leads.openLead", { name: fullName })}
-              className="text-ink hover:text-accent focus-visible:ring-accent block truncate rounded font-medium after:absolute after:inset-0 after:content-[''] focus-visible:ring-2 focus-visible:outline-none"
+              // The name is the only keyboard navigation tab-stop. It stops the
+              // pointerdown from starting a card drag and the click from also
+              // firing the card's onClick (Link already navigates).
+              onPointerDown={(event) => event.stopPropagation()}
+              onClick={(event) => event.stopPropagation()}
+              className="text-ink hover:text-accent focus-visible:ring-accent block truncate rounded font-medium focus-visible:ring-2 focus-visible:outline-none"
             >
               {fullName}
             </Link>
@@ -111,7 +172,7 @@ export function KanbanCard({
         </div>
 
         {canMove && !isOverlay ? (
-          <div className="relative z-10 -mt-0.5 -mr-1">
+          <div className="-mt-0.5 -mr-1">
             <MoveStageMenu leadId={card.id} currentStage={card.stage} stageOptions={stageOptions} />
           </div>
         ) : null}

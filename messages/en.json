@@ -520,8 +520,7 @@
       "more": "+{count} more"
     },
     "card": {
-      "label": "Lead {name}, stage {stage}",
-      "dragHandle": "Drag lead {name} to move it to another stage"
+      "label": "Lead {name}, stage {stage}"
     },
     "moveMenu": {
       "label": "Move to another stage",

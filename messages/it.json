@@ -520,8 +520,7 @@
       "more": "+{count} altri"
     },
     "card": {
-      "label": "Lead {name}, stage {stage}",
-      "dragHandle": "Trascina il lead {name} per spostarlo di stage"
+      "label": "Lead {name}, stage {stage}"
     },
     "moveMenu": {
       "label": "Sposta in un altro stage",
