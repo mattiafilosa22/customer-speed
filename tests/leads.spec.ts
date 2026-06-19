@@ -71,6 +71,34 @@ test.describe("leads — create + stage move", () => {
     await expect(page.getByText(/attesa documenti|waiting for documents/i).first()).toBeVisible();
   });
 
+  test("shows Notes at the top of the activity column (above Contact)", async ({ page }) => {
+    // Layout "Note colonna centrale Attività": Notes are the most prominent
+    // block — they must lead the main/central column and, in the DOM, come
+    // before the reference column's "Contatto" card (so on mobile, where the
+    // grid collapses to a single stack, Notes land right under "Sintesi").
+    await page.goto("/leads");
+    await page
+      .getByRole("link", { name: /apri il lead|open lead/i })
+      .first()
+      .click();
+    await page.waitForURL(/\/leads\/[^/]+$/);
+
+    // The Notes section heading is present…
+    const notesHeading = page.getByRole("heading", { level: 2, name: /^(note|notes)$/i });
+    await expect(notesHeading).toBeVisible();
+    // …and its "Scrivi una nota…" field is reachable (proUser can note).
+    await expect(page.getByLabel(/aggiungi nota|add note/i)).toBeVisible();
+
+    // DOM order: Notes precede the reference column's "Contatto"/"Contact".
+    const headings = await page
+      .getByRole("heading", { level: 2 })
+      .allTextContents();
+    const notesIndex = headings.findIndex((h) => /^(note|notes)$/i.test(h.trim()));
+    const contactIndex = headings.findIndex((h) => /^(contatto|contact)$/i.test(h.trim()));
+    expect(notesIndex).toBeGreaterThanOrEqual(0);
+    expect(contactIndex).toBeGreaterThan(notesIndex);
+  });
+
   test("requires a loss reason when moving to LOST (accessible alternative to drag&drop)", async ({
     page,
   }) => {
