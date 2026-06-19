@@ -134,7 +134,9 @@ model Lead {
 
   stage           LeadStage @default(TO_HANDLE)
   stageChangedAt  DateTime  @default(now())   // per il calcolo "giorni"
-  capitalBracket  CapitalBracket?
+  // Capitale: due rappresentazioni alternative e mutuamente esclusive (vedi nota sotto)
+  capitalBracket  CapitalBracket?            // la fascia (range)
+  capitalAmount   Decimal? @db.Decimal(14,2) // l'importo esatto in € (mai float)
 
   // provenienza / sorgente del lead (lista configurabile per tenant)
   sourceId        String?
@@ -157,7 +159,26 @@ model Lead {
   @@index([organizationId, stage])
   @@index([organizationId, stageChangedAt])
 }
+```
 
+> **Capitale del lead — fascia ↔ importo (derivazione).** L'utente sceglie *o* la
+> **fascia** (`capitalBracket`) *o* l'**importo esatto** in € (`capitalAmount`,
+> `Decimal(14,2)`, mai float — docs/00 §3). Sono mutuamente esclusivi:
+> - se imposta l'**importo esatto** → la **fascia viene DERIVATA** dall'importo
+>   server-side (helper `src/lib/capital.ts → bracketFromAmount`, confini
+>   semi-aperti `[lower, upper)` in €: `[0,50k)`, `[50k,100k)`, `[100k,250k)`,
+>   `[250k,500k)`, `[500k,1M)`, `[1M,∞)`) e vengono salvati **entrambi**, così
+>   dashboard/filtri/raggruppamenti che usano `capitalBracket` continuano a
+>   funzionare;
+> - se sceglie la **fascia** → si salva la fascia e si azzera `capitalAmount`;
+> - se entrambi vuoti → si azzerano entrambi.
+>
+> Il client non è mai fonte di verità per la fascia quando è presente l'importo.
+> Nella UI, dove si mostra il capitale, se è presente l'importo esatto si mostra
+> la **cifra in €**, altrimenti la label della fascia. Logica condivisa in
+> `src/lib/capital.ts → resolveCapital` (usata da `createLead`/`updateLead`).
+
+```prisma
 model StageHistory {                          // opzionale ma consigliato
   id          String   @id @default(cuid())
   leadId      String

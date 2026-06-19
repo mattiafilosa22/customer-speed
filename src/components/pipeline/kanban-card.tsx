@@ -8,7 +8,8 @@ import type { PipelineCard } from "@/server/pipeline";
 import { Pill } from "@/components/ui";
 import { Link } from "@/i18n/navigation";
 import { stageToPill } from "@/components/leads/stage-pill";
-import { useCapitalBracketLabel, useLeadStageLabel } from "@/i18n/enum-labels";
+import { useLeadStageLabel } from "@/i18n/enum-labels";
+import { useCapitalDisplay } from "@/components/leads/capital-display";
 import { MoveStageMenu, type StageOption } from "@/components/pipeline/move-stage-menu";
 
 /**
@@ -45,7 +46,7 @@ export function KanbanCard({
   canMove: boolean;
 }) {
   const t = useTranslations();
-  const capitalLabel = useCapitalBracketLabel();
+  const capitalDisplay = useCapitalDisplay();
   const stageLabel = useLeadStageLabel();
 
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
@@ -118,9 +119,12 @@ export function KanbanCard({
 
       <div className="flex flex-wrap items-center gap-2">
         <Pill stage={stageToPill(card.stage)}>{stageLabel(card.stage)}</Pill>
-        {card.capitalBracket ? (
+        {card.capitalAmount !== null || card.capitalBracket ? (
           <span className="label-mono bg-line2 text-ink rounded-pill inline-flex items-center px-2.5 py-0.5">
-            {capitalLabel(card.capitalBracket)}
+            {capitalDisplay({
+              capitalAmount: card.capitalAmount,
+              capitalBracket: card.capitalBracket,
+            })}
           </span>
         ) : null}
         {card.source ? (

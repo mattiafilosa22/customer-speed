@@ -95,3 +95,70 @@ test.describe("leads — create + stage move", () => {
     await expect(page.getByText(/^(persa|lost)$/i).first()).toBeVisible();
   });
 });
+
+/**
+ * Capital editor (docs/02 §2.4): the consultant sets an EXACT amount instead of
+ * a bracket; the bracket is derived server-side and the detail page then shows
+ * the cifra (and the derived bracket 100–250k surfaces on the kanban card).
+ * Creates its own lead so it never races the serial stage-move tests above.
+ */
+test.describe("leads — exact capital amount", () => {
+  test("sets an exact € amount and shows the figure on detail + kanban", async ({ page }) => {
+    const unique = Date.now();
+    const firstName = `Capital${unique}`;
+    const lastName = "Tester";
+
+    // Create a dedicated lead.
+    await page.goto("/leads");
+    await page
+      .getByRole("button", { name: /nuovo lead|new lead/i })
+      .first()
+      .click();
+    const createDialog = page.getByRole("dialog");
+    await createDialog
+      .getByLabel(/nome|first name/i)
+      .first()
+      .fill(firstName);
+    await createDialog
+      .getByLabel(/cognome|last name/i)
+      .first()
+      .fill(lastName);
+    await createDialog.getByRole("button", { name: /crea lead|create lead/i }).click();
+    await expect(page.getByRole("dialog")).toBeHidden();
+
+    // Open it via search.
+    await page
+      .getByLabel(/cerca|search/i)
+      .first()
+      .fill(firstName);
+    await page
+      .getByRole("link", { name: new RegExp(`${firstName} ${lastName}`, "i") })
+      .first()
+      .click();
+    await page.waitForURL(/\/leads\/[^/]+$/);
+
+    // Switch the capital editor to "Importo esatto". The radio is visually hidden
+    // behind a styled <label> (the Segmented control), so click the label text —
+    // this fires the real native change → React onValueChange (which a forced
+    // check on the sr-only input would skip).
+    await page.locator("label").filter({ hasText: /^(importo esatto|exact amount)$/i }).click();
+    const amount = page.getByRole("textbox", { name: /importo esatto|exact amount/i });
+    await amount.fill("175000");
+    await page
+      .locator("form")
+      .filter({ has: amount })
+      .getByRole("button", { name: /^(salva|save)$/i })
+      .click();
+
+    // The summary card now shows the exact figure (EUR, locale-formatted:
+    // IT "175.000,00 €" / EN "€175,000.00"), not the bracket label.
+    await expect(page.getByText(/175[.,]000/).first()).toBeVisible();
+
+    // The derived bracket (100-250k) surfaces on the kanban card, which now
+    // shows the exact figure too.
+    await page.goto("/pipeline");
+    const card = page.locator("article", { hasText: `${firstName} ${lastName}` }).first();
+    await expect(card).toBeVisible();
+    await expect(card.getByText(/175[.,]000/)).toBeVisible();
+  });
+});

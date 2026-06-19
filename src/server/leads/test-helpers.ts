@@ -1,3 +1,4 @@
+import { Prisma } from "@/generated/prisma/client";
 import type { CapitalBracket, LeadStage } from "@/generated/prisma/enums";
 import type { TenantPrismaClient } from "@/lib/prisma-tenant";
 import type { AuditEvent, AuditLogger } from "@/server/audit/audit-log";
@@ -31,6 +32,7 @@ export interface LeadRow {
   stage: LeadStage;
   stageChangedAt: Date;
   capitalBracket: CapitalBracket | null;
+  capitalAmount: number | null;
   sourceId: string | null;
   lossReasonId: string | null;
   adminNotes: string | null;
@@ -121,6 +123,7 @@ export class LeadStore {
       stage: partial.stage ?? ("TO_HANDLE" as LeadStage),
       stageChangedAt: partial.stageChangedAt ?? now,
       capitalBracket: partial.capitalBracket ?? null,
+      capitalAmount: partial.capitalAmount ?? null,
       sourceId: partial.sourceId ?? null,
       lossReasonId: partial.lossReasonId ?? null,
       adminNotes: partial.adminNotes ?? null,
@@ -332,6 +335,8 @@ export function tenantClientFor(store: LeadStore, organizationId: string): Tenan
           stage: l.stage,
           stageChangedAt: l.stageChangedAt,
           capitalBracket: l.capitalBracket,
+          // Mirror Prisma: a Decimal column comes back as Prisma.Decimal | null.
+          capitalAmount: l.capitalAmount === null ? null : new Prisma.Decimal(l.capitalAmount),
           createdAt: l.createdAt,
           source: l.sourceId
             ? (store.leadSources
@@ -360,6 +365,7 @@ export function tenantClientFor(store: LeadStore, organizationId: string): Tenan
           stage: data.stage as LeadStage | undefined,
           stageChangedAt: data.stageChangedAt as Date | undefined,
           capitalBracket: (data.capitalBracket as CapitalBracket | null) ?? null,
+          capitalAmount: toAmountNumber(data.capitalAmount),
           sourceId: (data.sourceId as string | null) ?? null,
         });
         return select ? { id: row.id } : row;
@@ -552,6 +558,13 @@ export function tenantClientFor(store: LeadStore, organizationId: string): Tenan
   return client as unknown as TenantPrismaClient;
 }
 
+/** Normalize a written capital amount (number | Decimal | null) to number|null. */
+function toAmountNumber(value: unknown): number | null {
+  if (value === null || value === undefined) return null;
+  if (value instanceof Prisma.Decimal) return value.toNumber();
+  return Number(value);
+}
+
 function applyLeadUpdate(row: LeadRow, data: Where): void {
   if (typeof data.firstName === "string") row.firstName = data.firstName;
   if (typeof data.lastName === "string") row.lastName = data.lastName;
@@ -559,6 +572,7 @@ function applyLeadUpdate(row: LeadRow, data: Where): void {
   if ("phone" in data) row.phone = (data.phone as string | null) ?? null;
   if ("capitalBracket" in data)
     row.capitalBracket = (data.capitalBracket as CapitalBracket) ?? null;
+  if ("capitalAmount" in data) row.capitalAmount = toAmountNumber(data.capitalAmount);
   if ("adminNotes" in data) row.adminNotes = (data.adminNotes as string | null) ?? null;
   if ("deletedAt" in data) row.deletedAt = (data.deletedAt as Date | null) ?? null;
   if ("stage" in data) row.stage = data.stage as LeadStage;

@@ -170,7 +170,17 @@ model Lead {
 
   stage          LeadStage       @default(TO_HANDLE)
   stageChangedAt DateTime        @default(now()) // per il calcolo "giorni nello stage"
+
+  // Capitale del lead. Due rappresentazioni alternative, mutuamente esclusive:
+  //  - `capitalBracket`: la fascia (range) selezionata dall'utente.
+  //  - `capitalAmount`: l'importo esatto in € (Decimal, mai float — docs/00 §3).
+  // Quando l'utente inserisce l'importo esatto, la FASCIA viene DERIVATA dal
+  // valore (vedi src/lib/capital.ts) e salvata anch'essa: così dashboard, filtri
+  // e raggruppamenti che usano `capitalBracket` continuano a funzionare sempre.
+  // Quando sceglie la fascia, `capitalAmount` viene azzerato. La derivazione è
+  // server-side: il client non è mai fonte di verità per la fascia.
   capitalBracket CapitalBracket?
+  capitalAmount  Decimal?        @db.Decimal(14, 2)
 
   // Provenienza / sorgente (lista configurabile per tenant).
   sourceId String?

@@ -376,7 +376,13 @@
     "capital": {
       "title": "Capital",
       "placeholder": "Select a bracket",
-      "none": "Not set"
+      "none": "Not set",
+      "modeLabel": "Capital mode",
+      "modeBracket": "Bracket",
+      "modeAmount": "Exact amount",
+      "amountLabel": "Exact amount (€)",
+      "amountPlaceholder": "e.g. 175000",
+      "amountHint": "The bracket is derived automatically from the amount."
     },
     "summary": {
       "title": "Summary",

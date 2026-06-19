@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { NotFoundError, ValidationError } from "@/lib/errors";
-import { LeadStage } from "@/generated/prisma/enums";
+import { CapitalBracket, LeadStage } from "@/generated/prisma/enums";
 import { createLead } from "@/server/leads/create-lead";
 import { buildFakeLeadDeps, LeadStore } from "@/server/leads/test-helpers";
 
@@ -59,6 +59,42 @@ describe("createLead", () => {
       createLead(deps, { firstName: "Mario", lastName: "Rossi", sourceId: otherSource.id }),
     ).rejects.toBeInstanceOf(NotFoundError);
     expect(store.leads).toHaveLength(0);
+  });
+
+  it("derives the bracket from an exact capital amount on create", async () => {
+    const store = new LeadStore();
+    const deps = buildFakeLeadDeps(store, ORG_A, USER_A);
+
+    await createLead(deps, {
+      firstName: "Mario",
+      lastName: "Rossi",
+      capitalAmount: "175000",
+    });
+
+    expect(store.lead().capitalAmount).toBe(175_000);
+    expect(store.lead().capitalBracket).toBe(CapitalBracket.B_100_250K);
+  });
+
+  it("stores the bracket alone when only a bracket is given on create", async () => {
+    const store = new LeadStore();
+    const deps = buildFakeLeadDeps(store, ORG_A, USER_A);
+
+    await createLead(deps, {
+      firstName: "Mario",
+      lastName: "Rossi",
+      capitalBracket: CapitalBracket.B_500K_1M,
+    });
+
+    expect(store.lead().capitalBracket).toBe(CapitalBracket.B_500K_1M);
+    expect(store.lead().capitalAmount).toBeNull();
+  });
+
+  it("rejects a negative capital amount on create", async () => {
+    const store = new LeadStore();
+    const deps = buildFakeLeadDeps(store, ORG_A, USER_A);
+    await expect(
+      createLead(deps, { firstName: "Mario", lastName: "Rossi", capitalAmount: "-1" }),
+    ).rejects.toBeInstanceOf(ValidationError);
   });
 
   it("records an audit entry for the actor's tenant", async () => {

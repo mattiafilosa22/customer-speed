@@ -140,6 +140,8 @@ const FABIO_LEADS: ReadonlyArray<{
   phone: string;
   stage: LeadStage;
   capitalBracket: CapitalBracket;
+  /** Importo esatto (€) in alternativa alla fascia; la fascia ne è la derivazione. */
+  capitalAmount?: number;
   sourceLabel: string;
   adminNotes: string;
 }> = [
@@ -149,7 +151,10 @@ const FABIO_LEADS: ReadonlyArray<{
     email: "annalisa.giobbio@example.com",
     phone: "+39 320 1112233",
     stage: LeadStage.WAITING_DECISION,
+    // Capitale impostato come IMPORTO ESATTO (175.000 €): la fascia B_100_250K è
+    // la derivazione coerente. Mostra in UI la cifra anziché la fascia.
     capitalBracket: CapitalBracket.B_100_250K,
+    capitalAmount: 175_000,
     sourceLabel: "Instagram",
     adminNotes: "Interessata a una consulenza patrimoniale. In attesa di decisione.",
   },
@@ -356,6 +361,7 @@ async function seedLeadsAndInvoice(
         phone: lead.phone,
         stage: lead.stage,
         capitalBracket: lead.capitalBracket,
+        capitalAmount: lead.capitalAmount ?? null,
         sourceId: sourceByLabel.get(lead.sourceLabel) ?? null,
         adminNotes: lead.adminNotes,
       },

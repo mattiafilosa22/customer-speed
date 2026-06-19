@@ -13,6 +13,7 @@ export const pipelineCardSelect = {
   stage: true,
   stageChangedAt: true,
   capitalBracket: true,
+  capitalAmount: true,
   source: { select: { id: true, label: true } },
 } satisfies Prisma.LeadSelect;
 

@@ -1,5 +1,6 @@
 import { Prisma } from "@/generated/prisma/client";
 import { NotFoundError } from "@/lib/errors";
+import { resolveCapital } from "@/lib/capital";
 import { parseInput } from "@/server/validation";
 import type { LeadDeps } from "@/server/leads/deps";
 import { updateLeadSchema } from "@/server/leads/schemas";
@@ -37,7 +38,16 @@ export async function updateLead(
   if (data.lastName !== undefined) updateData.lastName = data.lastName;
   if (data.email !== undefined) updateData.email = data.email ?? null;
   if (data.phone !== undefined) updateData.phone = data.phone ?? null;
-  if (data.capitalBracket !== undefined) updateData.capitalBracket = data.capitalBracket ?? null;
+  // Capital: exact amount OR bracket — derive the bracket from the amount and
+  // keep both columns consistent (docs/02 §2.4). Resolved once, server-side.
+  const capital = resolveCapital({
+    capitalAmount: data.capitalAmount,
+    capitalBracket: data.capitalBracket,
+  });
+  if (capital !== undefined) {
+    updateData.capitalBracket = capital.capitalBracket;
+    updateData.capitalAmount = capital.capitalAmount;
+  }
   if (data.adminNotes !== undefined) updateData.adminNotes = data.adminNotes ?? null;
   if (data.sourceId !== undefined) {
     updateData.source = data.sourceId ? { connect: { id: data.sourceId } } : { disconnect: true };

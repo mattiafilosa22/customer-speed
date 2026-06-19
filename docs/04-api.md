@@ -40,11 +40,13 @@ GET    /api/leads?query=&stage=&source=&year=&month=&sort=days_asc|days_desc&min
        → lista paginata (per "I miei lead"); filtro opzionale per provenienza (sourceId)
 POST   /api/leads                      # crea lead (sourceId opzionale)
 GET    /api/leads/:id                  # dettaglio
-PATCH  /api/leads/:id                  # aggiorna campi (incl. capitalBracket, sourceId)
+PATCH  /api/leads/:id                  # aggiorna campi (incl. capitalBracket | capitalAmount, sourceId)
 DELETE /api/leads/:id                  # solo ruoli con permesso (soft delete)
 PATCH  /api/leads/:id/stage            # { stage, lossReason? } -> aggiorna stage + stageChangedAt + StageHistory
 ```
 Validazioni: email formato valido (se presente), phone normalizzato, `capitalBracket` ∈ enum, `sourceId` deve appartenere allo stesso tenant, transizione a `LOST` richiede `lossReason`.
+
+**Capitale (fascia *o* importo esatto).** Sia in POST sia in PATCH il capitale si imposta in alternativa con `capitalBracket` (enum) **oppure** `capitalAmount` (importo esatto in €: numero o stringa con separatore decimale `.`/`,`, `>= 0` e `< 1e12`). Quando è presente `capitalAmount`, la **fascia è derivata server-side** dall'importo (vedi `docs/03` e `src/lib/capital.ts`) e vengono salvati entrambi; il client non è fonte di verità per la fascia. Se si invia solo `capitalBracket`, `capitalAmount` viene azzerato; se entrambi vuoti/`null`, il capitale è azzerato. `capitalAmount` non numerico o negativo → `400`.
 
 ## 4.4 Note
 ```
