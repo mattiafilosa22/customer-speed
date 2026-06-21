@@ -14,6 +14,26 @@ export class UnauthorizedError extends Error {
   }
 }
 
+/**
+ * The reCAPTCHA v3 score was too low and the v2 checkbox fallback is configured,
+ * so the auth flow needs the user to complete the "I'm not a robot" challenge
+ * (docs/06 §6.2). This is NOT an authorization failure and deliberately does NOT
+ * extend `UnauthorizedError`: it reveals nothing about the account (it is raised
+ * before — or independently of — any credential/account lookup), it only signals
+ * the form to render the v2 widget. The form layer maps it to a dedicated,
+ * non-revealing state (`recaptchaV2Required`), never to the credential error.
+ *
+ * Status 428 (Precondition Required): the request can't proceed until the extra
+ * verification precondition is satisfied.
+ */
+export class RecaptchaV2RequiredError extends Error {
+  readonly status = 428 as const;
+  constructor(message = "reCAPTCHA v2 challenge required") {
+    super(message);
+    this.name = "RecaptchaV2RequiredError";
+  }
+}
+
 /** Input failed validation (Zod). Carries field issues for the form layer. */
 export class ValidationError extends Error {
   readonly status = 400 as const;

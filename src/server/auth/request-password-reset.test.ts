@@ -1,12 +1,13 @@
 import { describe, expect, it } from "vitest";
 
-import { RateLimitedError, ValidationError } from "@/lib/errors";
+import { RateLimitedError, RecaptchaV2RequiredError, ValidationError } from "@/lib/errors";
 import { requestPasswordReset } from "@/server/auth/request-password-reset";
 import {
   blockAllRateLimiter,
   buildFakeDeps,
   FakeDb,
   recaptchaReturning,
+  recaptchaV2Returning,
 } from "@/server/auth/test-helpers";
 
 /**
@@ -109,6 +110,65 @@ describe("requestPasswordReset", () => {
 
     expect(result.accepted).toBe(true);
     expect(db.resetTokens).toHaveLength(1);
+  });
+
+  // ── v2 checkbox fallback when v3 score is low (docs/06 §6.1-6.2) ───────────
+  it("LOW-SCORE + v2 NOT configured → silent no-op (no token), no regression", async () => {
+    const db = new FakeDb();
+    seedActiveUser(db);
+    const deps = buildFakeDeps(db, {
+      verifyRecaptcha: recaptchaReturning("low-score") as unknown as typeof deps.verifyRecaptcha,
+      recaptchaV2Enabled: false,
+    });
+
+    const result = await requestPasswordReset(deps, baseInput);
+
+    expect(result.accepted).toBe(true);
+    expect(db.resetTokens).toHaveLength(0);
+  });
+
+  it("LOW-SCORE + v2 configured + NO v2 token → RecaptchaV2RequiredError (no token, before any lookup)", async () => {
+    const db = new FakeDb();
+    seedActiveUser(db);
+    const deps = buildFakeDeps(db, {
+      verifyRecaptcha: recaptchaReturning("low-score") as unknown as typeof deps.verifyRecaptcha,
+      recaptchaV2Enabled: true,
+    });
+
+    await expect(requestPasswordReset(deps, baseInput)).rejects.toBeInstanceOf(
+      RecaptchaV2RequiredError,
+    );
+    expect(db.resetTokens).toHaveLength(0);
+  });
+
+  it("LOW-SCORE + v2 configured + valid v2 token → proceeds, issues a token", async () => {
+    const db = new FakeDb();
+    seedActiveUser(db);
+    const deps = buildFakeDeps(db, {
+      verifyRecaptcha: recaptchaReturning("low-score") as unknown as typeof deps.verifyRecaptcha,
+      verifyRecaptchaV2: recaptchaV2Returning("ok") as unknown as typeof deps.verifyRecaptchaV2,
+      recaptchaV2Enabled: true,
+    });
+
+    const result = await requestPasswordReset(deps, { ...baseInput, recaptchaV2Token: "v2-ok" });
+
+    expect(result.accepted).toBe(true);
+    expect(db.resetTokens).toHaveLength(1);
+  });
+
+  it("LOW-SCORE + v2 configured + invalid v2 token → RecaptchaV2RequiredError", async () => {
+    const db = new FakeDb();
+    seedActiveUser(db);
+    const deps = buildFakeDeps(db, {
+      verifyRecaptcha: recaptchaReturning("low-score") as unknown as typeof deps.verifyRecaptcha,
+      verifyRecaptchaV2: recaptchaV2Returning("failed") as unknown as typeof deps.verifyRecaptchaV2,
+      recaptchaV2Enabled: true,
+    });
+
+    await expect(
+      requestPasswordReset(deps, { ...baseInput, recaptchaV2Token: "v2-bad" }),
+    ).rejects.toBeInstanceOf(RecaptchaV2RequiredError);
+    expect(db.resetTokens).toHaveLength(0);
   });
 
   it("rejects invalid input with ValidationError", async () => {

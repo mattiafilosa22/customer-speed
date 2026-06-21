@@ -2,6 +2,8 @@
 
 import { useCallback, useEffect, useRef } from "react";
 
+import "@/components/auth/recaptcha-types";
+
 /**
  * reCAPTCHA v3 client integration (docs/06 §6.2).
  *
@@ -16,17 +18,6 @@ import { useCallback, useEffect, useRef } from "react";
  * minimum needed to operate the security control on auth forms; its use is
  * declared in the cookie/privacy policy. It is loaded on the auth pages only.
  */
-
-interface GrecaptchaV3 {
-  ready(cb: () => void): void;
-  execute(siteKey: string, options: { action: string }): Promise<string>;
-}
-
-declare global {
-  interface Window {
-    grecaptcha?: GrecaptchaV3;
-  }
-}
 
 const SCRIPT_ID = "recaptcha-v3";
 
@@ -60,14 +51,14 @@ export function useRecaptcha(): {
 
   const execute = useCallback(
     async (action: string): Promise<string | null> => {
-      if (!key || typeof window === "undefined" || !window.grecaptcha) {
+      const grecaptcha = window.grecaptcha;
+      if (!key || typeof window === "undefined" || !grecaptcha?.ready || !grecaptcha.execute) {
         return null;
       }
-      const grecaptcha = window.grecaptcha;
+      const { ready, execute: run } = grecaptcha;
       return new Promise<string | null>((resolve) => {
-        grecaptcha.ready(() => {
-          grecaptcha
-            .execute(key, { action })
+        ready(() => {
+          run(key, { action })
             .then((token) => resolve(token))
             .catch(() => resolve(null));
         });

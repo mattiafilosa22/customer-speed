@@ -1,12 +1,18 @@
 import { describe, expect, it } from "vitest";
 
-import { ConflictError, RateLimitedError, ValidationError } from "@/lib/errors";
+import {
+  ConflictError,
+  RateLimitedError,
+  RecaptchaV2RequiredError,
+  ValidationError,
+} from "@/lib/errors";
 import { register } from "@/server/auth/register";
 import {
   blockAllRateLimiter,
   buildFakeDeps,
   FakeDb,
   recaptchaReturning,
+  recaptchaV2Returning,
 } from "@/server/auth/test-helpers";
 
 const validInput = {
@@ -101,5 +107,51 @@ describe("register", () => {
     const result = await register(deps, validInput);
     expect(result.userId).toBeTruthy();
     expect(db.users).toHaveLength(1);
+  });
+
+  // ── v2 checkbox fallback when v3 score is low (docs/06 §6.2) ───────────────
+  it("LOW-SCORE + v2 NOT configured → ConflictError, no user (no regression)", async () => {
+    const db = new FakeDb();
+    const deps = buildFakeDeps(db, {
+      verifyRecaptcha: recaptchaReturning("low-score") as unknown as typeof deps.verifyRecaptcha,
+      recaptchaV2Enabled: false,
+    });
+    await expect(register(deps, validInput)).rejects.toBeInstanceOf(ConflictError);
+    expect(db.users).toHaveLength(0);
+  });
+
+  it("LOW-SCORE + v2 configured + NO v2 token → RecaptchaV2RequiredError, no user", async () => {
+    const db = new FakeDb();
+    const deps = buildFakeDeps(db, {
+      verifyRecaptcha: recaptchaReturning("low-score") as unknown as typeof deps.verifyRecaptcha,
+      recaptchaV2Enabled: true,
+    });
+    await expect(register(deps, validInput)).rejects.toBeInstanceOf(RecaptchaV2RequiredError);
+    expect(db.users).toHaveLength(0);
+  });
+
+  it("LOW-SCORE + v2 configured + valid v2 token → creates the user", async () => {
+    const db = new FakeDb();
+    const deps = buildFakeDeps(db, {
+      verifyRecaptcha: recaptchaReturning("low-score") as unknown as typeof deps.verifyRecaptcha,
+      verifyRecaptchaV2: recaptchaV2Returning("ok") as unknown as typeof deps.verifyRecaptchaV2,
+      recaptchaV2Enabled: true,
+    });
+    const result = await register(deps, { ...validInput, recaptchaV2Token: "v2-ok" });
+    expect(result.userId).toBeTruthy();
+    expect(db.users).toHaveLength(1);
+  });
+
+  it("LOW-SCORE + v2 configured + invalid v2 token → RecaptchaV2RequiredError, no user", async () => {
+    const db = new FakeDb();
+    const deps = buildFakeDeps(db, {
+      verifyRecaptcha: recaptchaReturning("low-score") as unknown as typeof deps.verifyRecaptcha,
+      verifyRecaptchaV2: recaptchaV2Returning("failed") as unknown as typeof deps.verifyRecaptchaV2,
+      recaptchaV2Enabled: true,
+    });
+    await expect(
+      register(deps, { ...validInput, recaptchaV2Token: "v2-bad" }),
+    ).rejects.toBeInstanceOf(RecaptchaV2RequiredError);
+    expect(db.users).toHaveLength(0);
   });
 });

@@ -2,7 +2,7 @@ import { vi } from "vitest";
 
 import type { PasswordHasher } from "@/lib/password";
 import type { RateLimiter, RateLimitResult } from "@/lib/rate-limit";
-import type { RecaptchaVerification } from "@/lib/recaptcha";
+import type { RecaptchaV2Verification, RecaptchaVerification } from "@/lib/recaptcha";
 import type { PrismaClient } from "@/generated/prisma/client";
 import type { Role } from "@/generated/prisma/enums";
 import type { AuditEvent, AuditLogger } from "@/server/audit/audit-log";
@@ -261,6 +261,10 @@ export function recaptchaReturning(outcome: RecaptchaVerification["outcome"]) {
   return vi.fn(async (): Promise<RecaptchaVerification> => ({ outcome }));
 }
 
+export function recaptchaV2Returning(outcome: RecaptchaV2Verification["outcome"]) {
+  return vi.fn(async (): Promise<RecaptchaV2Verification> => ({ outcome }));
+}
+
 /** Build AuthDeps wired to the fakes. */
 export function buildFakeDeps(db: FakeDb, overrides: Partial<AuthDeps> = {}): AuthDeps {
   const sink = db.audits;
@@ -271,6 +275,11 @@ export function buildFakeDeps(db: FakeDb, overrides: Partial<AuthDeps> = {}): Au
     audit: fakeAudit(sink),
     rateLimiter: allowAllRateLimiter(),
     verifyRecaptcha: recaptchaReturning("ok") as unknown as AuthDeps["verifyRecaptcha"],
+    verifyRecaptchaV2: recaptchaV2Returning("ok") as unknown as AuthDeps["verifyRecaptchaV2"],
+    // v2 fallback is OFF by default in the fakes — the existing tests assert the
+    // current "low-score → reject" behaviour; tests that exercise the fallback
+    // flip this on explicitly via overrides.
+    recaptchaV2Enabled: false,
     appUrl: "http://localhost:3000",
     requestMeta: { ip: "1.2.3.4", userAgent: "vitest" },
     now: () => new Date("2026-06-18T12:00:00.000Z"),

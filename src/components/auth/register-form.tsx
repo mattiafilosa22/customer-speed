@@ -8,8 +8,10 @@ import { Link } from "@/i18n/navigation";
 import { registerAction } from "@/app/[locale]/(auth)/actions";
 import { type ActionState } from "@/server/actions/action-result";
 import { FormAlert } from "@/components/auth/form-alert";
+import { RecaptchaV2Challenge } from "@/components/auth/recaptcha-v2-challenge";
 import { SubmitButton } from "@/components/auth/submit-button";
 import { useMessage } from "@/components/auth/use-message";
+import { useRecaptchaV2 } from "@/components/auth/use-recaptcha-v2";
 import { useRecaptchaSubmit } from "@/components/auth/use-recaptcha-submit";
 
 const initialState: ActionState = { status: "idle" };
@@ -30,7 +32,11 @@ export function RegisterForm() {
   const tm = useMessage();
   const locale = useLocale();
   const [state, formAction] = useActionState(registerAction, initialState);
-  const onSubmit = useRecaptchaSubmit("register", formAction);
+  const needsV2 = state.status === "recaptchaV2Required";
+  const v2 = useRecaptchaV2(needsV2);
+  const onSubmit = useRecaptchaSubmit("register", formAction, {
+    getV2Token: needsV2 && v2.enabled ? v2.getResponse : undefined,
+  });
 
   const isError = state.status === "error";
 
@@ -106,6 +112,8 @@ export function RegisterForm() {
             : undefined
         }
       />
+
+      {needsV2 && v2.enabled ? <RecaptchaV2Challenge containerRef={v2.containerRef} /> : null}
 
       <SubmitButton pendingLabel={t("auth.register.submitting")}>
         {t("auth.register.submit")}

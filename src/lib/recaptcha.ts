@@ -93,6 +93,71 @@ export async function verifyRecaptcha(
 }
 
 /**
+ * reCAPTCHA v2 (checkbox "I'm not a robot") verification — the FALLBACK used when
+ * the v3 score is low (docs/06 §6.2). Unlike v3, the v2 siteverify response has
+ * NO `score`: it is a binary success/failure, so the outcome is simpler.
+ *
+ * Outcomes:
+ *   - "ok"      → Google confirmed the checkbox challenge (human).
+ *   - "failed"  → token rejected / missing / network error.
+ *   - "skipped" → the v2 secret is NOT configured. This mirrors the v3 dev no-op
+ *                 so behaviour degrades coherently; callers decide what "skipped"
+ *                 means in context (the use cases treat "v2 not configured" via an
+ *                 explicit `recaptchaV2Enabled` flag, not via this outcome).
+ *
+ * The HTTP call is injected (`fetchImpl`) for unit tests without network.
+ */
+export type RecaptchaV2Outcome = "ok" | "failed" | "skipped";
+
+export interface RecaptchaV2Verification {
+  readonly outcome: RecaptchaV2Outcome;
+}
+
+export interface VerifyRecaptchaV2Deps {
+  readonly secretKey?: string;
+  readonly fetchImpl?: FetchLike;
+  readonly logger?: Pick<typeof console, "warn" | "error">;
+}
+
+export async function verifyRecaptchaV2(
+  token: string | undefined | null,
+  deps: VerifyRecaptchaV2Deps = {},
+): Promise<RecaptchaV2Verification> {
+  const secretKey = deps.secretKey ?? env.RECAPTCHA_V2_SECRET_KEY;
+  const logger = deps.logger ?? console;
+  const fetchImpl: FetchLike = deps.fetchImpl ?? fetch;
+
+  // No v2 secret configured → the fallback is unavailable; degrade like v3.
+  if (!secretKey) {
+    logger.warn(
+      "[recaptcha] RECAPTCHA_V2_SECRET_KEY not set — v2 fallback unavailable. " +
+        "Set the key to enable the checkbox challenge on low v3 scores.",
+    );
+    return { outcome: "skipped" };
+  }
+
+  if (!token) {
+    return { outcome: "failed" };
+  }
+
+  let data: SiteVerifyResponse;
+  try {
+    const body = new URLSearchParams({ secret: secretKey, response: token });
+    const res = await fetchImpl(SITEVERIFY_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: body.toString(),
+    });
+    data = (await res.json()) as SiteVerifyResponse;
+  } catch (error: unknown) {
+    logger.error("[recaptcha] v2 verification request failed", error);
+    return { outcome: "failed" };
+  }
+
+  return { outcome: data.success ? "ok" : "failed" };
+}
+
+/**
  * Single decision point for whether a reCAPTCHA outcome is acceptable on a
  * protected auth flow (register/login/forgot — docs/06 §6.1-6.2).
  *

@@ -102,6 +102,10 @@
         "terms": "I accept the <link>terms of service</link>."
       }
     },
+    "recaptcha": {
+      "v2Required": "Complete the security check below to continue.",
+      "v2GroupLabel": "\"I'm not a robot\" security check"
+    },
     "verifyEmail": {
       "title": "Verify email",
       "description": "We're confirming your email address.",

@@ -53,6 +53,20 @@ describe("parseEnv", () => {
     ).toThrowError(/RECAPTCHA_MIN_SCORE/);
   });
 
+  it("treats the reCAPTCHA v2 fallback keys as optional", () => {
+    const without = parseEnv(validEnv as unknown as NodeJS.ProcessEnv);
+    expect(without.RECAPTCHA_V2_SECRET_KEY).toBeUndefined();
+    expect(without.NEXT_PUBLIC_RECAPTCHA_V2_SITE_KEY).toBeUndefined();
+
+    const withV2 = parseEnv({
+      ...validEnv,
+      NEXT_PUBLIC_RECAPTCHA_V2_SITE_KEY: "v2-site",
+      RECAPTCHA_V2_SECRET_KEY: "v2-secret",
+    } as unknown as NodeJS.ProcessEnv);
+    expect(withV2.RECAPTCHA_V2_SECRET_KEY).toBe("v2-secret");
+    expect(withV2.NEXT_PUBLIC_RECAPTCHA_V2_SITE_KEY).toBe("v2-site");
+  });
+
   it("defaults the rate-limit backend to memory and the kill-switch to false", () => {
     const result = parseEnv(validEnv as unknown as NodeJS.ProcessEnv);
     expect(result.RATE_LIMIT_BACKEND).toBe("memory");

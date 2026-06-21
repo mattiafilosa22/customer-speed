@@ -2,7 +2,7 @@ import { env } from "@/lib/env";
 import { argon2PasswordHasher } from "@/lib/password";
 import { prisma } from "@/lib/prisma";
 import { authRateLimiter } from "@/lib/rate-limit";
-import { verifyRecaptcha } from "@/lib/recaptcha";
+import { verifyRecaptcha, verifyRecaptchaV2 } from "@/lib/recaptcha";
 import { createAuditLogger } from "@/server/audit/audit-log";
 import type { AuthDeps } from "@/server/auth/deps";
 import { getEmailSender } from "@/server/email";
@@ -35,6 +35,10 @@ export function buildAuthDeps(requestMeta?: {
     audit: createAuditLogger(prisma),
     rateLimiter: authRateLimiter,
     verifyRecaptcha,
+    verifyRecaptchaV2,
+    // The v2 fallback is enabled iff its SECRET is configured. Deriving the flag
+    // here keeps the use cases env-agnostic and unit-testable.
+    recaptchaV2Enabled: Boolean(env.RECAPTCHA_V2_SECRET_KEY),
     appUrl: env.APP_URL,
     requestMeta,
   };

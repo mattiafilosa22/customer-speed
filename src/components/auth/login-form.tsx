@@ -8,8 +8,10 @@ import { Link } from "@/i18n/navigation";
 import { loginAction } from "@/app/[locale]/(auth)/actions";
 import { type ActionState } from "@/server/actions/action-result";
 import { FormAlert } from "@/components/auth/form-alert";
+import { RecaptchaV2Challenge } from "@/components/auth/recaptcha-v2-challenge";
 import { SubmitButton } from "@/components/auth/submit-button";
 import { useMessage } from "@/components/auth/use-message";
+import { useRecaptchaV2 } from "@/components/auth/use-recaptcha-v2";
 import { useRecaptchaSubmit } from "@/components/auth/use-recaptcha-submit";
 
 const initialState: ActionState = { status: "idle" };
@@ -25,7 +27,13 @@ export function LoginForm({ organizationSlug }: { organizationSlug?: string }) {
   const tm = useMessage();
   const locale = useLocale();
   const [state, formAction] = useActionState(loginAction, initialState);
-  const onSubmit = useRecaptchaSubmit("login", formAction);
+  // After a low v3 score the server replies `recaptchaV2Required`; render the
+  // checkbox widget and attach its response on the next submit (docs/06 §6.2).
+  const needsV2 = state.status === "recaptchaV2Required";
+  const v2 = useRecaptchaV2(needsV2);
+  const onSubmit = useRecaptchaSubmit("login", formAction, {
+    getV2Token: needsV2 && v2.enabled ? v2.getResponse : undefined,
+  });
 
   const isError = state.status === "error";
 
@@ -61,6 +69,8 @@ export function LoginForm({ organizationSlug }: { organizationSlug?: string }) {
           isError && state.fieldErrors?.password ? tm(state.fieldErrors.password) : undefined
         }
       />
+
+      {needsV2 && v2.enabled ? <RecaptchaV2Challenge containerRef={v2.containerRef} /> : null}
 
       <SubmitButton pendingLabel={t("auth.login.submitting")}>
         {t("auth.login.submit")}

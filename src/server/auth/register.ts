@@ -1,7 +1,7 @@
 import { ConflictError, RateLimitedError } from "@/lib/errors";
-import { isRecaptchaAccepted } from "@/lib/recaptcha";
 import { EMAIL_VERIFICATION_TTL_MS, generateRawToken, hashToken } from "@/lib/tokens";
 import { type AuthDeps, clockNow, parseInput } from "@/server/auth/deps";
+import { recaptchaGate } from "@/server/auth/recaptcha-gate";
 import { registerSchema } from "@/server/auth/schemas";
 
 /**
@@ -37,10 +37,15 @@ export async function register(
     throw new RateLimitedError(limit.retryAfterSeconds);
   }
 
-  // reCAPTCHA: reject "failed" AND "low-score"; only "ok"/"skipped" pass
-  // ("skipped" = keys unset in dev). Generic ConflictError → non-revealing.
-  const captcha = await deps.verifyRecaptcha(data.recaptchaToken, {});
-  if (!isRecaptchaAccepted(captcha.outcome)) {
+  // reCAPTCHA gate: "ok"/"skipped" pass; "failed"/low-score-without-v2 → reject
+  // (generic ConflictError → non-revealing); a low score with the v2 fallback
+  // configured throws `RecaptchaV2RequiredError` to request the checkbox
+  // challenge (docs/06 §6.2). No user is created on a non-pass.
+  const verdict = await recaptchaGate(deps, {
+    v3Token: data.recaptchaToken,
+    v2Token: data.recaptchaV2Token,
+  });
+  if (verdict === "reject") {
     throw new ConflictError("Captcha verification failed");
   }
 

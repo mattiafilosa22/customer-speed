@@ -1,6 +1,6 @@
 import { RateLimitedError, UnauthorizedError } from "@/lib/errors";
-import { isRecaptchaAccepted } from "@/lib/recaptcha";
 import { type AuthDeps, clockNow, parseInput } from "@/server/auth/deps";
+import { recaptchaGate } from "@/server/auth/recaptcha-gate";
 import { loginSchema } from "@/server/auth/schemas";
 
 /**
@@ -32,11 +32,16 @@ export async function login(deps: AuthDeps, input: unknown): Promise<LoginResult
     throw new RateLimitedError(Math.max(byIp.retryAfterSeconds, byAccount.retryAfterSeconds));
   }
 
-  // reCAPTCHA: reject "failed" AND "low-score" (bot-like). Only "ok"/"skipped"
-  // pass — "skipped" happens solely when keys are unset in dev (docs/06 §6.2).
-  // The failure key is the SAME generic UnauthorizedError → no enumeration.
-  const captcha = await deps.verifyRecaptcha(data.recaptchaToken, {});
-  if (!isRecaptchaAccepted(captcha.outcome)) {
+  // reCAPTCHA gate: "ok"/"skipped" pass; "failed" → reject; a low v3 score either
+  // rejects (v2 not configured) or triggers the v2 checkbox fallback, which throws
+  // `RecaptchaV2RequiredError` (a non-revealing "challenge me" signal, distinct
+  // from the generic credential error). A "reject" maps to the SAME generic
+  // UnauthorizedError → no enumeration (docs/06 §6.2).
+  const verdict = await recaptchaGate(deps, {
+    v3Token: data.recaptchaToken,
+    v2Token: data.recaptchaV2Token,
+  });
+  if (verdict === "reject") {
     throw new UnauthorizedError("Invalid credentials");
   }
 

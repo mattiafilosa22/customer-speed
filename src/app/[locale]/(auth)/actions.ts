@@ -80,6 +80,8 @@ export async function loginAction(
       email: field(form, "email"),
       password: (form.get("password") as string | null) ?? "",
       recaptchaToken: field(form, "recaptchaToken") || undefined,
+      // v2 checkbox response, present only after a low-score challenge (docs/06 §6.2).
+      recaptchaV2Token: field(form, "recaptchaV2Token") || undefined,
     };
 
     // Pre-flight: rate limit + reCAPTCHA + credential check (throws on failure).
@@ -135,6 +137,7 @@ export async function registerAction(
       email: field(form, "email"),
       password: (form.get("password") as string | null) ?? "",
       recaptchaToken: field(form, "recaptchaToken") || undefined,
+      recaptchaV2Token: field(form, "recaptchaV2Token") || undefined,
       consents: [...registrationConsents()],
     });
 
@@ -179,6 +182,7 @@ export async function requestPasswordResetAction(
       organizationId,
       email: field(form, "email"),
       recaptchaToken: field(form, "recaptchaToken") || undefined,
+      recaptchaV2Token: field(form, "recaptchaV2Token") || undefined,
     });
     return ok("auth.forgotPassword.success");
   } catch (error) {
