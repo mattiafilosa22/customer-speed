@@ -18,6 +18,9 @@ const createLead = vi.fn();
 const softDeleteLead = vi.fn();
 const changeStage = vi.fn();
 const exportLeadDataXlsx = vi.fn();
+const redirectSpy = vi.fn((path: string): never => {
+  throw new Error(`NEXT_REDIRECT:${path}`);
+});
 
 vi.mock("@/lib/tenant", () => ({
   requireTenantContext: (...a: unknown[]) => requireTenantContext(...a),
@@ -40,6 +43,10 @@ vi.mock("@/server/leads", () => ({
   deleteExternalRef: vi.fn(),
 }));
 vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }));
+vi.mock("next/navigation", async () => {
+  const actual = await vi.importActual<typeof import("next/navigation")>("next/navigation");
+  return { ...actual, redirect: (...a: [string]) => redirectSpy(...a) };
+});
 vi.mock("@/server/privacy", () => ({
   buildExportDeps: (..._a: unknown[]) => ({ deps: true }),
   buildErasureDeps: (..._a: unknown[]) => ({ deps: true }),
@@ -97,23 +104,40 @@ describe("createLeadAction", () => {
 });
 
 describe("deleteLeadAction", () => {
-  it("requires lead.delete capability", async () => {
+  it("checks lead.delete, soft-deletes, then redirects to the list (default locale)", async () => {
     requireTenantContext.mockResolvedValue(TENANT);
     requirePermission.mockReturnValue(undefined);
     softDeleteLead.mockResolvedValue({ id: "lead_1" });
 
-    const res = await deleteLeadAction({ status: "idle" }, fd({ leadId: "lead_1" }));
+    // Navigates server-side (throws NEXT_REDIRECT) instead of returning a state,
+    // so the just-deleted detail page never re-renders → no blank page.
+    await expect(
+      deleteLeadAction({ status: "idle" }, fd({ leadId: "lead_1", locale: "it" })),
+    ).rejects.toThrow("NEXT_REDIRECT:/leads");
     expect(requirePermission).toHaveBeenCalledWith("proUser", "lead.delete");
-    expect(res).toEqual({ status: "success", messageKey: "leads.delete.success" });
+    expect(softDeleteLead).toHaveBeenCalled();
+    expect(redirectSpy).toHaveBeenCalledWith("/leads");
   });
 
-  it("maps NotFoundError (cross-tenant) to the notFound key", async () => {
+  it("redirects to the locale-prefixed list for a non-default locale", async () => {
+    requireTenantContext.mockResolvedValue(TENANT);
+    requirePermission.mockReturnValue(undefined);
+    softDeleteLead.mockResolvedValue({ id: "lead_1" });
+
+    await expect(
+      deleteLeadAction({ status: "idle" }, fd({ leadId: "lead_1", locale: "en" })),
+    ).rejects.toThrow("NEXT_REDIRECT:/en/leads");
+    expect(redirectSpy).toHaveBeenCalledWith("/en/leads");
+  });
+
+  it("maps NotFoundError (cross-tenant) to the notFound key and does NOT redirect", async () => {
     requireTenantContext.mockResolvedValue(TENANT);
     requirePermission.mockReturnValue(undefined);
     softDeleteLead.mockRejectedValue(new NotFoundError());
 
     const res = await deleteLeadAction({ status: "idle" }, fd({ leadId: "x" }));
     expect(res).toMatchObject({ status: "error", formError: "leads.errors.notFound" });
+    expect(redirectSpy).not.toHaveBeenCalled();
   });
 });
 

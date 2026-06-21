@@ -1,8 +1,9 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { unstable_rethrow } from "next/navigation";
+import { redirect, unstable_rethrow } from "next/navigation";
 
+import { asLocale, routing } from "@/i18n/routing";
 import { requirePermission } from "@/lib/rbac";
 import { requireTenantContext } from "@/lib/tenant";
 import {
@@ -224,11 +225,19 @@ export async function deleteLeadAction(
     const deps = buildLeadDeps(ctx);
     await softDeleteLead(deps, str(form, "leadId"));
     leadPaths();
-    return ok("leads.delete.success");
   } catch (error) {
     unstable_rethrow(error);
     return toActionState(error, errorKeys);
   }
+
+  // Navigate to the list on the SERVER. The delete is triggered from the lead
+  // detail page; after a Server Action Next refreshes the current route, which
+  // would re-run `getLead` for the just-soft-deleted lead → `notFound()` and,
+  // with no not-found boundary, a blank page. Redirecting server-side leaves the
+  // detail route before that refresh, so the user lands cleanly on the list.
+  // Locale-aware (`as-needed` prefix), mirroring the login redirect.
+  const locale = asLocale(str(form, "locale"));
+  redirect(locale === routing.defaultLocale ? "/leads" : `/${locale}/leads`);
 }
 
 // ── Notes ───────────────────────────────────────────────────────────────────────
