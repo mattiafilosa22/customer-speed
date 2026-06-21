@@ -1020,5 +1020,13 @@
         "resetPassword": "Reset password"
       }
     }
+  },
+  "errorBoundary": {
+    "title": "Qualcosa è andato storto",
+    "description": "Si è verificato un errore imprevisto. Riprova; se il problema persiste, ricarica la pagina.",
+    "retry": "Riprova",
+    "notFoundTitle": "Pagina non trovata",
+    "notFoundDescription": "La risorsa che cerchi non esiste o è stata spostata.",
+    "backToDashboard": "Torna alla dashboard"
   }
 }

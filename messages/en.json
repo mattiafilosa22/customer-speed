@@ -1020,5 +1020,13 @@
         "resetPassword": "Reset password"
       }
     }
+  },
+  "errorBoundary": {
+    "title": "Something went wrong",
+    "description": "An unexpected error occurred. Please try again; if it persists, reload the page.",
+    "retry": "Try again",
+    "notFoundTitle": "Page not found",
+    "notFoundDescription": "The resource you're looking for doesn't exist or was moved.",
+    "backToDashboard": "Back to the dashboard"
   }
 }
