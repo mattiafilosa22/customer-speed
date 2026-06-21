@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 
-import { isRecaptchaAccepted, verifyRecaptcha } from "@/lib/recaptcha";
+import { isRecaptchaAccepted, verifyRecaptcha, verifyRecaptchaV2 } from "@/lib/recaptcha";
 
 const silentLogger = { warn: vi.fn(), error: vi.fn() };
 
@@ -60,6 +60,51 @@ describe("verifyRecaptcha", () => {
     }) as unknown as typeof fetch;
     const result = await verifyRecaptcha("token", {
       secretKey: "sk",
+      fetchImpl: throwingFetch,
+      logger: silentLogger,
+    });
+    expect(result.outcome).toBe("failed");
+  });
+});
+
+describe("verifyRecaptchaV2", () => {
+  it("skips (no-op) when no v2 secret key is configured", async () => {
+    const result = await verifyRecaptchaV2("token", {
+      secretKey: undefined,
+      logger: silentLogger,
+    });
+    expect(result.outcome).toBe("skipped");
+  });
+
+  it("fails when the token is missing but a v2 key is configured", async () => {
+    const result = await verifyRecaptchaV2(undefined, { secretKey: "sk2", logger: silentLogger });
+    expect(result.outcome).toBe("failed");
+  });
+
+  it("returns ok for a successful v2 response (no score)", async () => {
+    const result = await verifyRecaptchaV2("token", {
+      secretKey: "sk2",
+      fetchImpl: fakeFetch({ success: true }),
+      logger: silentLogger,
+    });
+    expect(result.outcome).toBe("ok");
+  });
+
+  it("returns failed when Google reports success:false", async () => {
+    const result = await verifyRecaptchaV2("token", {
+      secretKey: "sk2",
+      fetchImpl: fakeFetch({ success: false, "error-codes": ["invalid-input-response"] }),
+      logger: silentLogger,
+    });
+    expect(result.outcome).toBe("failed");
+  });
+
+  it("returns failed when the request throws (network error)", async () => {
+    const throwingFetch = (async () => {
+      throw new Error("network");
+    }) as unknown as typeof fetch;
+    const result = await verifyRecaptchaV2("token", {
+      secretKey: "sk2",
       fetchImpl: throwingFetch,
       logger: silentLogger,
     });

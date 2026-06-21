@@ -57,6 +57,16 @@ const envSchema = z.object({
   // Minimum v3 score to accept (0..1). Below it → reject / fall back to v2.
   RECAPTCHA_MIN_SCORE: z.coerce.number().min(0).max(1).default(0.5),
 
+  // reCAPTCHA v2 — the "I'm not a robot" CHECKBOX fallback used when the v3 score
+  // is below the threshold (docs/06 §6.2). These are a DIFFERENT key pair from the
+  // v3 keys above (a v3 site key cannot render the v2 widget and vice-versa).
+  // Both are OPTIONAL: when the v2 SECRET is absent the fallback is disabled and a
+  // low v3 score is simply rejected (current behaviour, no regression). The site
+  // key is exposed to the browser to render the widget, so it carries the
+  // `NEXT_PUBLIC_` prefix; the secret is server-side only (siteverify).
+  NEXT_PUBLIC_RECAPTCHA_V2_SITE_KEY: z.string().min(1).optional(),
+  RECAPTCHA_V2_SECRET_KEY: z.string().min(1).optional(),
+
   // ── Transactional email (optional in dev → logging sender) ───────────
   RESEND_API_KEY: z.string().min(1).optional(),
   EMAIL_FROM: z.string().min(1).default("CustomerSpeed <no-reply@example.com>"),

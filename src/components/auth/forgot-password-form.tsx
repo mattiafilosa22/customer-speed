@@ -8,8 +8,10 @@ import { Link } from "@/i18n/navigation";
 import { requestPasswordResetAction } from "@/app/[locale]/(auth)/actions";
 import { type ActionState } from "@/server/actions/action-result";
 import { FormAlert } from "@/components/auth/form-alert";
+import { RecaptchaV2Challenge } from "@/components/auth/recaptcha-v2-challenge";
 import { SubmitButton } from "@/components/auth/submit-button";
 import { useMessage } from "@/components/auth/use-message";
+import { useRecaptchaV2 } from "@/components/auth/use-recaptcha-v2";
 import { useRecaptchaSubmit } from "@/components/auth/use-recaptcha-submit";
 
 const initialState: ActionState = { status: "idle" };
@@ -24,7 +26,11 @@ export function ForgotPasswordForm() {
   const tm = useMessage();
   const locale = useLocale();
   const [state, formAction] = useActionState(requestPasswordResetAction, initialState);
-  const onSubmit = useRecaptchaSubmit("forgot_password", formAction);
+  const needsV2 = state.status === "recaptchaV2Required";
+  const v2 = useRecaptchaV2(needsV2);
+  const onSubmit = useRecaptchaSubmit("forgot_password", formAction, {
+    getV2Token: needsV2 && v2.enabled ? v2.getResponse : undefined,
+  });
 
   if (state.status === "success") {
     return <FormAlert tone="success">{t("auth.forgotPassword.success")}</FormAlert>;
@@ -48,6 +54,8 @@ export function ForgotPasswordForm() {
         required
         error={isError && state.fieldErrors?.email ? tm(state.fieldErrors.email) : undefined}
       />
+
+      {needsV2 && v2.enabled ? <RecaptchaV2Challenge containerRef={v2.containerRef} /> : null}
 
       <SubmitButton pendingLabel={t("auth.forgotPassword.submitting")}>
         {t("auth.forgotPassword.submit")}

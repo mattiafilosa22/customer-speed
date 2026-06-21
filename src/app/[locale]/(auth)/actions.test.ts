@@ -1,6 +1,12 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { ConflictError, RateLimitedError, UnauthorizedError, ValidationError } from "@/lib/errors";
+import {
+  ConflictError,
+  RateLimitedError,
+  RecaptchaV2RequiredError,
+  UnauthorizedError,
+  ValidationError,
+} from "@/lib/errors";
 
 /**
  * Tests for the (auth) Server Actions. Scope: the ORCHESTRATION + non-revealing
@@ -135,6 +141,25 @@ describe("loginAction", () => {
       fieldErrors: { email: "auth.errors.fields.email" },
     });
   });
+
+  it("maps RecaptchaV2RequiredError to the dedicated recaptchaV2Required status (NOT a credential error)", async () => {
+    useCases.login.mockRejectedValue(new RecaptchaV2RequiredError());
+    const result = await loginAction(idle, fd(valid));
+    expect(result).toEqual({ status: "recaptchaV2Required" });
+    expect(signIn).not.toHaveBeenCalled();
+  });
+
+  it("forwards the v2 token from the form to the login use case", async () => {
+    useCases.login.mockResolvedValue({ userId: "u1", organizationId: "org_fabio", role: "proUser" });
+    signIn.mockResolvedValue(undefined);
+
+    await loginAction(idle, fd({ ...valid, recaptchaV2Token: "v2-token" }));
+
+    expect(useCases.login).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({ recaptchaV2Token: "v2-token" }),
+    );
+  });
 });
 
 describe("registerAction", () => {
@@ -172,6 +197,12 @@ describe("registerAction", () => {
     const result = await registerAction(idle, fd(base));
     expect(result).toEqual({ status: "error", formError: "auth.errors.couldNotComplete" });
   });
+
+  it("maps RecaptchaV2RequiredError to the recaptchaV2Required status", async () => {
+    useCases.register.mockRejectedValue(new RecaptchaV2RequiredError());
+    const result = await registerAction(idle, fd(base));
+    expect(result).toEqual({ status: "recaptchaV2Required" });
+  });
 });
 
 describe("requestPasswordResetAction", () => {
@@ -179,6 +210,12 @@ describe("requestPasswordResetAction", () => {
     useCases.requestPasswordReset.mockResolvedValue({ accepted: true });
     const result = await requestPasswordResetAction(idle, fd({ email: "x@y.z", locale: "it" }));
     expect(result).toEqual({ status: "success", messageKey: "auth.forgotPassword.success" });
+  });
+
+  it("maps RecaptchaV2RequiredError to the recaptchaV2Required status", async () => {
+    useCases.requestPasswordReset.mockRejectedValue(new RecaptchaV2RequiredError());
+    const result = await requestPasswordResetAction(idle, fd({ email: "x@y.z", locale: "it" }));
+    expect(result).toEqual({ status: "recaptchaV2Required" });
   });
 });
 

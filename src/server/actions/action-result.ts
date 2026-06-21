@@ -3,6 +3,7 @@ import {
   ConflictError,
   NotFoundError,
   RateLimitedError,
+  RecaptchaV2RequiredError,
   UnauthorizedError,
   ValidationError,
 } from "@/lib/errors";
@@ -30,7 +31,14 @@ export type ActionState =
       formError?: string;
       /** Per-field message keys, keyed by the form field name. */
       fieldErrors?: Record<string, string>;
-    };
+    }
+  /**
+   * The reCAPTCHA v3 score was too low and the v2 checkbox fallback is configured
+   * (docs/06 §6.2). DISTINCT from `error` so the auth forms render the v2 widget
+   * and resubmit with the checkbox response — without surfacing a credential
+   * error. Non-revealing: it carries no per-account information.
+   */
+  | { status: "recaptchaV2Required" };
 
 /** Convenience constructors keep call sites terse and consistent. */
 export const ok = (messageKey?: string): ActionState => ({
@@ -72,6 +80,12 @@ export interface ErrorKeyMap {
 }
 
 export function toActionState(error: unknown, keys: ErrorKeyMap): ActionState {
+  // Not an error to surface: a legitimate "complete the v2 challenge" signal.
+  // Mapped to a dedicated state BEFORE the credential mappings so a low score
+  // never collapses into the generic credential error (docs/06 §6.2).
+  if (error instanceof RecaptchaV2RequiredError) {
+    return { status: "recaptchaV2Required" };
+  }
   if (error instanceof ValidationError) {
     const fieldErrors: Record<string, string> = {};
     for (const field of Object.keys(error.issues)) {

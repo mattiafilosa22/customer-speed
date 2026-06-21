@@ -1,7 +1,7 @@
 import { parseInput } from "@/server/validation";
 import type { PasswordHasher } from "@/lib/password";
 import type { RateLimiter } from "@/lib/rate-limit";
-import type { verifyRecaptcha } from "@/lib/recaptcha";
+import type { verifyRecaptcha, verifyRecaptchaV2 } from "@/lib/recaptcha";
 import type { PrismaClient } from "@/generated/prisma/client";
 import type { AuditLogger } from "@/server/audit/audit-log";
 import type { EmailSender } from "@/server/email/types";
@@ -23,6 +23,16 @@ export interface AuthDeps {
   readonly audit: AuditLogger;
   readonly rateLimiter: RateLimiter;
   readonly verifyRecaptcha: typeof verifyRecaptcha;
+  /** v2 checkbox fallback verifier, invoked only when the v3 score is low. */
+  readonly verifyRecaptchaV2: typeof verifyRecaptchaV2;
+  /**
+   * Whether the v2 checkbox fallback is configured (a v2 secret is present).
+   * Injected as a boolean — derived from `env.RECAPTCHA_V2_SECRET_KEY` at the
+   * real wiring point — so the low-score branch is testable without env: when
+   * false the use cases keep the current "low score → reject" behaviour; when
+   * true they challenge with v2 (Dependency Inversion, docs/00 §1).
+   */
+  readonly recaptchaV2Enabled: boolean;
   /** Base URL for links in emails (verification/reset). */
   readonly appUrl: string;
   /** Injectable clock for deterministic token expiry in tests. */

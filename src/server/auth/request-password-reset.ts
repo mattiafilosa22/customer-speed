@@ -1,7 +1,7 @@
 import { RateLimitedError } from "@/lib/errors";
-import { isRecaptchaAccepted } from "@/lib/recaptcha";
 import { generateRawToken, hashToken, PASSWORD_RESET_TTL_MS } from "@/lib/tokens";
 import { type AuthDeps, clockNow, parseInput } from "@/server/auth/deps";
+import { recaptchaGate } from "@/server/auth/recaptcha-gate";
 import { requestPasswordResetSchema } from "@/server/auth/schemas";
 
 /**
@@ -32,13 +32,17 @@ export async function requestPasswordReset(
     throw new RateLimitedError(limit.retryAfterSeconds);
   }
 
-  // reCAPTCHA: a "failed"/"low-score" outcome means bot-like traffic. We must
-  // NOT issue a reset token, but we also must NOT reveal that the request was
-  // rejected (no enumeration / no oracle): exit as a silent, non-revealing
-  // no-op returning the SAME `accepted: true`. Only "ok"/"skipped" proceed
-  // ("skipped" = keys unset in dev, the verifier already warned). docs/06 §6.1-6.2.
-  const captcha = await deps.verifyRecaptcha(data.recaptchaToken, {});
-  if (!isRecaptchaAccepted(captcha.outcome)) {
+  // reCAPTCHA gate: bot-like traffic ("failed", or a low score when the v2
+  // fallback is not configured) exits as a silent, non-revealing no-op returning
+  // the SAME `accepted: true` (no enumeration / no oracle). A low score WITH the
+  // v2 fallback configured throws `RecaptchaV2RequiredError` to request the
+  // checkbox challenge — raised here, BEFORE any user lookup, so it leaks nothing
+  // about the account (docs/06 §6.1-6.2).
+  const verdict = await recaptchaGate(deps, {
+    v3Token: data.recaptchaToken,
+    v2Token: data.recaptchaV2Token,
+  });
+  if (verdict === "reject") {
     return { accepted: true };
   }
 

@@ -29,6 +29,7 @@ export const registerSchema = z.object({
   email,
   password,
   recaptchaToken: z.string().optional(),
+  recaptchaV2Token: z.string().optional(),
   consents: z.array(consentInput).default([]),
 });
 export type RegisterInput = z.infer<typeof registerSchema>;
@@ -38,6 +39,7 @@ export const loginSchema = z.object({
   email,
   password: z.string().min(1, "Password is required"),
   recaptchaToken: z.string().optional(),
+  recaptchaV2Token: z.string().optional(),
 });
 export type LoginInput = z.infer<typeof loginSchema>;
 
@@ -50,6 +52,7 @@ export const requestPasswordResetSchema = z.object({
   organizationId: z.string().min(1),
   email,
   recaptchaToken: z.string().optional(),
+  recaptchaV2Token: z.string().optional(),
 });
 export type RequestPasswordResetInput = z.infer<typeof requestPasswordResetSchema>;
 
