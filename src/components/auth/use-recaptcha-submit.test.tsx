@@ -14,12 +14,13 @@ vi.mock("@/components/auth/use-recaptcha", () => ({
 }));
 
 function Harness({ onAction }: { onAction: (form: FormData) => void }) {
-  const onSubmit = useRecaptchaSubmit("login", onAction);
+  const { onSubmit, pending } = useRecaptchaSubmit("login", onAction);
   return (
     <form onSubmit={onSubmit}>
       <input name="email" defaultValue="user@example.com" aria-label="email" />
       <input name="password" defaultValue="s3cret-pass" aria-label="password" />
       <button type="submit">submit</button>
+      <output aria-label="pending">{pending ? "pending" : "idle"}</output>
     </form>
   );
 }
@@ -56,5 +57,23 @@ describe("useRecaptchaSubmit", () => {
     expect(data.get("email")).toBe("user@example.com");
     expect(data.get("password")).toBe("s3cret-pass");
     expect(data.get("recaptchaToken")).toBe("v3-token");
+  });
+
+  it("is pending from the click through the reCAPTCHA round-trip, then settles", async () => {
+    const onAction = vi.fn<(form: FormData) => void>();
+    render(<Harness onAction={onAction} />);
+
+    const status = () => screen.getByLabelText("pending").textContent;
+    expect(status()).toBe("idle");
+
+    // Click → pending immediately, while reCAPTCHA `execute` is still in flight
+    // (the button must show a loader even before the server call starts).
+    fireEvent.click(screen.getByRole("button", { name: "submit" }));
+    expect(status()).toBe("pending");
+
+    // Token resolves → action dispatches → transition settles → back to idle.
+    resolveToken("v3-token");
+    await vi.waitFor(() => expect(onAction).toHaveBeenCalledTimes(1));
+    await vi.waitFor(() => expect(status()).toBe("idle"));
   });
 });

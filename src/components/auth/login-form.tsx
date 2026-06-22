@@ -31,7 +31,7 @@ export function LoginForm({ organizationSlug }: { organizationSlug?: string }) {
   // checkbox widget and attach its response on the next submit (docs/06 §6.2).
   const needsV2 = state.status === "recaptchaV2Required";
   const v2 = useRecaptchaV2(needsV2);
-  const onSubmit = useRecaptchaSubmit("login", formAction, {
+  const { onSubmit, pending } = useRecaptchaSubmit("login", formAction, {
     getV2Token: needsV2 && v2.enabled ? v2.getResponse : undefined,
   });
 
@@ -72,7 +72,7 @@ export function LoginForm({ organizationSlug }: { organizationSlug?: string }) {
 
       {needsV2 && v2.enabled ? <RecaptchaV2Challenge containerRef={v2.containerRef} /> : null}
 
-      <SubmitButton pendingLabel={t("auth.login.submitting")}>
+      <SubmitButton pending={pending} pendingLabel={t("auth.login.submitting")}>
         {t("auth.login.submit")}
       </SubmitButton>
 
