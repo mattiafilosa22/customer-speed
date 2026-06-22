@@ -37,9 +37,9 @@ const eslintConfig = [
     },
   },
   {
-    // CLI scripts (seed, migrations tooling) legitimately report progress to
-    // stdout; allow informational logging there.
-    files: ["prisma/**/*.ts"],
+    // CLI scripts (seed, migrations tooling, one-off provisioning) legitimately
+    // report progress to stdout; allow informational logging there.
+    files: ["prisma/**/*.ts", "scripts/**/*.ts"],
     rules: {
       "no-console": ["warn", { allow: ["warn", "error", "info"] }],
     },

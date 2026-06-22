@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 
-import { ValidationError } from "@/lib/errors";
+import { NotFoundError } from "@/lib/errors";
 import { resolveOrganizationIdBySlug } from "@/server/tenant/resolve-organization";
 import type { PrismaClient } from "@/generated/prisma/client";
 
@@ -21,17 +21,20 @@ describe("resolveOrganizationIdBySlug", () => {
     });
   });
 
-  it("throws ValidationError for an unknown slug", async () => {
+  // Unknown/empty slug → NotFoundError so the auth actions surface a VISIBLE
+  // form-level error. A ValidationError would key onto the hidden
+  // `organizationSlug` field and the form would fail silently ("nothing happens").
+  it("throws NotFoundError for an unknown slug", async () => {
     const prisma = prismaWith(null);
     await expect(resolveOrganizationIdBySlug(prisma, "ghost")).rejects.toBeInstanceOf(
-      ValidationError,
+      NotFoundError,
     );
   });
 
-  it("throws ValidationError for an empty slug without hitting the DB", async () => {
+  it("throws NotFoundError for an empty slug without hitting the DB", async () => {
     const prisma = prismaWith({ id: "org_1" });
     await expect(resolveOrganizationIdBySlug(prisma, "   ")).rejects.toBeInstanceOf(
-      ValidationError,
+      NotFoundError,
     );
     expect(prisma.organization.findUnique).not.toHaveBeenCalled();
   });
