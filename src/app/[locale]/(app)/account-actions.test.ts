@@ -16,8 +16,19 @@ vi.mock("@/server/auth", () => ({
 }));
 
 const requireTenantContext = vi.fn();
+const getTenantContext = vi.fn();
 vi.mock("@/lib/tenant", () => ({
   requireTenantContext: () => requireTenantContext(),
+  getTenantContext: () => getTenantContext(),
+}));
+
+const orgFindUnique = vi.fn();
+vi.mock("@/lib/prisma", () => ({
+  prisma: { organization: { findUnique: (...a: unknown[]) => orgFindUnique(...a) } },
+}));
+
+vi.mock("@/server/audit/audit-log", () => ({
+  createAuditLogger: () => ({ record: vi.fn(async () => {}) }),
 }));
 
 const signOut = vi.fn();
@@ -28,8 +39,10 @@ vi.mock("@/server/actions/request-meta", () => ({
 }));
 
 class RedirectSignal extends Error {}
+const redirectMock = vi.fn();
 vi.mock("@/i18n/navigation", () => ({
-  redirect: () => {
+  redirect: (arg: unknown) => {
+    redirectMock(arg);
     throw new RedirectSignal();
   },
 }));
@@ -114,9 +127,33 @@ describe("changePasswordAction", () => {
 });
 
 describe("logoutAction", () => {
-  it("signs out then redirects to the localized login", async () => {
+  it("signs out then redirects back to the SAME tenant login (?org=slug)", async () => {
     signOut.mockResolvedValue(undefined);
-    await expect(logoutAction(fd({ locale: "en" }))).rejects.toBeInstanceOf(RedirectSignal);
+    getTenantContext.mockResolvedValue({
+      kind: "tenant",
+      userId: "u1",
+      organizationId: "org_fabio",
+      role: "proUser",
+    });
+    orgFindUnique.mockResolvedValue({ slug: "fabio" });
+
+    await expect(logoutAction(fd({ locale: "it" }))).rejects.toBeInstanceOf(RedirectSignal);
+
     expect(signOut).toHaveBeenCalledWith({ redirect: false });
+    expect(redirectMock).toHaveBeenCalledWith({
+      href: { pathname: "/login", query: { org: "fabio" } },
+      locale: "it",
+    });
+  });
+
+  it("falls back to the bare login when the tenant cannot be resolved", async () => {
+    signOut.mockResolvedValue(undefined);
+    // No session / lookup fails → best-effort path, plain /login.
+    getTenantContext.mockRejectedValue(new UnauthorizedError("No active session"));
+
+    await expect(logoutAction(fd({ locale: "en" }))).rejects.toBeInstanceOf(RedirectSignal);
+
+    expect(signOut).toHaveBeenCalledWith({ redirect: false });
+    expect(redirectMock).toHaveBeenCalledWith({ href: "/login", locale: "en" });
   });
 });
