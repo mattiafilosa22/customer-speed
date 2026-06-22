@@ -215,7 +215,7 @@ export function MiniCalendar({ onNavigate }: MiniCalendarProps) {
           type="button"
           onClick={() => goMonth(-1)}
           aria-label={t("previousMonth")}
-          className="inline-flex h-8 w-8 items-center justify-center rounded-control text-muted hover:bg-accent-soft focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+          className="inline-flex h-8 w-8 cursor-pointer items-center justify-center rounded-control text-muted hover:bg-accent-soft focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
         >
           <span aria-hidden="true">‹</span>
         </button>
@@ -226,7 +226,7 @@ export function MiniCalendar({ onNavigate }: MiniCalendarProps) {
           type="button"
           onClick={() => goMonth(1)}
           aria-label={t("nextMonth")}
-          className="inline-flex h-8 w-8 items-center justify-center rounded-control text-muted hover:bg-accent-soft focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+          className="inline-flex h-8 w-8 cursor-pointer items-center justify-center rounded-control text-muted hover:bg-accent-soft focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
         >
           <span aria-hidden="true">›</span>
         </button>
@@ -272,7 +272,7 @@ export function MiniCalendar({ onNavigate }: MiniCalendarProps) {
                     onFocus={() => setFocusedIso(isoDate(cell.date))}
                     onKeyDown={(event) => onCellKeyDown(event, cell.date)}
                     className={cn(
-                      "relative mx-auto flex h-8 w-8 items-center justify-center rounded-control font-body text-[12px]",
+                      "relative mx-auto flex h-8 w-8 cursor-pointer items-center justify-center rounded-control font-body text-[12px]",
                       "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring",
                       cell.inMonth ? "text-ink hover:bg-accent-soft" : "text-muted",
                       // Today: --panel text on --accent is AA in both modes
@@ -301,7 +301,7 @@ export function MiniCalendar({ onNavigate }: MiniCalendarProps) {
       <button
         type="button"
         onClick={goToday}
-        className="mt-2 w-full rounded-control py-1 font-body text-[12px] text-accent hover:bg-accent-soft focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+        className="mt-2 w-full cursor-pointer rounded-control py-1 font-body text-[12px] text-accent hover:bg-accent-soft focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
       >
         {t("today")}
       </button>

@@ -41,7 +41,7 @@ export function ThemeModeToggle({ initialMode }: { initialMode: ResolvedMode }) 
       aria-pressed={isDark}
       aria-label={label}
       title={label}
-      className="flex h-9 w-9 items-center justify-center rounded-control border border-line text-ink transition-colors hover:bg-accent-soft focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+      className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-control border border-line text-ink transition-colors hover:bg-accent-soft focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
     >
       {isDark ? <SunIcon /> : <MoonIcon />}
     </button>

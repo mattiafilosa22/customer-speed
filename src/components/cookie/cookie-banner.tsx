@@ -62,7 +62,7 @@ export function CookieBanner() {
             onClick={() => decide(false)}
             disabled={isPending}
             aria-label={t("close")}
-            className="rounded-control p-1 text-muted hover:bg-accent-soft focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring disabled:opacity-60"
+            className="cursor-pointer rounded-control p-1 text-muted hover:bg-accent-soft focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring disabled:cursor-not-allowed disabled:opacity-60"
           >
             <span aria-hidden="true" className="font-mono text-lg leading-none">
               ×

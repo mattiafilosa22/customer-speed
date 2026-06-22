@@ -50,7 +50,7 @@ export function StageConfigRow({
           onClick={() => onMove(index, -1)}
           disabled={isFirst}
           aria-label={t("moveUp", { stage: label })}
-          className="text-muted hover:text-ink focus-visible:outline-ring rounded px-1 leading-none disabled:opacity-30 focus-visible:outline-2"
+          className="text-muted hover:text-ink focus-visible:outline-ring cursor-pointer rounded px-1 leading-none disabled:cursor-not-allowed disabled:opacity-30 focus-visible:outline-2"
         >
           <span aria-hidden="true">▲</span>
         </button>
@@ -59,7 +59,7 @@ export function StageConfigRow({
           onClick={() => onMove(index, 1)}
           disabled={isLast}
           aria-label={t("moveDown", { stage: label })}
-          className="text-muted hover:text-ink focus-visible:outline-ring rounded px-1 leading-none disabled:opacity-30 focus-visible:outline-2"
+          className="text-muted hover:text-ink focus-visible:outline-ring cursor-pointer rounded px-1 leading-none disabled:cursor-not-allowed disabled:opacity-30 focus-visible:outline-2"
         >
           <span aria-hidden="true">▼</span>
         </button>
@@ -94,7 +94,7 @@ export function StageConfigRow({
               aria-label={t("colorOption", { token })}
               onClick={() => onSetColor(item.stage, token === DEFAULT_STAGE_TOKENS[item.stage] ? null : token)}
               className={[
-                "h-6 w-6 rounded-full focus-visible:outline-ring focus-visible:outline-2 focus-visible:outline-offset-2",
+                "h-6 w-6 cursor-pointer rounded-full focus-visible:outline-ring focus-visible:outline-2 focus-visible:outline-offset-2",
                 selected ? "ring-ink ring-2 ring-offset-2" : "",
               ].join(" ")}
               style={{ backgroundColor: `var(${token})` }}
@@ -114,7 +114,7 @@ export function StageConfigRow({
         className={[
           "focus-visible:outline-ring relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors focus-visible:outline-2 focus-visible:outline-offset-2",
           item.isVisible ? "bg-accent" : "bg-line",
-          item.isTerminal ? "cursor-not-allowed opacity-50" : "",
+          item.isTerminal ? "cursor-not-allowed opacity-50" : "cursor-pointer",
         ].join(" ")}
         title={item.isTerminal ? t("terminalLocked") : undefined}
       >
