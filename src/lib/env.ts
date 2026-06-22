@@ -20,6 +20,12 @@ const envSchema = z.object({
     .string()
     .min(1, "DATABASE_URL is required")
     .url("DATABASE_URL must be a valid connection URL"),
+  // Max connections in the pg pool PER serverless instance. On Vercel each warm
+  // instance keeps its own pool, so with a low-cap pooler (e.g. Supabase
+  // session-mode = 15 clients) a default of 10 is exhausted by a couple of
+  // instances → "max clients reached" 500s on query-heavy pages. Keep it small;
+  // raise it only behind a transaction-mode pooler (PgBouncer/Supavisor 6543).
+  DATABASE_POOL_MAX: z.coerce.number().int().min(1).max(50).default(3),
 
   // ── Auth.js / NextAuth v5 (REQUIRED from Fase 1) ─────────────────────
   // Auth.js v5 reads `AUTH_SECRET`; we keep the `NEXTAUTH_*` names from docs/06

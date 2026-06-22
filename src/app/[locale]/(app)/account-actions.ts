@@ -65,16 +65,27 @@ export async function changePasswordAction(
   }
 }
 
-/** Sign the user out and return to the localized login page. */
+/** Sign the user out and return to the localized login page for the SAME tenant. */
 export async function logoutAction(formData: FormData): Promise<void> {
   const locale = asLocale(formData.get("locale") as string | null);
 
-  // Audit the logout BEFORE clearing the session (we still have the actor).
-  // Best-effort: a failure here must not block the user from signing out, so we
-  // swallow audit errors (the sign-out itself is the security-critical step).
+  // Resolve the tenant slug BEFORE clearing the session, so we return the user to
+  // THEIR tenant login (`/login?org=<slug>`) and not the platform-default login —
+  // otherwise a non-default tenant (e.g. Fabio) would land on the wrong tenant and
+  // be unable to sign back in. Best-effort + audited: a failure here must not block
+  // the sign-out (the security-critical step), so we swallow errors and fall back
+  // to the bare login.
+  let orgSlug: string | undefined;
   try {
     const meta = await getRequestMeta();
     const ctx = await getTenantContext();
+    if (ctx.kind === "tenant") {
+      const org = await prisma.organization.findUnique({
+        where: { id: ctx.organizationId },
+        select: { slug: true },
+      });
+      orgSlug = org?.slug;
+    }
     await createAuditLogger(prisma).record({
       action: "auth.logout",
       organizationId: ctx.kind === "tenant" ? ctx.organizationId : null,
@@ -88,5 +99,5 @@ export async function logoutAction(formData: FormData): Promise<void> {
   }
 
   await signOut({ redirect: false });
-  redirect({ href: "/login", locale });
+  redirect({ href: orgSlug ? { pathname: "/login", query: { org: orgSlug } } : "/login", locale });
 }
