@@ -28,7 +28,7 @@ export function ForgotPasswordForm() {
   const [state, formAction] = useActionState(requestPasswordResetAction, initialState);
   const needsV2 = state.status === "recaptchaV2Required";
   const v2 = useRecaptchaV2(needsV2);
-  const onSubmit = useRecaptchaSubmit("forgot_password", formAction, {
+  const { onSubmit, pending } = useRecaptchaSubmit("forgot_password", formAction, {
     getV2Token: needsV2 && v2.enabled ? v2.getResponse : undefined,
   });
 
@@ -57,7 +57,7 @@ export function ForgotPasswordForm() {
 
       {needsV2 && v2.enabled ? <RecaptchaV2Challenge containerRef={v2.containerRef} /> : null}
 
-      <SubmitButton pendingLabel={t("auth.forgotPassword.submitting")}>
+      <SubmitButton pending={pending} pendingLabel={t("auth.forgotPassword.submitting")}>
         {t("auth.forgotPassword.submit")}
       </SubmitButton>
 

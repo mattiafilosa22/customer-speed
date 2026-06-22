@@ -34,7 +34,7 @@ export function RegisterForm() {
   const [state, formAction] = useActionState(registerAction, initialState);
   const needsV2 = state.status === "recaptchaV2Required";
   const v2 = useRecaptchaV2(needsV2);
-  const onSubmit = useRecaptchaSubmit("register", formAction, {
+  const { onSubmit, pending } = useRecaptchaSubmit("register", formAction, {
     getV2Token: needsV2 && v2.enabled ? v2.getResponse : undefined,
   });
 
@@ -115,7 +115,7 @@ export function RegisterForm() {
 
       {needsV2 && v2.enabled ? <RecaptchaV2Challenge containerRef={v2.containerRef} /> : null}
 
-      <SubmitButton pendingLabel={t("auth.register.submitting")}>
+      <SubmitButton pending={pending} pendingLabel={t("auth.register.submitting")}>
         {t("auth.register.submit")}
       </SubmitButton>
 

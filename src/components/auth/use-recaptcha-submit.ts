@@ -1,6 +1,6 @@
 "use client";
 
-import { startTransition, type FormEvent } from "react";
+import { useState, useTransition, type FormEvent } from "react";
 
 import { useRecaptcha } from "@/components/auth/use-recaptcha";
 
@@ -19,6 +19,14 @@ import { useRecaptcha } from "@/components/auth/use-recaptcha";
  * challenge, the form passes `getV2Token` — the current v2 widget response is
  * read synchronously and attached as `recaptchaV2Token` alongside the fresh v3
  * token, so a single resubmit carries both.
+ *
+ * Pending state: because we preventDefault and dispatch the action MANUALLY,
+ * `useFormStatus` never reports pending (it only tracks NATIVE form submissions),
+ * so the submit button would look inert during the reCAPTCHA round-trip + server
+ * call. We therefore expose our own `pending` flag — true from the click, through
+ * the async reCAPTCHA `execute`, and for the whole transition — so the button can
+ * show a loader. On success the action throws a redirect and the form unmounts
+ * (stays pending until navigation); on error the transition settles → false.
  */
 export interface RecaptchaSubmitOptions {
   readonly tokenFieldName?: string;
@@ -27,30 +35,46 @@ export interface RecaptchaSubmitOptions {
   readonly v2FieldName?: string;
 }
 
+export interface RecaptchaSubmit {
+  readonly onSubmit: (event: FormEvent<HTMLFormElement>) => void;
+  /** True from click until the action settles — drive the submit button loader. */
+  readonly pending: boolean;
+}
+
 export function useRecaptchaSubmit(
   action: string,
   formAction: (formData: FormData) => void,
   options: RecaptchaSubmitOptions = {},
-): (event: FormEvent<HTMLFormElement>) => void {
+): RecaptchaSubmit {
   const { execute } = useRecaptcha();
+  const [isTransitionPending, startTransition] = useTransition();
+  // Covers the reCAPTCHA `execute` round-trip, which happens BEFORE the
+  // transition starts (so `isTransitionPending` alone would miss it).
+  const [isPreparing, setIsPreparing] = useState(false);
   const tokenFieldName = options.tokenFieldName ?? "recaptchaToken";
   const v2FieldName = options.v2FieldName ?? "recaptchaV2Token";
   const getV2Token = options.getV2Token;
 
-  return (event: FormEvent<HTMLFormElement>) => {
+  const onSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    setIsPreparing(true);
     // Snapshot the form fields SYNCHRONOUSLY, inside the submit user-gesture.
     // WebKit (Safari/iOS) only exposes Keychain/Apple-Passwords autofilled values
     // to script during the gesture that submits the form; reading FormData after
     // the async reCAPTCHA `await` lands in a continuation outside that gesture, so
     // the autofilled email/password come back empty and the login silently fails.
     const data = new FormData(event.currentTarget);
-    void execute(action).then((token) => {
-      data.set(tokenFieldName, token ?? "");
-      if (getV2Token) {
-        data.set(v2FieldName, getV2Token() ?? "");
-      }
-      startTransition(() => formAction(data));
-    });
+    void execute(action)
+      .then((token) => {
+        data.set(tokenFieldName, token ?? "");
+        if (getV2Token) {
+          data.set(v2FieldName, getV2Token() ?? "");
+        }
+        setIsPreparing(false);
+        startTransition(() => formAction(data));
+      })
+      .catch(() => setIsPreparing(false));
   };
+
+  return { onSubmit, pending: isPreparing || isTransitionPending };
 }
