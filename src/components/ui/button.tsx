@@ -50,7 +50,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button
       type={type ?? "button"}
       className={cn(
         "inline-flex items-center justify-center gap-2 font-body font-medium",
-        "select-none transition-colors",
+        "select-none transition-colors cursor-pointer",
         "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring",
         "disabled:cursor-not-allowed",
         squared ? "rounded-none" : "rounded-control",

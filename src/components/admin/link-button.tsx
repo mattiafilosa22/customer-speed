@@ -40,7 +40,7 @@ export function LinkButton({
       tabIndex={disabled ? -1 : undefined}
       className={cn(
         "inline-flex items-center justify-center gap-2 rounded-control font-body font-medium",
-        "select-none transition-colors",
+        "select-none transition-colors cursor-pointer",
         "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring",
         disabled && "pointer-events-none opacity-50",
         VARIANT[variant],

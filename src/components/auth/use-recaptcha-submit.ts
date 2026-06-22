@@ -39,9 +39,13 @@ export function useRecaptchaSubmit(
 
   return (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    const form = event.currentTarget;
+    // Snapshot the form fields SYNCHRONOUSLY, inside the submit user-gesture.
+    // WebKit (Safari/iOS) only exposes Keychain/Apple-Passwords autofilled values
+    // to script during the gesture that submits the form; reading FormData after
+    // the async reCAPTCHA `await` lands in a continuation outside that gesture, so
+    // the autofilled email/password come back empty and the login silently fails.
+    const data = new FormData(event.currentTarget);
     void execute(action).then((token) => {
-      const data = new FormData(form);
       data.set(tokenFieldName, token ?? "");
       if (getV2Token) {
         data.set(v2FieldName, getV2Token() ?? "");

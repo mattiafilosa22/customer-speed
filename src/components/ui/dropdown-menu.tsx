@@ -44,7 +44,7 @@ const SURFACE_CLASSES =
 
 /** Shared item styling (normal + sub-trigger), with token-driven focus state. */
 const ITEM_BASE =
-  "relative flex min-h-9 w-full cursor-default select-none items-center gap-2 rounded-control " +
+  "relative flex min-h-9 w-full cursor-pointer select-none items-center gap-2 rounded-control " +
   "px-2.5 py-1.5 text-[13px] outline-none " +
   // Radix sets data-highlighted on keyboard/pointer focus → use the accent-soft
   // tint (AA token) so the focused row is obvious without relying on colour alone
@@ -190,7 +190,7 @@ export const OverflowTrigger = forwardRef<
       type="button"
       aria-label={label}
       className={cn(
-        "text-muted hover:text-ink hover:bg-accent-soft inline-flex items-center justify-center",
+        "text-muted hover:text-ink hover:bg-accent-soft inline-flex cursor-pointer items-center justify-center",
         "rounded-control transition-colors",
         "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring",
         "data-[state=open]:bg-accent-soft data-[state=open]:text-ink",

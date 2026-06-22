@@ -101,7 +101,7 @@ export function ImageUploadField({
           <button
             type="button"
             onClick={handleRemove}
-            className="min-h-11 rounded-control border border-line px-3 font-body text-[13px] text-ink hover:bg-accent-soft focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+            className="min-h-11 cursor-pointer rounded-control border border-line px-3 font-body text-[13px] text-ink hover:bg-accent-soft focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
           >
             {removeLabel}
           </button>
