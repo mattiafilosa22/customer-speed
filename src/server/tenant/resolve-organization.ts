@@ -1,4 +1,4 @@
-import { ValidationError } from "@/lib/errors";
+import { NotFoundError } from "@/lib/errors";
 import type { PrismaClient } from "@/generated/prisma/client";
 
 /**
@@ -18,9 +18,12 @@ import type { PrismaClient } from "@/generated/prisma/client";
  *   derive the slug from the request host and pass it here. No call site or the
  *   `@@unique` constraint changes.
  *
- * Returns a typed `ValidationError` (→ 400) on an unknown slug so the boundary
- * surfaces a generic, non-revealing message (it does NOT leak which tenants
- * exist beyond the slug the caller already supplied).
+ * Throws a typed `NotFoundError` (→ 404) on an unknown/empty slug. The auth
+ * actions map this to a FORM-LEVEL generic message (non-revealing — it does NOT
+ * leak which tenants exist). A `ValidationError` would be WRONG here: the slug is
+ * derived from the URL/host/config, not a visible form field, so its issue key
+ * would land on the hidden `organizationSlug` input and the form would fail
+ * SILENTLY (the "nothing happens" bug). A form-level error is always visible.
  *
  * The Prisma surface is the BASE client: this lookup is intentionally NOT
  * tenant-scoped — it is the step that establishes which tenant we are in.
@@ -33,7 +36,7 @@ export async function resolveOrganizationIdBySlug(
 ): Promise<string> {
   const normalized = slug.trim().toLowerCase();
   if (normalized.length === 0) {
-    throw new ValidationError({ organizationSlug: ["Organization is required"] });
+    throw new NotFoundError("Organization is required");
   }
 
   const org = await prisma.organization.findUnique({
@@ -42,7 +45,7 @@ export async function resolveOrganizationIdBySlug(
   });
 
   if (!org) {
-    throw new ValidationError({ organizationSlug: ["Unknown organization"] });
+    throw new NotFoundError("Unknown organization");
   }
 
   return org.id;
