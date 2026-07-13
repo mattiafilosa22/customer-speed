@@ -10,11 +10,15 @@ export { updateOrganizationTheme } from "@/server/organization/update-theme";
 export type { UpdateThemeResult } from "@/server/organization/update-theme";
 export { updateOrganizationBranding } from "@/server/organization/update-branding";
 export type { UpdateBrandingResult } from "@/server/organization/update-branding";
+export { updateOrganizationRetention } from "@/server/organization/update-retention";
+export type { UpdateRetentionResult } from "@/server/organization/update-retention";
 export {
   updateThemeSchema,
   updateBrandingSchema,
+  updateRetentionSchema,
 } from "@/server/organization/schemas";
 export type {
   UpdateThemeInput,
   UpdateBrandingInput,
+  UpdateRetentionInput,
 } from "@/server/organization/schemas";

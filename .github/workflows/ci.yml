@@ -13,6 +13,14 @@ jobs:
   quality:
     name: Lint · Typecheck · Unit tests
     runs-on: ubuntu-latest
+    env:
+      # `prisma generate` (postinstall) resolves `datasource.url` from
+      # `prisma.config.ts` eagerly, even though generation never opens a
+      # connection — it just needs the env var to be present. This job never
+      # talks to a real Postgres (unit tests use tenant-scoped fakes, not a
+      # live DB) and starts no DB service (unlike `e2e`), so this value is
+      # NEVER dialed — deliberately obvious-fake placeholder, not a credential.
+      DATABASE_URL: postgresql://not-a-real-user:not-a-real-password@localhost:5432/unused-placeholder-db
     steps:
       - name: Checkout
         uses: actions/checkout@v4
