@@ -870,6 +870,49 @@
       "generic": "Si è verificato un errore. Riprova."
     }
   },
+  "dataRetention": {
+    "title": "Pulizia lead persi",
+    "description": "Configura per quanti mesi conservare i lead persi prima che diventino candidati alla pulizia, scarica il backup ed elimina definitivamente i dati.",
+    "manageLink": "Gestisci pulizia lead persi",
+    "settingsSection": {
+      "heading": "Finestra di conservazione",
+      "description": "I lead persi (con un motivo di perdita registrato) diventano candidati alla pulizia dopo questo periodo di inattività nello stage \"Perso\".",
+      "enable": "Attiva la pulizia automatica",
+      "months": "Mesi di conservazione",
+      "monthsHint": "Da 1 a 120 mesi.",
+      "save": "Salva impostazioni",
+      "saving": "Salvataggio…",
+      "saved": "Impostazioni salvate."
+    },
+    "preview": {
+      "heading": "Anteprima",
+      "count": "{count, plural, =0 {Nessun lead pronto per la pulizia} one {# lead pronto per la pulizia} other {# lead pronti per la pulizia}}",
+      "disabled": "La pulizia automatica non è attiva.",
+      "refresh": "Aggiorna conteggio",
+      "refreshing": "Aggiornamento…"
+    },
+    "backup": {
+      "heading": "Backup ed eliminazione definitiva",
+      "description": "Scarica un backup completo dei dati personali dei lead candidati prima di eliminarli in modo irreversibile.",
+      "downloadCta": "Scarica backup (JSON)",
+      "downloading": "Esportazione…",
+      "downloadedHint": "Backup di {count} lead scaricato in questa sessione. Ora puoi procedere con l'eliminazione definitiva.",
+      "purgeCta": "Elimina definitivamente",
+      "purgePending": "Eliminazione…",
+      "purgeHint": "Disponibile solo dopo aver scaricato un backup in questa sessione.",
+      "confirmTitle": "Elimina definitivamente i lead persi",
+      "confirmBody": "Questa azione anonimizza in modo irreversibile i dati personali di {count} lead scaricati nel backup. Le fatture collegate vengono conservate per obblighi di legge. Vuoi procedere?",
+      "confirmConfirm": "Conferma eliminazione",
+      "confirmCancel": "Annulla",
+      "resultSummary": "{anonymized} anonimizzati, {alreadyAnonymized} già anonimizzati, {failed} falliti.",
+      "noCandidates": "Nessun lead da esportare al momento."
+    },
+    "errors": {
+      "invalid": "Dati non validi.",
+      "unauthorized": "Non hai i permessi per questa operazione.",
+      "generic": "Operazione non riuscita. Riprova."
+    }
+  },
   "admin": {
     "brand": "CustomerSpeed Admin",
     "brandSub": "Console cross-tenant",

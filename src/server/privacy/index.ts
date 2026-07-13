@@ -16,3 +16,25 @@ export {
   type LeadDataXlsxExport,
 } from "@/server/privacy/export-lead-data-xlsx";
 export { eraseLeadData, type EraseLeadResult } from "@/server/privacy/erase-lead-data";
+export {
+  listRetentionCandidates,
+  type RetentionCandidate,
+} from "@/server/privacy/list-retention-candidates";
+export {
+  exportRetentionCandidates,
+  type RetentionBulkExport,
+} from "@/server/privacy/export-retention-candidates";
+export {
+  purgeRetentionCandidates,
+  type RetentionPurgeResult,
+} from "@/server/privacy/purge-retention-candidates";
+export {
+  countRetentionCandidates,
+  type RetentionCandidatesCount,
+} from "@/server/privacy/count-retention-candidates";
+export { resolveRetentionMonths } from "@/server/privacy/retention-months";
+export {
+  retentionMonthsOverrideSchema,
+  purgeRetentionCandidatesSchema,
+} from "@/server/privacy/schemas";
+export type { PurgeRetentionCandidatesInput } from "@/server/privacy/schemas";
