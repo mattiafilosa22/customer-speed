@@ -870,6 +870,49 @@
       "generic": "Something went wrong. Please try again."
     }
   },
+  "dataRetention": {
+    "title": "Lost lead cleanup",
+    "description": "Configure how many months to keep lost leads before they become cleanup candidates, download a backup and permanently erase the data.",
+    "manageLink": "Manage lost lead cleanup",
+    "settingsSection": {
+      "heading": "Retention window",
+      "description": "Lost leads (with a recorded loss reason) become cleanup candidates after this period of inactivity in the \"Lost\" stage.",
+      "enable": "Enable automatic cleanup",
+      "months": "Retention months",
+      "monthsHint": "From 1 to 120 months.",
+      "save": "Save settings",
+      "saving": "Saving…",
+      "saved": "Settings saved."
+    },
+    "preview": {
+      "heading": "Preview",
+      "count": "{count, plural, =0 {No leads ready for cleanup} one {# lead ready for cleanup} other {# leads ready for cleanup}}",
+      "disabled": "Automatic cleanup is not enabled.",
+      "refresh": "Refresh count",
+      "refreshing": "Refreshing…"
+    },
+    "backup": {
+      "heading": "Backup and permanent erasure",
+      "description": "Download a full backup of the candidate leads' personal data before permanently erasing it.",
+      "downloadCta": "Download backup (JSON)",
+      "downloading": "Exporting…",
+      "downloadedHint": "Backup of {count} leads downloaded in this session. You can now proceed with permanent erasure.",
+      "purgeCta": "Erase permanently",
+      "purgePending": "Erasing…",
+      "purgeHint": "Available only after downloading a backup in this session.",
+      "confirmTitle": "Permanently erase lost leads",
+      "confirmBody": "This action irreversibly anonymizes the personal data of {count} leads downloaded in the backup. Linked invoices are kept for legal accounting retention. Do you want to proceed?",
+      "confirmConfirm": "Confirm erasure",
+      "confirmCancel": "Cancel",
+      "resultSummary": "{anonymized} anonymized, {alreadyAnonymized} already anonymized, {failed} failed.",
+      "noCandidates": "No leads to export at the moment."
+    },
+    "errors": {
+      "invalid": "Invalid data.",
+      "unauthorized": "You do not have permission for this operation.",
+      "generic": "Operation failed. Please try again."
+    }
+  },
   "admin": {
     "brand": "CustomerSpeed Admin",
     "brandSub": "Cross-tenant console",

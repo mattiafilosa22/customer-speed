@@ -85,6 +85,11 @@ model Organization {
   theme        Json // design tokens (vedi docs/05)
   featureFlags Json   @default("{}") // { calendarIntegrations:false, invoices:true, ... }
 
+  // Data retention lead persi: null = retention disattivata per il tenant; se
+  // valorizzato, mesi dall'ingresso in stage LOST (Lead.stageChangedAt) dopo
+  // cui il lead è candidato a backup+anonimizzazione (contenimento spazio DB).
+  leadRetentionMonths Int?
+
   // Brand assets (pannello "Aspetto & brand", docs/05 §5.4). Fase 7.
   // Storage: per ora data URL (PNG/SVG) salvati direttamente in colonna @db.Text —
   // niente blob storage in questa fase. TODO infra: spostare su object storage
@@ -211,9 +216,12 @@ model Lead {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  // Kanban/pipeline: colonne per stage del tenant.
-  @@index([organizationId, stage])
-  // "Giorni nello stage" e ordinamenti pipeline per anzianità.
+  // Kanban/pipeline (colonne per stage del tenant) + retention lead persi
+  // (stage=LOST filtrato per anzianità, vedi listRetentionCandidates):
+  // colonna composita, così il prefisso (organizationId, stage) copre anche le
+  // query kanban senza un indice a due colonne ridondante.
+  @@index([organizationId, stage, stageChangedAt])
+  // "Giorni nello stage" e ordinamenti pipeline per anzianità (tutti gli stage).
   @@index([organizationId, stageChangedAt])
   // Liste lead ordinate per data creazione (default lista) + paginazione.
   @@index([organizationId, createdAt])

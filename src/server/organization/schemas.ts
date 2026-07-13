@@ -54,3 +54,22 @@ export const updateBrandingSchema = z.object({
 });
 /** Caller-facing INPUT shape (optional asset fields stay optional). */
 export type UpdateBrandingInput = z.input<typeof updateBrandingSchema>;
+
+/**
+ * Lead data-retention window (docs/09, `Organization.leadRetentionMonths`):
+ * how many months a LOST lead (with a recorded loss reason) sits before it
+ * becomes a purge candidate (`listRetentionCandidates`). A positive integer
+ * enables the policy; `null` disables it for the tenant (no automatic purge
+ * candidates are ever computed). Bounded to 120 months (10 years) — well
+ * beyond any plausible compliance window, just a sanity cap against a typo
+ * (e.g. entering days instead of months) silently disabling retention.
+ */
+export const updateRetentionSchema = z.object({
+  leadRetentionMonths: z
+    .number()
+    .int("Must be a whole number of months")
+    .min(1, "Must be at least 1 month")
+    .max(120, "Must be at most 120 months")
+    .nullable(),
+});
+export type UpdateRetentionInput = z.input<typeof updateRetentionSchema>;

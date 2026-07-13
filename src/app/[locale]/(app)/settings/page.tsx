@@ -22,16 +22,19 @@ export default async function SettingsPage() {
   const ti = await getTranslations("integrations");
   const ta = await getTranslations("appearance");
 
+  const tr = await getTranslations("dataRetention");
+
   const ctx = await requireTenantContext();
   const flags = await getTenantFeatureFlags(ctx.organizationId);
   const showIntegrations = flags.calendarIntegrations && can(ctx.role, "calendar.integrations");
   const showAppearance = can(ctx.role, "settings.tenant");
+  const showRetention = can(ctx.role, "settings.tenant");
 
   return (
     <div className="flex flex-col gap-6">
       <div className="flex flex-col gap-1">
-        <h1 className="font-display text-3xl text-ink">{t("title")}</h1>
-        <p className="font-body text-[14px] text-muted">{t("description")}</p>
+        <h1 className="font-display text-ink text-3xl">{t("title")}</h1>
+        <p className="font-body text-muted text-[14px]">{t("description")}</p>
       </div>
 
       {showAppearance ? (
@@ -39,16 +42,37 @@ export default async function SettingsPage() {
           <Card>
             <CardBody className="flex flex-col gap-3">
               <div className="flex flex-col gap-1">
-                <h2 id="appearance-link-heading" className="font-display text-xl text-ink">
+                <h2 id="appearance-link-heading" className="font-display text-ink text-xl">
                   {ta("title")}
                 </h2>
-                <p className="font-body text-[13px] text-muted">{ta("description")}</p>
+                <p className="font-body text-muted text-[13px]">{ta("description")}</p>
               </div>
               <Link
                 href="/settings/appearance"
-                className="inline-flex w-fit min-h-11 items-center justify-center rounded-control border border-line px-4 font-body text-[13.5px] font-medium text-ink transition-colors hover:bg-accent-soft focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+                className="rounded-control border-line font-body text-ink hover:bg-accent-soft focus-visible:outline-ring inline-flex min-h-11 w-fit items-center justify-center border px-4 text-[13.5px] font-medium transition-colors focus-visible:outline-2 focus-visible:outline-offset-2"
               >
                 {ta("manageLink")}
+              </Link>
+            </CardBody>
+          </Card>
+        </section>
+      ) : null}
+
+      {showRetention ? (
+        <section aria-labelledby="data-retention-link-heading">
+          <Card>
+            <CardBody className="flex flex-col gap-3">
+              <div className="flex flex-col gap-1">
+                <h2 id="data-retention-link-heading" className="font-display text-ink text-xl">
+                  {tr("title")}
+                </h2>
+                <p className="font-body text-muted text-[13px]">{tr("description")}</p>
+              </div>
+              <Link
+                href="/settings/data-retention"
+                className="rounded-control border-line font-body text-ink hover:bg-accent-soft focus-visible:outline-ring inline-flex min-h-11 w-fit items-center justify-center border px-4 text-[13.5px] font-medium transition-colors focus-visible:outline-2 focus-visible:outline-offset-2"
+              >
+                {tr("manageLink")}
               </Link>
             </CardBody>
           </Card>
@@ -59,10 +83,10 @@ export default async function SettingsPage() {
         <Card>
           <CardBody className="flex flex-col gap-4">
             <div className="flex flex-col gap-1">
-              <h2 id="change-password-heading" className="font-display text-xl text-ink">
+              <h2 id="change-password-heading" className="font-display text-ink text-xl">
                 {tc("title")}
               </h2>
-              <p className="font-body text-[13px] text-muted">{tc("description")}</p>
+              <p className="font-body text-muted text-[13px]">{tc("description")}</p>
             </div>
             <ChangePasswordForm />
           </CardBody>
@@ -74,14 +98,14 @@ export default async function SettingsPage() {
           <Card>
             <CardBody className="flex flex-col gap-3">
               <div className="flex flex-col gap-1">
-                <h2 id="integrations-link-heading" className="font-display text-xl text-ink">
+                <h2 id="integrations-link-heading" className="font-display text-ink text-xl">
                   {ti("title")}
                 </h2>
-                <p className="font-body text-[13px] text-muted">{ti("description")}</p>
+                <p className="font-body text-muted text-[13px]">{ti("description")}</p>
               </div>
               <Link
                 href="/settings/integrations"
-                className="inline-flex w-fit min-h-11 items-center justify-center rounded-control border border-line px-4 font-body text-[13.5px] font-medium text-ink transition-colors hover:bg-accent-soft focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+                className="rounded-control border-line font-body text-ink hover:bg-accent-soft focus-visible:outline-ring inline-flex min-h-11 w-fit items-center justify-center border px-4 text-[13.5px] font-medium transition-colors focus-visible:outline-2 focus-visible:outline-offset-2"
               >
                 {ti("manageLink")}
               </Link>
