@@ -23,6 +23,7 @@
     "db:deploy": "prisma migrate deploy",
     "db:seed": "prisma db seed",
     "db:provision": "tsx scripts/provision-tenant-owner.ts",
+    "db:backfill-loss-reasons": "tsx scripts/backfill-loss-reasons.ts",
     "db:studio": "prisma studio",
     "prisma:generate": "prisma generate",
     "postinstall": "prisma generate"
