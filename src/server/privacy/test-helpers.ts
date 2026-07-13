@@ -24,9 +24,11 @@ export interface PLead {
   email: string | null;
   phone: string | null;
   stage: LeadStage;
+  stageChangedAt: Date;
   capitalBracket: CapitalBracket | null;
   adminNotes: string | null;
   sourceId: string | null;
+  lossReasonId: string | null;
   deletedAt: Date | null;
   anonymizedAt: Date | null;
   createdAt: Date;
@@ -77,6 +79,10 @@ export interface PSource {
   organizationId: string;
   label: string;
 }
+export interface POrg {
+  id: string;
+  leadRetentionMonths: number | null;
+}
 
 const D = (s: string) => new Date(s);
 
@@ -88,10 +94,22 @@ export class PrivacyStore {
   invoices: PInvoice[] = [];
   stageHistory: PStageHist[] = [];
   sources: PSource[] = [];
+  organizations: POrg[] = [];
   private seq = 0;
   private id(p: string): string {
     this.seq += 1;
     return `${p}_${this.seq}`;
+  }
+
+  /** Seeds (or updates) the tenant-root row read by `resolveRetentionMonths`. */
+  setOrganization(p: POrg): POrg {
+    const existing = this.organizations.find((o) => o.id === p.id);
+    if (existing) {
+      existing.leadRetentionMonths = p.leadRetentionMonths;
+      return existing;
+    }
+    this.organizations.push(p);
+    return p;
   }
 
   addLead(p: Partial<PLead> & Pick<PLead, "organizationId">): PLead {
@@ -103,9 +121,11 @@ export class PrivacyStore {
       email: p.email ?? "mario@example.com",
       phone: p.phone ?? "+39000",
       stage: p.stage ?? ("WON" as LeadStage),
+      stageChangedAt: p.stageChangedAt ?? D("2026-01-01T00:00:00.000Z"),
       capitalBracket: p.capitalBracket ?? null,
       adminNotes: p.adminNotes ?? "nota interna",
       sourceId: p.sourceId ?? null,
+      lossReasonId: p.lossReasonId ?? null,
       deletedAt: p.deletedAt ?? null,
       anonymizedAt: p.anonymizedAt ?? null,
       createdAt: p.createdAt ?? D("2026-01-01T00:00:00.000Z"),
@@ -171,7 +191,9 @@ export class PrivacyStore {
     this.invoices.push(row);
     return row;
   }
-  addStageHist(p: Pick<PStageHist, "organizationId" | "leadId" | "toStage"> & Partial<PStageHist>): PStageHist {
+  addStageHist(
+    p: Pick<PStageHist, "organizationId" | "leadId" | "toStage"> & Partial<PStageHist>,
+  ): PStageHist {
     const row: PStageHist = {
       id: p.id ?? this.id("hist"),
       organizationId: p.organizationId,
@@ -255,6 +277,38 @@ export function privacyClientFor(
         }
         return base;
       },
+      findMany: async ({ where, orderBy }: { where: Where; orderBy?: Where; select?: Where }) => {
+        let rows = store.leads.filter((l) => visibleLead(l));
+        if (where.stage !== undefined) {
+          rows = rows.filter((l) => l.stage === where.stage);
+        }
+        if (where.lossReasonId && typeof where.lossReasonId === "object") {
+          const cond = where.lossReasonId as { not?: unknown };
+          if ("not" in cond) rows = rows.filter((l) => l.lossReasonId !== cond.not);
+        }
+        if (where.anonymizedAt !== undefined) {
+          rows = rows.filter((l) => l.anonymizedAt === where.anonymizedAt);
+        }
+        if (where.stageChangedAt && typeof where.stageChangedAt === "object") {
+          const cond = where.stageChangedAt as { lte?: Date; gte?: Date };
+          if (cond.lte)
+            rows = rows.filter((l) => l.stageChangedAt.getTime() <= cond.lte!.getTime());
+          if (cond.gte)
+            rows = rows.filter((l) => l.stageChangedAt.getTime() >= cond.gte!.getTime());
+        }
+        if (orderBy?.stageChangedAt) {
+          const dir = orderBy.stageChangedAt === "desc" ? -1 : 1;
+          rows = [...rows].sort(
+            (a, b) => dir * (a.stageChangedAt.getTime() - b.stageChangedAt.getTime()),
+          );
+        }
+        return rows.map((l) => ({
+          id: l.id,
+          firstName: l.firstName,
+          lastName: l.lastName,
+          stageChangedAt: l.stageChangedAt,
+        }));
+      },
       update: async ({ where, data }: { where: Where; data: Where }) => {
         const row = store.leads.find(
           (l) => l.id === where.id && l.organizationId === organizationId,
@@ -268,6 +322,44 @@ export function privacyClientFor(
         if ("anonymizedAt" in data) row.anonymizedAt = (data.anonymizedAt as Date | null) ?? null;
         if ("deletedAt" in data) row.deletedAt = (data.deletedAt as Date | null) ?? null;
         return { id: row.id };
+      },
+      // DB-aggregated count for `countRetentionCandidates` — same filter
+      // predicates as `findMany` above, kept in sync manually (small, stable
+      // criteria; see `list-retention-candidates.ts` for the source of truth).
+      count: async ({ where }: { where: Where }) => {
+        let rows = store.leads.filter((l) => visibleLead(l));
+        if (where.stage !== undefined) {
+          rows = rows.filter((l) => l.stage === where.stage);
+        }
+        if (where.lossReasonId && typeof where.lossReasonId === "object") {
+          const cond = where.lossReasonId as { not?: unknown };
+          if ("not" in cond) rows = rows.filter((l) => l.lossReasonId !== cond.not);
+        }
+        if (where.anonymizedAt !== undefined) {
+          rows = rows.filter((l) => l.anonymizedAt === where.anonymizedAt);
+        }
+        if (where.stageChangedAt && typeof where.stageChangedAt === "object") {
+          const cond = where.stageChangedAt as { lte?: Date; gte?: Date };
+          if (cond.lte)
+            rows = rows.filter((l) => l.stageChangedAt.getTime() <= cond.lte!.getTime());
+          if (cond.gte)
+            rows = rows.filter((l) => l.stageChangedAt.getTime() >= cond.gte!.getTime());
+        }
+        return rows.length;
+      },
+    },
+    organization: {
+      // `Organization` is the tenant ROOT (not tenant-scoped by the real
+      // extension either), so this fake — like production — matches on `id`
+      // alone; callers are responsible for passing the actor's own org id.
+      findUnique: async ({ where, select }: { where: Where; select?: Where }) => {
+        const row = store.organizations.find((o) => o.id === where.id);
+        if (!row) return null;
+        if (!select) return row;
+        const out: Record<string, unknown> = {};
+        for (const key of Object.keys(select))
+          out[key] = (row as unknown as Record<string, unknown>)[key];
+        return out;
       },
     },
     note: {
@@ -324,6 +416,7 @@ export function buildExportFake(
   store: PrivacyStore,
   organizationId: string,
   userId = "user_1",
+  now: Date = D("2026-06-19T12:00:00.000Z"),
 ): { deps: PrivacyDeps; audits: AuditEvent[] } {
   const audits: AuditEvent[] = [];
   return {
@@ -331,7 +424,7 @@ export function buildExportFake(
       prisma: privacyClientFor(store, organizationId, false),
       audit: collectingAudit(audits),
       actor: { organizationId, userId },
-      now: () => D("2026-06-19T12:00:00.000Z"),
+      now: () => now,
     },
     audits,
   };
@@ -341,6 +434,7 @@ export function buildErasureFake(
   store: PrivacyStore,
   organizationId: string,
   userId = "user_1",
+  now: Date = D("2026-06-19T12:00:00.000Z"),
 ): { deps: PrivacyDeps; audits: AuditEvent[] } {
   const audits: AuditEvent[] = [];
   return {
@@ -348,7 +442,7 @@ export function buildErasureFake(
       prisma: privacyClientFor(store, organizationId, true),
       audit: collectingAudit(audits),
       actor: { organizationId, userId },
-      now: () => D("2026-06-19T12:00:00.000Z"),
+      now: () => now,
     },
     audits,
   };
