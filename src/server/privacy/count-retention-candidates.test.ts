@@ -29,6 +29,23 @@ describe("countRetentionCandidates", () => {
     expect(result).toEqual({ count: 1, retentionMonths: 6 });
   });
 
+  it("counts LOST leads with only a custom loss reason (lossReasonId null, 'Altro')", async () => {
+    const store = new PrivacyStore();
+    store.setOrganization({ id: ORG_A, leadRetentionMonths: 6 });
+    store.addLead({
+      organizationId: ORG_A,
+      stage: "LOST",
+      lossReasonId: null,
+      lossReasonCustomText: "Preferisce un altro consulente",
+      stageChangedAt: new Date("2025-01-01T00:00:00.000Z"),
+    });
+    const { deps } = buildExportFake(store, ORG_A, "user_1", NOW);
+
+    const result = await countRetentionCandidates(deps);
+
+    expect(result).toEqual({ count: 1, retentionMonths: 6 });
+  });
+
   it("an explicit months override wins over the tenant's configured value", async () => {
     const store = new PrivacyStore();
     store.setOrganization({ id: ORG_A, leadRetentionMonths: 24 });

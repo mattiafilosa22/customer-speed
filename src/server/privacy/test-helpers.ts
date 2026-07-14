@@ -29,6 +29,7 @@ export interface PLead {
   adminNotes: string | null;
   sourceId: string | null;
   lossReasonId: string | null;
+  lossReasonCustomText: string | null;
   deletedAt: Date | null;
   anonymizedAt: Date | null;
   createdAt: Date;
@@ -79,6 +80,11 @@ export interface PSource {
   organizationId: string;
   label: string;
 }
+export interface PLossReason {
+  id: string;
+  organizationId: string;
+  label: string;
+}
 export interface POrg {
   id: string;
   leadRetentionMonths: number | null;
@@ -94,6 +100,7 @@ export class PrivacyStore {
   invoices: PInvoice[] = [];
   stageHistory: PStageHist[] = [];
   sources: PSource[] = [];
+  lossReasons: PLossReason[] = [];
   organizations: POrg[] = [];
   private seq = 0;
   private id(p: string): string {
@@ -126,6 +133,7 @@ export class PrivacyStore {
       adminNotes: p.adminNotes ?? "nota interna",
       sourceId: p.sourceId ?? null,
       lossReasonId: p.lossReasonId ?? null,
+      lossReasonCustomText: p.lossReasonCustomText ?? null,
       deletedAt: p.deletedAt ?? null,
       anonymizedAt: p.anonymizedAt ?? null,
       createdAt: p.createdAt ?? D("2026-01-01T00:00:00.000Z"),
@@ -140,6 +148,15 @@ export class PrivacyStore {
       label: p.label ?? "Funnel",
     };
     this.sources.push(row);
+    return row;
+  }
+  addLossReason(p: Pick<PLossReason, "organizationId"> & Partial<PLossReason>): PLossReason {
+    const row: PLossReason = {
+      id: p.id ?? this.id("lossreason"),
+      organizationId: p.organizationId,
+      label: p.label ?? "Non ha più risposto",
+    };
+    this.lossReasons.push(row);
     return row;
   }
   addNote(p: Pick<PNote, "organizationId" | "leadId"> & Partial<PNote>): PNote {
@@ -214,6 +231,24 @@ export class PrivacyStore {
 
 type Where = Record<string, unknown>;
 
+/**
+ * Evaluates a Prisma-style `OR: [...]` array of `{ field: { not: value } }`
+ * clauses against a lead row — mirrors `listRetentionCandidates`'/
+ * `countRetentionCandidates`' `OR: [{ lossReasonId: { not: null } },
+ * { lossReasonCustomText: { not: null } }]`. Only the `{ not }` shape is
+ * modelled since it's the only one these two use cases emit.
+ */
+function matchesOrClauses(row: PLead, clauses: Where[]): boolean {
+  return clauses.some((clause) =>
+    Object.entries(clause).every(([field, cond]) => {
+      if (cond && typeof cond === "object" && "not" in cond) {
+        return (row as unknown as Record<string, unknown>)[field] !== (cond as { not: unknown }).not;
+      }
+      return (row as unknown as Record<string, unknown>)[field] === cond;
+    }),
+  );
+}
+
 export function privacyClientFor(
   store: PrivacyStore,
   organizationId: string,
@@ -233,6 +268,11 @@ export function privacyClientFor(
         if (select?.source) {
           base.source = row.sourceId
             ? (store.sources.find((s) => s.id === row.sourceId) ?? null)
+            : null;
+        }
+        if (select?.lossReason) {
+          base.lossReason = row.lossReasonId
+            ? (store.lossReasons.find((r) => r.id === row.lossReasonId) ?? null)
             : null;
         }
         if (select?.notes) {
@@ -286,6 +326,9 @@ export function privacyClientFor(
           const cond = where.lossReasonId as { not?: unknown };
           if ("not" in cond) rows = rows.filter((l) => l.lossReasonId !== cond.not);
         }
+        if (Array.isArray(where.OR)) {
+          rows = rows.filter((l) => matchesOrClauses(l, where.OR as Where[]));
+        }
         if (where.anonymizedAt !== undefined) {
           rows = rows.filter((l) => l.anonymizedAt === where.anonymizedAt);
         }
@@ -319,6 +362,8 @@ export function privacyClientFor(
         if ("email" in data) row.email = (data.email as string | null) ?? null;
         if ("phone" in data) row.phone = (data.phone as string | null) ?? null;
         if ("adminNotes" in data) row.adminNotes = (data.adminNotes as string | null) ?? null;
+        if ("lossReasonCustomText" in data)
+          row.lossReasonCustomText = (data.lossReasonCustomText as string | null) ?? null;
         if ("anonymizedAt" in data) row.anonymizedAt = (data.anonymizedAt as Date | null) ?? null;
         if ("deletedAt" in data) row.deletedAt = (data.deletedAt as Date | null) ?? null;
         return { id: row.id };
@@ -334,6 +379,9 @@ export function privacyClientFor(
         if (where.lossReasonId && typeof where.lossReasonId === "object") {
           const cond = where.lossReasonId as { not?: unknown };
           if ("not" in cond) rows = rows.filter((l) => l.lossReasonId !== cond.not);
+        }
+        if (Array.isArray(where.OR)) {
+          rows = rows.filter((l) => matchesOrClauses(l, where.OR as Where[]));
         }
         if (where.anonymizedAt !== undefined) {
           rows = rows.filter((l) => l.anonymizedAt === where.anonymizedAt);

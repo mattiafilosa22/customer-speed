@@ -33,6 +33,31 @@ function seed(): { store: PrivacyStore; leadAId: string } {
   return { store, leadAId: leadA.id };
 }
 
+/** A LOST lead with a predefined `lossReasonId` (resolved to its label). */
+function seedWithPredefinedLossReason(): { store: PrivacyStore; leadId: string } {
+  const store = new PrivacyStore();
+  const reason = store.addLossReason({ organizationId: ORG_A, label: "Non ha più risposto" });
+  const lead = store.addLead({
+    organizationId: ORG_A,
+    firstName: "Luca",
+    lastName: "Bianchi",
+    lossReasonId: reason.id,
+  });
+  return { store, leadId: lead.id };
+}
+
+/** A LOST lead with only a free-text `lossReasonCustomText` ("Altro"). */
+function seedWithCustomLossReason(): { store: PrivacyStore; leadId: string } {
+  const store = new PrivacyStore();
+  const lead = store.addLead({
+    organizationId: ORG_A,
+    firstName: "Giulia",
+    lastName: "Verdi",
+    lossReasonCustomText: "Preferisce un altro consulente",
+  });
+  return { store, leadId: lead.id };
+}
+
 describe("exportLeadData", () => {
   it("happy path: returns all the subject's personal data, structured", async () => {
     const { store, leadAId } = seed();
@@ -53,6 +78,24 @@ describe("exportLeadData", () => {
     expect(result.invoices[0]?.netAmount).toBe("1000");
     expect(result.externalReferences).toHaveLength(1);
     expect(result.stageHistory).toHaveLength(1);
+  });
+
+  it("includes the loss reason label when lossReasonId is set (predefined reason)", async () => {
+    const { store, leadId } = seedWithPredefinedLossReason();
+    const { deps } = buildExportFake(store, ORG_A);
+
+    const result = await exportLeadData(deps, leadId);
+
+    expect(result.lead.lossReason).toBe("Non ha più risposto");
+  });
+
+  it("includes the free-text custom loss reason when only lossReasonCustomText is set ('Altro')", async () => {
+    const { store, leadId } = seedWithCustomLossReason();
+    const { deps } = buildExportFake(store, ORG_A);
+
+    const result = await exportLeadData(deps, leadId);
+
+    expect(result.lead.lossReason).toBe("Preferisce un altro consulente");
   });
 
   it("minimization: never includes another tenant's data", async () => {

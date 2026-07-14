@@ -12,8 +12,8 @@ import { INDIGO_THEME } from "@/lib/theme";
  * tint, or the ink-darken amount that drops a pill below AA fails here.
  */
 describe("stage/tone pill contrast (WCAG AA)", () => {
-  it("covers all 9 stages and 4 tones (13 pills)", () => {
-    expect(allPillContrasts()).toHaveLength(13);
+  it("covers all 11 stages and 4 tones (15 pills)", () => {
+    expect(allPillContrasts()).toHaveLength(15);
   });
 
   it("every default pill text/background pair clears text AA (≥4.5:1)", () => {
@@ -22,9 +22,9 @@ describe("stage/tone pill contrast (WCAG AA)", () => {
     }
   });
 
-  it("each of the 9 stage pills clears AA individually", () => {
+  it("each of the 11 stage pills clears AA individually", () => {
     const stages = allPillContrasts(INDIGO_THEME).filter((p) => p.key.startsWith("stage:"));
-    expect(stages).toHaveLength(9);
+    expect(stages).toHaveLength(11);
     for (const { key, ratio } of stages) {
       expect(ratio, key).toBeGreaterThanOrEqual(AA_TEXT);
     }

@@ -26,7 +26,7 @@ import { parseInput } from "@/server/validation";
  *    (docs/06 §6.1) — the admin never sees or sets the password.
  *
  * Atomicity (docs/00 §3): the organization, its default lead sources / loss
- * reasons / 9 pipeline stage configs, the owner user and the invite token are
+ * reasons / 11 pipeline stage configs, the owner user and the invite token are
  * all created in ONE `$transaction`. A duplicate slug or owner email aborts the
  * whole transaction (nothing is partially created).
  *

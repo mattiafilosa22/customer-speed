@@ -50,6 +50,7 @@ function buildWorkbook(data: LeadDataExport): ExcelJS.Workbook {
     { field: "Stage", value: data.lead.stage },
     { field: "Capitale", value: data.lead.capitalBracket ?? "" },
     { field: "Provenienza", value: data.lead.source ?? "" },
+    { field: "Motivo perdita", value: data.lead.lossReason ?? "" },
     { field: "Note interne", value: data.lead.adminNotes ?? "" },
     { field: "Creato il", value: data.lead.createdAt },
     { field: "Esportato il", value: data.exportedAt },

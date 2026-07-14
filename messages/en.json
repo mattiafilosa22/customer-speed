@@ -247,7 +247,9 @@
       "CALL_SCHEDULED": "Call scheduled",
       "WAITING_DOCS": "Waiting for documents",
       "PRESENTATION_CALL": "Presentation call",
+      "PRESENTATION_CALL_2": "Second call",
       "WAITING_DECISION": "Waiting for decision",
+      "STANDBY": "Standby",
       "WAITING_PAYMENT": "Waiting for payment",
       "WON": "Won",
       "LOST": "Lost"
@@ -357,6 +359,7 @@
         "email": "Enter a valid email.",
         "phone": "Enter a valid phone number.",
         "lossReasonId": "Select a loss reason.",
+        "lossReasonCustomText": "Enter a valid loss reason.",
         "form": "Check the entered data."
       }
     },
@@ -398,12 +401,20 @@
     "details": {
       "title": "Lead details"
     },
+    "edit": {
+      "cta": "Edit",
+      "title": "Edit lead"
+    },
     "updateStage": {
       "cta": "Update stage",
       "title": "Update stage",
       "stageLabel": "New stage",
       "lossReasonLabel": "Loss reason",
-      "lossReasonPlaceholder": "Select a reason"
+      "lossReasonPlaceholder": "Select a reason",
+      "lossReasonOther": "Other",
+      "lossReasonCustomLabel": "Custom reason",
+      "lossReasonCustomPlaceholder": "Write the reason...",
+      "lossReasonCustomRequired": "Enter the loss reason."
     },
     "timeline": {
       "title": "Stage history",
@@ -524,7 +535,10 @@
       "more": "+{count} more"
     },
     "card": {
-      "label": "Lead {name}, stage {stage}"
+      "label": "Lead {name}, stage {stage}",
+      "nextAppointment": {
+        "label": "Next appointment:"
+      }
     },
     "moveMenu": {
       "label": "Move to another stage",
@@ -533,7 +547,11 @@
     "lossReason": {
       "title": "Loss reason",
       "label": "Why was the lead lost?",
-      "placeholder": "Select a reason"
+      "placeholder": "Select a reason",
+      "other": "Other",
+      "customLabel": "Custom reason",
+      "customPlaceholder": "Write the reason...",
+      "customRequired": "Enter the loss reason."
     },
     "announce": {
       "moved": "{name} moved to {stage}.",
@@ -596,11 +614,21 @@
     "lost": {
       "title": "Lost sales",
       "empty": "No lost sales in this period.",
-      "unspecified": "Unspecified"
+      "unspecified": "Unspecified",
+      "other": "Other"
     },
     "active": {
       "title": "Total leads",
       "empty": "No active leads right now."
+    },
+    "dateRange": {
+      "from": "From",
+      "to": "To",
+      "lastWeek": "Last week",
+      "all": "All",
+      "activeRangeNotice": "Range filter active",
+      "invertedRangeError": "The \"To\" date must be on or after the \"From\" date",
+      "invalidDateError": "Invalid date"
     }
   },
   "invoices": {
@@ -910,6 +938,39 @@
     "errors": {
       "invalid": "Invalid data.",
       "unauthorized": "You do not have permission for this operation.",
+      "generic": "Operation failed. Please try again."
+    }
+  },
+  "lossReasons": {
+    "title": "Loss reasons",
+    "description": "Manage the list of loss reasons used when a lead is moved to \"Lost\": add, rename, deactivate and reorder them.",
+    "manageLink": "Manage loss reasons",
+    "listHeading": "Reason list",
+    "listDescription": "Deactivated reasons stay visible on leads that already use them, but no longer appear when marking a new lead as lost.",
+    "listLabel": "Loss reason list",
+    "empty": "No loss reason configured yet.",
+    "moveUp": "Move up: {label}",
+    "moveDown": "Move down: {label}",
+    "renameFieldLabel": "New label for {label}",
+    "rename": "Rename",
+    "renameAria": "Rename: {label}",
+    "save": "Save",
+    "cancel": "Cancel",
+    "statusActive": "Active",
+    "statusInactive": "Inactive",
+    "deactivate": "Deactivate",
+    "reactivate": "Reactivate",
+    "deactivateAria": "Deactivate: {label}",
+    "reactivateAria": "Reactivate: {label}",
+    "addHeading": "Add reason",
+    "addLabel": "Label",
+    "add": "Add",
+    "adding": "Adding…",
+    "errors": {
+      "invalid": "Invalid data.",
+      "unauthorized": "You don't have permission for this operation.",
+      "notFound": "Loss reason not found.",
+      "duplicateLabel": "A loss reason with this label already exists.",
       "generic": "Operation failed. Please try again."
     }
   },

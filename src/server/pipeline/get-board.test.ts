@@ -1,12 +1,17 @@
 import { describe, expect, it } from "vitest";
 
-import { LeadStage } from "@/generated/prisma/enums";
+import { AppointmentStatus, LeadStage } from "@/generated/prisma/enums";
 import { getBoard } from "@/server/pipeline/get-board";
 import { buildFakePipelineDeps, LeadStore } from "@/server/leads/test-helpers";
 
 const ORG_A = "org_a";
 const ORG_B = "org_b";
 const USER_A = "user_a";
+
+/** Comfortably in the future/past relative to whenever the suite actually runs. */
+const FUTURE_1 = new Date(Date.now() + 2 * 24 * 60 * 60 * 1000);
+const FUTURE_2 = new Date(Date.now() + 5 * 24 * 60 * 60 * 1000);
+const PAST = new Date(Date.now() - 2 * 24 * 60 * 60 * 1000);
 
 describe("getBoard", () => {
   it("builds one column per VISIBLE stage in config order, with DB-side counts", async () => {
@@ -21,7 +26,7 @@ describe("getBoard", () => {
 
     const { columns } = await getBoard(deps, {});
 
-    expect(columns).toHaveLength(8); // 9 - 1 hidden
+    expect(columns).toHaveLength(10); // 11 - 1 hidden
     expect(columns.map((c) => c.stage)).not.toContain(LeadStage.CALL_SCHEDULED);
     expect(columns.find((c) => c.stage === LeadStage.TO_HANDLE)?.count).toBe(2);
     expect(columns.find((c) => c.stage === LeadStage.TO_HANDLE)?.cards).toHaveLength(2);
@@ -169,5 +174,110 @@ describe("getBoard", () => {
     const { deps } = buildFakePipelineDeps(store, ORG_A, USER_A);
 
     await expect(getBoard(deps, { year: "2026", month: "13" })).rejects.toThrow();
+  });
+
+  describe("nextAppointment", () => {
+    it("exposes only the closer of two future, non-cancelled appointments", async () => {
+      const store = new LeadStore();
+      store.seedStageConfigs(ORG_A);
+      const lead = store.addLead({ organizationId: ORG_A, stage: LeadStage.TO_HANDLE });
+      store.addAppointment({
+        organizationId: ORG_A,
+        leadId: lead.id,
+        startAt: FUTURE_2,
+        status: AppointmentStatus.PENDING,
+      });
+      store.addAppointment({
+        organizationId: ORG_A,
+        leadId: lead.id,
+        startAt: FUTURE_1,
+        status: AppointmentStatus.PENDING,
+      });
+      const { deps } = buildFakePipelineDeps(store, ORG_A, USER_A);
+
+      const { columns } = await getBoard(deps, {});
+
+      const card = columns.find((c) => c.stage === LeadStage.TO_HANDLE)?.cards[0];
+      expect(card?.nextAppointment).toEqual({
+        startAt: FUTURE_1.toISOString(),
+        status: AppointmentStatus.PENDING,
+      });
+    });
+
+    it("returns null when the only future appointment is CANCELED", async () => {
+      const store = new LeadStore();
+      store.seedStageConfigs(ORG_A);
+      const lead = store.addLead({ organizationId: ORG_A, stage: LeadStage.TO_HANDLE });
+      store.addAppointment({
+        organizationId: ORG_A,
+        leadId: lead.id,
+        startAt: FUTURE_1,
+        status: AppointmentStatus.CANCELED,
+      });
+      const { deps } = buildFakePipelineDeps(store, ORG_A, USER_A);
+
+      const { columns } = await getBoard(deps, {});
+
+      const card = columns.find((c) => c.stage === LeadStage.TO_HANDLE)?.cards[0];
+      expect(card?.nextAppointment).toBeNull();
+    });
+
+    it("returns null when the lead only has a past appointment", async () => {
+      const store = new LeadStore();
+      store.seedStageConfigs(ORG_A);
+      const lead = store.addLead({ organizationId: ORG_A, stage: LeadStage.TO_HANDLE });
+      store.addAppointment({
+        organizationId: ORG_A,
+        leadId: lead.id,
+        startAt: PAST,
+        status: AppointmentStatus.PENDING,
+      });
+      const { deps } = buildFakePipelineDeps(store, ORG_A, USER_A);
+
+      const { columns } = await getBoard(deps, {});
+
+      const card = columns.find((c) => c.stage === LeadStage.TO_HANDLE)?.cards[0];
+      expect(card?.nextAppointment).toBeNull();
+    });
+
+    it("returns null when the lead has no appointment at all", async () => {
+      const store = new LeadStore();
+      store.seedStageConfigs(ORG_A);
+      store.addLead({ organizationId: ORG_A, stage: LeadStage.TO_HANDLE });
+      const { deps } = buildFakePipelineDeps(store, ORG_A, USER_A);
+
+      const { columns } = await getBoard(deps, {});
+
+      const card = columns.find((c) => c.stage === LeadStage.TO_HANDLE)?.cards[0];
+      expect(card?.nextAppointment).toBeNull();
+    });
+
+    it("never exposes another tenant's appointment (cross-tenant isolation)", async () => {
+      const store = new LeadStore();
+      store.seedStageConfigs(ORG_A);
+      store.seedStageConfigs(ORG_B);
+      const leadA = store.addLead({
+        organizationId: ORG_A,
+        id: "lead_shared",
+        stage: LeadStage.TO_HANDLE,
+      });
+      // Worst case: an ORG_B appointment referencing the SAME lead id (e.g. a
+      // stale/forged reference). The tenant-scoped query must still filter it
+      // out by `organizationId`, not rely on lead-id uniqueness alone.
+      store.addAppointment({
+        organizationId: ORG_B,
+        leadId: "lead_shared",
+        startAt: FUTURE_1,
+        status: AppointmentStatus.PENDING,
+      });
+      const { deps } = buildFakePipelineDeps(store, ORG_A, USER_A);
+
+      const { columns } = await getBoard(deps, {});
+
+      const cardA = columns
+        .find((c) => c.stage === LeadStage.TO_HANDLE)
+        ?.cards.find((c) => c.id === leadA.id);
+      expect(cardA?.nextAppointment).toBeNull();
+    });
   });
 });

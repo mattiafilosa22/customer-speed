@@ -9,8 +9,10 @@ import { assertLossReasonBelongsToTenant } from "@/server/leads/ownership";
  * Move a lead to a new stage (docs/02 §2.3/§2.5, docs/04 §4.3 PATCH /:id/stage).
  *
  * Invariants enforced here:
- *  1. **LOST requires a loss reason** — validated by the schema, and the
- *     `lossReasonId` is verified to belong to the tenant (else 404).
+ *  1. **LOST requires a loss reason** — validated by the schema (either
+ *     `lossReasonId` OR `lossReasonCustomText`, never both), and the
+ *     `lossReasonId` — when present — is verified to belong to the tenant
+ *     (else 404).
  *  2. **Atomicity** — `stage` + `stageChangedAt` on the lead AND the new
  *     `StageHistory` row are written in ONE `$transaction`: either both land or
  *     neither (docs/00 §3). `stageChangedAt` is reset so "giorni" restarts.
@@ -21,7 +23,8 @@ import { assertLossReasonBelongsToTenant } from "@/server/leads/ownership";
  *     soft-deleted lead is not found.
  *
  * When the move LEAVES the LOST stage (to anything else) the stored
- * `lossReasonId` is cleared, so a re-opened lead does not keep a stale reason.
+ * `lossReasonId` AND `lossReasonCustomText` are both cleared, so a re-opened
+ * lead does not keep a stale reason.
  */
 export interface ChangeStageResult {
   readonly id: string;
@@ -64,7 +67,9 @@ export async function changeStage(
         stage: data.stage,
         stageChangedAt: now,
         // Set the reason only when entering LOST; clear it on any other move.
-        lossReasonId: movingToLost ? data.lossReasonId : null,
+        // Exactly one of the two is set when `movingToLost` (schema-enforced).
+        lossReasonId: movingToLost ? (data.lossReasonId ?? null) : null,
+        lossReasonCustomText: movingToLost ? (data.lossReasonCustomText ?? null) : null,
       },
     });
 

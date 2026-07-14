@@ -1,4 +1,5 @@
 import type { LeadDeps } from "@/server/leads/deps";
+import { listLossReasons as listAllLossReasons } from "@/server/loss-reasons";
 
 /**
  * Read-only reference lists used by the lead forms / filters: the tenant's lead
@@ -22,12 +23,19 @@ export async function listLeadSources(deps: LeadDeps): Promise<ReferenceItem[]> 
   });
 }
 
-/** Loss reasons for the tenant, ordered by label. */
+/**
+ * ACTIVE loss reasons for the tenant, ordered by `sortOrder` — the "sposta in
+ * Perso" picker (`update-stage-dialog.tsx`, `loss-reason-dialog.tsx`). A thin
+ * re-export of the loss-reason domain module's `listLossReasons` with
+ * `includeInactive: false` (its default), so the query has exactly ONE
+ * implementation (docs/00 §1 DRY) — the full CRUD list (including deactivated
+ * reasons) lives in Settings (`src/server/loss-reasons`). `LeadDeps` is
+ * structurally assignable to `LossReasonDeps` (same tenant-scoped `prisma` +
+ * `actor` shape), so no adapter is needed.
+ */
 export async function listLossReasons(deps: LeadDeps): Promise<ReferenceItem[]> {
-  return deps.prisma.lossReason.findMany({
-    select: { id: true, label: true },
-    orderBy: { label: "asc" },
-  });
+  const items = await listAllLossReasons(deps);
+  return items.map(({ id, label }) => ({ id, label }));
 }
 
 /**

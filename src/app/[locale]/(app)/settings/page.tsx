@@ -23,12 +23,14 @@ export default async function SettingsPage() {
   const ta = await getTranslations("appearance");
 
   const tr = await getTranslations("dataRetention");
+  const tl = await getTranslations("lossReasons");
 
   const ctx = await requireTenantContext();
   const flags = await getTenantFeatureFlags(ctx.organizationId);
   const showIntegrations = flags.calendarIntegrations && can(ctx.role, "calendar.integrations");
   const showAppearance = can(ctx.role, "settings.tenant");
   const showRetention = can(ctx.role, "settings.tenant");
+  const showLossReasons = can(ctx.role, "settings.tenant");
 
   return (
     <div className="flex flex-col gap-6">
@@ -73,6 +75,27 @@ export default async function SettingsPage() {
                 className="rounded-control border-line font-body text-ink hover:bg-accent-soft focus-visible:outline-ring inline-flex min-h-11 w-fit items-center justify-center border px-4 text-[13.5px] font-medium transition-colors focus-visible:outline-2 focus-visible:outline-offset-2"
               >
                 {tr("manageLink")}
+              </Link>
+            </CardBody>
+          </Card>
+        </section>
+      ) : null}
+
+      {showLossReasons ? (
+        <section aria-labelledby="loss-reasons-link-heading">
+          <Card>
+            <CardBody className="flex flex-col gap-3">
+              <div className="flex flex-col gap-1">
+                <h2 id="loss-reasons-link-heading" className="font-display text-ink text-xl">
+                  {tl("title")}
+                </h2>
+                <p className="font-body text-muted text-[13px]">{tl("description")}</p>
+              </div>
+              <Link
+                href="/settings/loss-reasons"
+                className="rounded-control border-line font-body text-ink hover:bg-accent-soft focus-visible:outline-ring inline-flex min-h-11 w-fit items-center justify-center border px-4 text-[13.5px] font-medium transition-colors focus-visible:outline-2 focus-visible:outline-offset-2"
+              >
+                {tl("manageLink")}
               </Link>
             </CardBody>
           </Card>

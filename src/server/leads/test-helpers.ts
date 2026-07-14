@@ -1,8 +1,9 @@
 import { Prisma } from "@/generated/prisma/client";
-import type { CapitalBracket, LeadStage } from "@/generated/prisma/enums";
+import { AppointmentStatus, type CapitalBracket, type LeadStage } from "@/generated/prisma/enums";
 import type { TenantPrismaClient } from "@/lib/prisma-tenant";
 import type { AuditEvent, AuditLogger } from "@/server/audit/audit-log";
 import type { LeadDeps } from "@/server/leads/deps";
+import type { LossReasonDeps } from "@/server/loss-reasons/deps";
 import type { PipelineDeps } from "@/server/pipeline/deps";
 
 /**
@@ -35,6 +36,7 @@ export interface LeadRow {
   capitalAmount: number | null;
   sourceId: string | null;
   lossReasonId: string | null;
+  lossReasonCustomText: string | null;
   adminNotes: string | null;
   deletedAt: Date | null;
   createdAt: Date;
@@ -83,6 +85,8 @@ export interface LossReasonRow {
   id: string;
   organizationId: string;
   label: string;
+  isActive: boolean;
+  sortOrder: number;
 }
 
 export interface PipelineStageConfigRow {
@@ -94,6 +98,15 @@ export interface PipelineStageConfigRow {
   colorToken: string | null;
 }
 
+/** Minimal appointment row for the pipeline board's "next appointment" lookup. */
+export interface AppointmentRow {
+  id: string;
+  organizationId: string;
+  leadId: string | null;
+  startAt: Date;
+  status: AppointmentStatus;
+}
+
 /** Shared, cross-tenant store. Build per-tenant clients against the same store. */
 export class LeadStore {
   leads: LeadRow[] = [];
@@ -103,6 +116,7 @@ export class LeadStore {
   leadSources: LeadSourceRow[] = [];
   lossReasons: LossReasonRow[] = [];
   stageConfigs: PipelineStageConfigRow[] = [];
+  appointments: AppointmentRow[] = [];
   private seq = 0;
 
   nextId(prefix: string): string {
@@ -126,6 +140,7 @@ export class LeadStore {
       capitalAmount: partial.capitalAmount ?? null,
       sourceId: partial.sourceId ?? null,
       lossReasonId: partial.lossReasonId ?? null,
+      lossReasonCustomText: partial.lossReasonCustomText ?? null,
       adminNotes: partial.adminNotes ?? null,
       deletedAt: partial.deletedAt ?? null,
       createdAt: now,
@@ -156,6 +171,8 @@ export class LeadStore {
       id: partial.id ?? this.nextId("loss"),
       organizationId: partial.organizationId,
       label: partial.label ?? "Non ha più risposto",
+      isActive: partial.isActive ?? true,
+      sortOrder: partial.sortOrder ?? 0,
     };
     this.lossReasons.push(row);
     return row;
@@ -207,11 +224,25 @@ export class LeadStore {
     return row;
   }
 
-  /** Seed the canonical 9 stage configs (all visible) for a tenant. */
+  /** Seed the canonical 11 stage configs (all visible) for a tenant. */
   seedStageConfigs(organizationId: string): PipelineStageConfigRow[] {
     return PIPELINE_STAGE_ORDER.map((stage, index) =>
       this.addStageConfig({ organizationId, stage, sortOrder: index }),
     );
+  }
+
+  addAppointment(
+    partial: Partial<AppointmentRow> & Pick<AppointmentRow, "organizationId">,
+  ): AppointmentRow {
+    const row: AppointmentRow = {
+      id: partial.id ?? this.nextId("appt"),
+      organizationId: partial.organizationId,
+      leadId: partial.leadId ?? null,
+      startAt: partial.startAt ?? new Date("2026-06-10T09:00:00.000Z"),
+      status: partial.status ?? AppointmentStatus.PENDING,
+    };
+    this.appointments.push(row);
+    return row;
   }
 
   lead(index = 0): LeadRow {
@@ -236,7 +267,9 @@ const PIPELINE_STAGE_ORDER = [
   "CALL_SCHEDULED",
   "WAITING_DOCS",
   "PRESENTATION_CALL",
+  "PRESENTATION_CALL_2",
   "WAITING_DECISION",
+  "STANDBY",
   "WAITING_PAYMENT",
   "WON",
   "LOST",
@@ -382,6 +415,39 @@ export function tenantClientFor(store: LeadStore, organizationId: string): Tenan
         return { id: row.id };
       },
     },
+    appointment: {
+      findMany: async ({
+        where = {},
+        orderBy,
+      }: {
+        where?: Where;
+        orderBy?: Record<string, "asc" | "desc">;
+      }) => {
+        let rows = store.appointments.filter((a) => a.organizationId === organizationId);
+        const leadIdCond = where.leadId as { in?: string[] } | undefined;
+        if (leadIdCond?.in) {
+          const allowed = new Set(leadIdCond.in);
+          rows = rows.filter((a) => a.leadId !== null && allowed.has(a.leadId));
+        }
+        if (where.startAt && typeof where.startAt === "object") {
+          const range = where.startAt as { gte?: Date };
+          if (range.gte) rows = rows.filter((a) => a.startAt >= range.gte!);
+        }
+        const statusCond = where.status as { not?: AppointmentStatus } | undefined;
+        if (statusCond?.not !== undefined) {
+          rows = rows.filter((a) => a.status !== statusCond.not);
+        }
+        if (orderBy?.startAt) {
+          const dir = orderBy.startAt;
+          rows = [...rows].sort((a, b) =>
+            dir === "asc"
+              ? a.startAt.getTime() - b.startAt.getTime()
+              : b.startAt.getTime() - a.startAt.getTime(),
+          );
+        }
+        return rows.map((a) => ({ leadId: a.leadId, startAt: a.startAt, status: a.status }));
+      },
+    },
     note: {
       findUnique: async ({ where }: { where: Where }) => {
         const row = store.notes.find(
@@ -494,10 +560,74 @@ export function tenantClientFor(store: LeadStore, organizationId: string): Tenan
         );
         return row ? { id: row.id } : null;
       },
-      findMany: async () =>
-        store.lossReasons
-          .filter((r) => r.organizationId === organizationId)
-          .map((r) => ({ id: r.id, label: r.label })),
+      findFirst: async ({
+        where = {},
+        orderBy,
+        select,
+      }: { where?: Where; orderBy?: Where; select?: Where } = {}) => {
+        const notClause = where.NOT as Where | undefined;
+        let rows = store.lossReasons.filter(
+          (r) =>
+            r.organizationId === organizationId &&
+            (where.label === undefined || r.label === where.label) &&
+            (notClause?.id === undefined || r.id !== notClause.id),
+        );
+        if (orderBy && "sortOrder" in orderBy) {
+          const dir = (orderBy as { sortOrder: "asc" | "desc" }).sortOrder;
+          rows = [...rows].sort((a, b) =>
+            dir === "asc" ? a.sortOrder - b.sortOrder : b.sortOrder - a.sortOrder,
+          );
+        }
+        const row = rows[0];
+        return row ? projectLossReason(row, select) : null;
+      },
+      findMany: async ({
+        where = {},
+        orderBy,
+        select,
+      }: { where?: Where; orderBy?: Where | Where[]; select?: Where } = {}) => {
+        let rows = store.lossReasons.filter(
+          (r) =>
+            r.organizationId === organizationId &&
+            (where.isActive === undefined || r.isActive === where.isActive),
+        );
+        const orderKeys = orderBy ? (Array.isArray(orderBy) ? orderBy : [orderBy]) : [];
+        rows = [...rows].sort((a, b) => {
+          for (const key of orderKeys) {
+            const [field, dir] = Object.entries(key)[0] ?? [];
+            if (!field) continue;
+            const av = (a as unknown as Record<string, unknown>)[field];
+            const bv = (b as unknown as Record<string, unknown>)[field];
+            let cmp =
+              typeof av === "number" && typeof bv === "number"
+                ? av - bv
+                : String(av).localeCompare(String(bv));
+            if (dir === "desc") cmp = -cmp;
+            if (cmp !== 0) return cmp;
+          }
+          return 0;
+        });
+        return rows.map((r) => projectLossReason(r, select));
+      },
+      create: async ({ data, select }: { data: Where; select?: Where }) => {
+        const row = store.addLossReason({
+          organizationId,
+          label: data.label as string,
+          sortOrder: (data.sortOrder as number | undefined) ?? 0,
+          isActive: (data.isActive as boolean | undefined) ?? true,
+        });
+        return projectLossReason(row, select);
+      },
+      update: async ({ where, data, select }: { where: Where; data: Where; select?: Where }) => {
+        const row = store.lossReasons.find(
+          (r) => r.id === where.id && r.organizationId === organizationId,
+        );
+        if (!row) throw makeP2025();
+        if (typeof data.label === "string") row.label = data.label;
+        if (typeof data.isActive === "boolean") row.isActive = data.isActive;
+        if (typeof data.sortOrder === "number") row.sortOrder = data.sortOrder;
+        return projectLossReason(row, select);
+      },
     },
     pipelineStageConfig: {
       findUnique: async ({ where, select }: { where: Where; select?: Where }) => {
@@ -537,6 +667,44 @@ export function tenantClientFor(store: LeadStore, organizationId: string): Tenan
         if ("sortOrder" in data) row.sortOrder = data.sortOrder as number;
         if ("colorToken" in data) row.colorToken = (data.colorToken as string | null) ?? null;
         return { id: row.id };
+      },
+      create: async ({ data }: { data: Where }) => {
+        const row = store.addStageConfig({
+          organizationId,
+          stage: data.stage as LeadStage,
+          sortOrder: data.sortOrder as number,
+          isVisible: (data.isVisible as boolean | undefined) ?? true,
+          colorToken: (data.colorToken as string | null | undefined) ?? null,
+        });
+        return { id: row.id };
+      },
+      upsert: async ({
+        where,
+        update,
+        create,
+      }: {
+        where: Where;
+        update: Where;
+        create: Where;
+      }) => {
+        const compound = where.organizationId_stage as { stage: LeadStage } | undefined;
+        const row = store.stageConfigs.find(
+          (c) => c.organizationId === organizationId && compound !== undefined && c.stage === compound.stage,
+        );
+        if (row) {
+          if ("isVisible" in update) row.isVisible = update.isVisible as boolean;
+          if ("sortOrder" in update) row.sortOrder = update.sortOrder as number;
+          if ("colorToken" in update) row.colorToken = (update.colorToken as string | null) ?? null;
+          return { id: row.id };
+        }
+        const created = store.addStageConfig({
+          organizationId,
+          stage: create.stage as LeadStage,
+          sortOrder: create.sortOrder as number,
+          isVisible: (create.isVisible as boolean | undefined) ?? true,
+          colorToken: (create.colorToken as string | null | undefined) ?? null,
+        });
+        return { id: created.id };
       },
     },
     // Transaction: supports BOTH the callback form (run against this same fake
@@ -578,6 +746,8 @@ function applyLeadUpdate(row: LeadRow, data: Where): void {
   if ("stage" in data) row.stage = data.stage as LeadStage;
   if ("stageChangedAt" in data) row.stageChangedAt = data.stageChangedAt as Date;
   if ("lossReasonId" in data) row.lossReasonId = (data.lossReasonId as string | null) ?? null;
+  if ("lossReasonCustomText" in data)
+    row.lossReasonCustomText = (data.lossReasonCustomText as string | null) ?? null;
   if (data.source && typeof data.source === "object") {
     const op = data.source as { connect?: { id: string }; disconnect?: boolean };
     if (op.connect) row.sourceId = op.connect.id;
@@ -590,6 +760,18 @@ function projectStageConfig(
   row: PipelineStageConfigRow,
   select?: Where,
 ): Record<string, unknown> {
+  if (!select) {
+    return { ...row };
+  }
+  const out: Record<string, unknown> = {};
+  for (const key of Object.keys(select)) {
+    if (select[key]) out[key] = (row as unknown as Record<string, unknown>)[key];
+  }
+  return out;
+}
+
+/** Project a loss-reason row to the requested `select` (or the full row). */
+function projectLossReason(row: LossReasonRow, select?: Where): Record<string, unknown> {
   if (!select) {
     return { ...row };
   }
@@ -646,5 +828,17 @@ export function buildFakePipelineDeps(
       actor: { organizationId, userId },
     },
     audits,
+  };
+}
+
+/** Build LossReasonDeps bound to a tenant, backed by the shared store (no audit — docs/00 §1, `LossReasonDeps`). */
+export function buildFakeLossReasonDeps(
+  store: LeadStore,
+  organizationId: string,
+  userId: string,
+): LossReasonDeps {
+  return {
+    prisma: tenantClientFor(store, organizationId),
+    actor: { organizationId, userId },
   };
 }

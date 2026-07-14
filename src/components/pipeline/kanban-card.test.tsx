@@ -3,9 +3,11 @@ import { fireEvent, render, screen, within } from "@testing-library/react";
 import { DndContext } from "@dnd-kit/core";
 import { NextIntlClientProvider } from "next-intl";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { axe } from "vitest-axe";
 
 import itMessages from "../../../messages/it.json";
-import { LeadStage } from "@/generated/prisma/enums";
+import { AppointmentStatus, LeadStage } from "@/generated/prisma/enums";
+import { formats } from "@/i18n/formats";
 import type { PipelineCard } from "@/server/pipeline";
 import { BoardContext, type BoardContextValue } from "@/components/pipeline/board-context";
 import { KanbanCard } from "@/components/pipeline/kanban-card";
@@ -37,6 +39,7 @@ const CARD: PipelineCard = {
   capitalBracket: null,
   capitalAmount: null,
   source: null,
+  nextAppointment: null,
 };
 
 const STAGE_OPTIONS: readonly StageOption[] = [
@@ -49,7 +52,10 @@ function renderCard(props: Partial<Parameters<typeof KanbanCard>[0]> = {}) {
   const moveLead = vi.fn().mockResolvedValue(undefined);
   const boardValue: BoardContextValue = { moveLead, lossReasons: [] };
   const utils = render(
-    <NextIntlClientProvider locale="it" messages={itMessages}>
+    // `formats`/`timeZone` mirror the real per-request config (`src/i18n/request.ts`)
+    // so the "dateTime" named format used for `nextAppointment` renders the same
+    // localized string as in production, not next-intl's unformatted fallback.
+    <NextIntlClientProvider locale="it" messages={itMessages} formats={formats} timeZone="Europe/Rome">
       <BoardContext.Provider value={boardValue}>
         <DndContext>
           <KanbanCard card={CARD} stageOptions={STAGE_OPTIONS} canMove {...props} />
@@ -174,5 +180,39 @@ describe("KanbanCard", () => {
     // A click on the clone never navigates.
     fireEvent.click(article);
     expect(push).not.toHaveBeenCalled();
+  });
+
+  it("does not render a next-appointment row when there is none", () => {
+    renderCard();
+    expect(screen.queryByText(/prossimo appuntamento/i)).not.toBeInTheDocument();
+  });
+
+  it("shows the formatted date/time when a next appointment is present", () => {
+    const startAt = "2026-08-20T10:30:00.000Z";
+    renderCard({
+      card: {
+        ...CARD,
+        nextAppointment: { startAt, status: AppointmentStatus.PENDING },
+      },
+    });
+    // Accessible label ("Prossimo appuntamento:") is sr-only; the visible text
+    // is the localized date/time (Europe/Rome, `formats.dateTime.dateTime`) —
+    // same formatting the real per-request next-intl config produces.
+    expect(screen.getByText(/prossimo appuntamento/i)).toBeInTheDocument();
+    const expected = new Intl.DateTimeFormat("it", {
+      ...formats.dateTime.dateTime,
+      timeZone: "Europe/Rome",
+    }).format(new Date(startAt));
+    expect(screen.getByText(expected)).toBeInTheDocument();
+  });
+
+  it("has no axe violations, including with the next-appointment row shown", async () => {
+    const { container } = renderCard({
+      card: {
+        ...CARD,
+        nextAppointment: { startAt: "2026-08-20T10:30:00.000Z", status: AppointmentStatus.PENDING },
+      },
+    });
+    expect(await axe(container)).toHaveNoViolations();
   });
 });

@@ -247,7 +247,9 @@
       "CALL_SCHEDULED": "Call schedulata",
       "WAITING_DOCS": "Attesa documenti",
       "PRESENTATION_CALL": "Call presentazione",
+      "PRESENTATION_CALL_2": "Seconda call",
       "WAITING_DECISION": "Attesa decisione",
+      "STANDBY": "Stand by",
       "WAITING_PAYMENT": "Attesa pagamento",
       "WON": "Vinta",
       "LOST": "Persa"
@@ -357,6 +359,7 @@
         "email": "Inserisci un'email valida.",
         "phone": "Inserisci un telefono valido.",
         "lossReasonId": "Seleziona il motivo della perdita.",
+        "lossReasonCustomText": "Inserisci un motivo della perdita valido.",
         "form": "Controlla i dati inseriti."
       }
     },
@@ -398,12 +401,20 @@
     "details": {
       "title": "Dettagli lead"
     },
+    "edit": {
+      "cta": "Modifica",
+      "title": "Modifica lead"
+    },
     "updateStage": {
       "cta": "Aggiorna stage",
       "title": "Aggiorna lo stage",
       "stageLabel": "Nuovo stage",
       "lossReasonLabel": "Motivo della perdita",
-      "lossReasonPlaceholder": "Seleziona un motivo"
+      "lossReasonPlaceholder": "Seleziona un motivo",
+      "lossReasonOther": "Altro",
+      "lossReasonCustomLabel": "Motivo personalizzato",
+      "lossReasonCustomPlaceholder": "Scrivi il motivo...",
+      "lossReasonCustomRequired": "Inserisci il motivo della perdita."
     },
     "timeline": {
       "title": "Cronologia stage",
@@ -524,7 +535,10 @@
       "more": "+{count} altri"
     },
     "card": {
-      "label": "Lead {name}, stage {stage}"
+      "label": "Lead {name}, stage {stage}",
+      "nextAppointment": {
+        "label": "Prossimo appuntamento:"
+      }
     },
     "moveMenu": {
       "label": "Sposta in un altro stage",
@@ -533,7 +547,11 @@
     "lossReason": {
       "title": "Motivo della perdita",
       "label": "Perché il lead è stato perso?",
-      "placeholder": "Seleziona un motivo"
+      "placeholder": "Seleziona un motivo",
+      "other": "Altro",
+      "customLabel": "Motivo personalizzato",
+      "customPlaceholder": "Scrivi il motivo...",
+      "customRequired": "Inserisci il motivo della perdita."
     },
     "announce": {
       "moved": "{name} spostato in {stage}.",
@@ -596,11 +614,21 @@
     "lost": {
       "title": "Vendite perse",
       "empty": "Nessuna vendita persa nel periodo.",
-      "unspecified": "Non specificato"
+      "unspecified": "Non specificato",
+      "other": "Altro"
     },
     "active": {
       "title": "Lead totali",
       "empty": "Nessun lead attivo al momento."
+    },
+    "dateRange": {
+      "from": "Dal",
+      "to": "Al",
+      "lastWeek": "Ultima settimana",
+      "all": "Tutto",
+      "activeRangeNotice": "Filtro per intervallo attivo",
+      "invertedRangeError": "La data \"Al\" deve essere uguale o successiva alla data \"Dal\"",
+      "invalidDateError": "Data non valida"
     }
   },
   "invoices": {
@@ -910,6 +938,39 @@
     "errors": {
       "invalid": "Dati non validi.",
       "unauthorized": "Non hai i permessi per questa operazione.",
+      "generic": "Operazione non riuscita. Riprova."
+    }
+  },
+  "lossReasons": {
+    "title": "Motivi di perdita",
+    "description": "Gestisci l'elenco dei motivi di perdita usati quando un lead viene spostato in \"Perso\": aggiungi, rinomina, disattiva e riordina.",
+    "manageLink": "Gestisci motivi di perdita",
+    "listHeading": "Elenco motivi",
+    "listDescription": "I motivi disattivati restano visibili sui lead che li usano già, ma non compaiono più nella selezione per i nuovi lead persi.",
+    "listLabel": "Elenco motivi di perdita",
+    "empty": "Nessun motivo di perdita configurato.",
+    "moveUp": "Sposta in alto: {label}",
+    "moveDown": "Sposta in basso: {label}",
+    "renameFieldLabel": "Nuova etichetta per {label}",
+    "rename": "Rinomina",
+    "renameAria": "Rinomina: {label}",
+    "save": "Salva",
+    "cancel": "Annulla",
+    "statusActive": "Attivo",
+    "statusInactive": "Disattivato",
+    "deactivate": "Disattiva",
+    "reactivate": "Riattiva",
+    "deactivateAria": "Disattiva: {label}",
+    "reactivateAria": "Riattiva: {label}",
+    "addHeading": "Aggiungi motivo",
+    "addLabel": "Etichetta",
+    "add": "Aggiungi",
+    "adding": "Aggiunta…",
+    "errors": {
+      "invalid": "Dati non validi.",
+      "unauthorized": "Non hai i permessi per questa operazione.",
+      "notFound": "Motivo di perdita non trovato.",
+      "duplicateLabel": "Esiste già un motivo di perdita con questa etichetta.",
       "generic": "Operazione non riuscita. Riprova."
     }
   },

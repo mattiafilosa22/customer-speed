@@ -72,6 +72,7 @@ describe("listRetentionCandidates", () => {
       organizationId: ORG_A,
       stage: "LOST",
       lossReasonId: null,
+      lossReasonCustomText: null,
       stageChangedAt: new Date("2025-01-01T00:00:00.000Z"),
     });
     const { deps } = buildExportFake(store, ORG_A);
@@ -79,6 +80,24 @@ describe("listRetentionCandidates", () => {
     const result = await listRetentionCandidates(deps, 6);
 
     expect(result).toHaveLength(0);
+  });
+
+  it("includes LOST leads with only a custom loss reason (lossReasonId null, 'Altro')", async () => {
+    const store = new PrivacyStore();
+    const candidate = store.addLead({
+      organizationId: ORG_A,
+      firstName: "Anna",
+      lastName: "Verdi",
+      stage: "LOST",
+      lossReasonId: null,
+      lossReasonCustomText: "Preferisce un altro consulente",
+      stageChangedAt: new Date("2025-01-01T00:00:00.000Z"),
+    });
+    const { deps } = buildExportFake(store, ORG_A);
+
+    const result = await listRetentionCandidates(deps, 6);
+
+    expect(result.map((r) => r.id)).toEqual([candidate.id]);
   });
 
   it("excludes leads not in stage LOST, even if old enough", async () => {

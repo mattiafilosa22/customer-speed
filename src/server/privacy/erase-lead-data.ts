@@ -12,9 +12,12 @@ import { clockNow, type PrivacyDeps } from "@/server/privacy/deps";
  *  - External CRM references (altName/altEmail are PII) → HARD DELETE.
  *  - Appointment.reason (free text, may name the person) → ANONYMIZED (cleared);
  *    the slot's timing/status is kept for operational/aggregate integrity.
- *  - Lead identity (firstName/lastName/email/phone/adminNotes) → ANONYMIZED
- *    (overwritten with neutral placeholders / null), and the row is marked
- *    `anonymizedAt` (+ `deletedAt` so it stays hidden everywhere).
+ *  - Lead identity (firstName/lastName/email/phone/adminNotes) and the
+ *    free-text custom loss reason (lossReasonCustomText, may name the person
+ *    or otherwise carry PII — same risk class as Note.body/Appointment.reason,
+ *    just stored directly on the lead) → ANONYMIZED (overwritten with neutral
+ *    placeholders / null), and the row is marked `anonymizedAt` (+ `deletedAt`
+ *    so it stays hidden everywhere).
  *  - Invoices → KEPT AS-IS. Amounts/dates are required for tax/accounting
  *    retention (a legal obligation that overrides erasure under GDPR art. 17(3)).
  *    They carry NO personal data of their own beyond the link to the lead, and
@@ -101,8 +104,9 @@ export async function eraseLeadData(
         data: { reason: ANON_LAST_NAME }, // "" — neutral, no PII
       });
       // Anonymize the lead identity and mark it erased. We do NOT touch invoices
-      // (legal retention) nor stageHistory (no PII). Setting `deletedAt` keeps it
-      // hidden from every default-filtered read.
+      // (legal retention) nor stageHistory (no PII), nor lossReasonId (an FK to a
+      // predefined, non-personal reason, not free text). Setting `deletedAt`
+      // keeps it hidden from every default-filtered read.
       await tx.lead.update({
         where: { id: leadId },
         data: {
@@ -111,6 +115,7 @@ export async function eraseLeadData(
           email: null,
           phone: null,
           adminNotes: null,
+          lossReasonCustomText: null,
           anonymizedAt: now,
           deletedAt: now,
         },

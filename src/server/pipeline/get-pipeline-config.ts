@@ -1,6 +1,7 @@
 import type { LeadStage } from "@/generated/prisma/enums";
 import type { PipelineDeps } from "@/server/pipeline/deps";
 import { STAGE_ORDER, isTerminalStage } from "@/server/leads/stage";
+import { synthesizeMissingOrder } from "@/server/pipeline/stage-order";
 
 /**
  * One stage's tenant configuration row (docs/03 PipelineStageConfig).
@@ -31,8 +32,9 @@ export interface PipelineConfigResult {
  * counts are joined to the configs in memory (a 9-element map), never per row.
  *
  * Defensive completeness: should a tenant be missing a config row for some stage
- * (e.g. a stage added after that tenant was seeded), we synthesize a sensible
- * default so the board/config never silently drops a stage.
+ * (e.g. a stage added to the `LeadStage` enum after that tenant was seeded), we
+ * synthesize a sensible default so the board/config never silently drops a
+ * stage — see `synthesizeMissingOrder` below for how the default is placed.
  */
 export async function getPipelineConfig(deps: PipelineDeps): Promise<PipelineConfigResult> {
   const [configs, grouped] = await Promise.all([
@@ -50,14 +52,24 @@ export async function getPipelineConfig(deps: PipelineDeps): Promise<PipelineCon
 
   const byStage = new Map(configs.map((c) => [c.stage, c]));
 
+  // Effective sortOrder per canonical position: the persisted value where a
+  // config row exists, else a synthesized default that slots the stage between
+  // its canonical neighbours (see synthesizeMissingOrder).
+  const persistedOrder = STAGE_ORDER.map((stage) => byStage.get(stage)?.sortOrder);
+  const effectiveOrder = synthesizeMissingOrder(persistedOrder);
+
   // Iterate the canonical stage set so the result is always complete and stable,
-  // then sort by the persisted order (defaults fall back to the canonical index).
+  // then sort by the effective order.
   const stages: PipelineStageConfigItem[] = STAGE_ORDER.map((stage, index) => {
     const config = byStage.get(stage);
+    // `effectiveOrder` has exactly one entry per STAGE_ORDER position (built
+    // from it above), so this is always defined; the `?? index` fallback is a
+    // defensive no-op that just satisfies `noUncheckedIndexedAccess`.
+    const sortOrder = effectiveOrder[index] ?? index;
     return {
       stage,
       isVisible: config?.isVisible ?? true,
-      sortOrder: config?.sortOrder ?? index,
+      sortOrder,
       colorToken: config?.colorToken ?? null,
       isTerminal: isTerminalStage(stage),
       leadCount: counts.get(stage) ?? 0,

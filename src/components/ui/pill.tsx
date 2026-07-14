@@ -12,7 +12,9 @@ export type PillStage =
   | "call-scheduled"
   | "waiting-docs"
   | "presentation"
+  | "presentation-2"
   | "waiting-decision"
+  | "standby"
   | "waiting-payment"
   | "won"
   | "lost";
@@ -60,7 +62,9 @@ const STAGE_STYLE: Readonly<Record<PillStage, { color: string; bg: string }>> = 
   "call-scheduled": pillVars("--stage-call-scheduled"),
   "waiting-docs": pillVars("--stage-waiting-docs"),
   presentation: pillVars("--stage-presentation"),
+  "presentation-2": pillVars("--stage-presentation-2"),
   "waiting-decision": pillVars("--stage-waiting-decision"),
+  standby: pillVars("--stage-standby"),
   "waiting-payment": pillVars("--stage-waiting-payment"),
   won: pillVars("--stage-won"),
   lost: pillVars("--stage-lost"),

@@ -13,8 +13,8 @@ import type { InvoiceDeps } from "@/server/invoices/deps";
  * filtered to it (AND soft-deleted leads are excluded), and every write stamps
  * it. Rows live in a shared `DashboardStore` so a test can seed another tenant's
  * data and assert it is invisible. Only the operations these use cases call are
- * modelled — `lead.groupBy/findMany`, `invoice.aggregate/findMany/create/delete/
- * findUnique`, `pipelineStageConfig.findMany`, `lossReason.findMany`.
+ * modelled — `lead.groupBy/count/findMany`, `invoice.aggregate/findMany/create/
+ * delete/findUnique`, `pipelineStageConfig.findMany`, `lossReason.findMany`.
  *
  * Amounts are stored as `Prisma.Decimal` so the aggregate SUM is exact (no float
  * drift), exactly like the real DB column `Decimal(12,2)`.
@@ -29,6 +29,8 @@ export interface DLeadRow {
   stage: LeadStage;
   stageChangedAt: Date;
   lossReasonId: string | null;
+  /** Free-text "Altro" loss reason (docs/02 §2.5-bis) — mutually exclusive with `lossReasonId`. */
+  lossReasonCustomText: string | null;
   deletedAt: Date | null;
   createdAt: Date;
 }
@@ -64,7 +66,9 @@ const STAGE_ORDER: readonly LeadStage[] = [
   LeadStage.CALL_SCHEDULED,
   LeadStage.WAITING_DOCS,
   LeadStage.PRESENTATION_CALL,
+  LeadStage.PRESENTATION_CALL_2,
   LeadStage.WAITING_DECISION,
+  LeadStage.STANDBY,
   LeadStage.WAITING_PAYMENT,
   LeadStage.WON,
   LeadStage.LOST,
@@ -93,6 +97,7 @@ export class DashboardStore {
       stage: partial.stage ?? LeadStage.TO_HANDLE,
       stageChangedAt: partial.stageChangedAt ?? createdAt,
       lossReasonId: partial.lossReasonId ?? null,
+      lossReasonCustomText: partial.lossReasonCustomText ?? null,
       deletedAt: partial.deletedAt ?? null,
       createdAt,
     };
@@ -133,7 +138,7 @@ export class DashboardStore {
     return row;
   }
 
-  /** Seed the canonical 9 stage configs (all visible) for a tenant. */
+  /** Seed the canonical 11 stage configs (all visible) for a tenant. */
   seedStageConfigs(organizationId: string): void {
     STAGE_ORDER.forEach((stage, index) => {
       this.stageConfigs.push({
@@ -178,6 +183,18 @@ function leadMatches(lead: DLeadRow, where: Where): boolean {
   }
   if (where.createdAt && typeof where.createdAt === "object") {
     if (!inDateRange(lead.createdAt, where.createdAt as { gte?: Date; lt?: Date })) return false;
+  }
+  if (where.lossReasonId !== undefined && lead.lossReasonId !== where.lossReasonId) {
+    return false;
+  }
+  if (where.lossReasonCustomText !== undefined) {
+    const cond = where.lossReasonCustomText;
+    if (cond === null) {
+      if (lead.lossReasonCustomText !== null) return false;
+    } else if (typeof cond === "object" && cond !== null && "not" in cond) {
+      const notValue = (cond as { not: unknown }).not;
+      if (notValue === null && lead.lossReasonCustomText === null) return false;
+    }
   }
   return true;
 }
@@ -265,6 +282,9 @@ export function dashboardClientFor(
       findUnique: async ({ where }: { where: Where }) => {
         const row = ownLeads().find((l) => l.id === where.id && l.deletedAt === null);
         return row ? { id: row.id, stage: row.stage } : null;
+      },
+      count: async ({ where = {} }: { where?: Where }) => {
+        return ownLeads().filter((l) => leadMatches(l, where)).length;
       },
     },
     invoice: {
