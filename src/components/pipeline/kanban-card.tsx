@@ -6,9 +6,7 @@ import { CSS } from "@dnd-kit/utilities";
 import { useTranslations } from "next-intl";
 
 import type { PipelineCard } from "@/server/pipeline";
-import { Pill } from "@/components/ui";
 import { Link, useRouter } from "@/i18n/navigation";
-import { stageToPill } from "@/components/leads/stage-pill";
 import { useLeadStageLabel } from "@/i18n/enum-labels";
 import { useCapitalDisplay } from "@/components/leads/capital-display";
 import { MoveStageMenu, type StageOption } from "@/components/pipeline/move-stage-menu";
@@ -179,7 +177,6 @@ export function KanbanCard({
       </div>
 
       <div className="flex flex-wrap items-center gap-2">
-        <Pill stage={stageToPill(card.stage)}>{stageLabel(card.stage)}</Pill>
         {card.capitalAmount !== null || card.capitalBracket ? (
           <span className="label-mono bg-line2 text-ink rounded-pill inline-flex items-center px-2.5 py-0.5">
             {capitalDisplay({
