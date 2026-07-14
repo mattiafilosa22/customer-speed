@@ -3,6 +3,7 @@ import type { CapitalBracket, LeadStage } from "@/generated/prisma/enums";
 import type { TenantPrismaClient } from "@/lib/prisma-tenant";
 import type { AuditEvent, AuditLogger } from "@/server/audit/audit-log";
 import type { LeadDeps } from "@/server/leads/deps";
+import type { LossReasonDeps } from "@/server/loss-reasons/deps";
 import type { PipelineDeps } from "@/server/pipeline/deps";
 
 /**
@@ -84,6 +85,8 @@ export interface LossReasonRow {
   id: string;
   organizationId: string;
   label: string;
+  isActive: boolean;
+  sortOrder: number;
 }
 
 export interface PipelineStageConfigRow {
@@ -158,6 +161,8 @@ export class LeadStore {
       id: partial.id ?? this.nextId("loss"),
       organizationId: partial.organizationId,
       label: partial.label ?? "Non ha più risposto",
+      isActive: partial.isActive ?? true,
+      sortOrder: partial.sortOrder ?? 0,
     };
     this.lossReasons.push(row);
     return row;
@@ -498,10 +503,74 @@ export function tenantClientFor(store: LeadStore, organizationId: string): Tenan
         );
         return row ? { id: row.id } : null;
       },
-      findMany: async () =>
-        store.lossReasons
-          .filter((r) => r.organizationId === organizationId)
-          .map((r) => ({ id: r.id, label: r.label })),
+      findFirst: async ({
+        where = {},
+        orderBy,
+        select,
+      }: { where?: Where; orderBy?: Where; select?: Where } = {}) => {
+        const notClause = where.NOT as Where | undefined;
+        let rows = store.lossReasons.filter(
+          (r) =>
+            r.organizationId === organizationId &&
+            (where.label === undefined || r.label === where.label) &&
+            (notClause?.id === undefined || r.id !== notClause.id),
+        );
+        if (orderBy && "sortOrder" in orderBy) {
+          const dir = (orderBy as { sortOrder: "asc" | "desc" }).sortOrder;
+          rows = [...rows].sort((a, b) =>
+            dir === "asc" ? a.sortOrder - b.sortOrder : b.sortOrder - a.sortOrder,
+          );
+        }
+        const row = rows[0];
+        return row ? projectLossReason(row, select) : null;
+      },
+      findMany: async ({
+        where = {},
+        orderBy,
+        select,
+      }: { where?: Where; orderBy?: Where | Where[]; select?: Where } = {}) => {
+        let rows = store.lossReasons.filter(
+          (r) =>
+            r.organizationId === organizationId &&
+            (where.isActive === undefined || r.isActive === where.isActive),
+        );
+        const orderKeys = orderBy ? (Array.isArray(orderBy) ? orderBy : [orderBy]) : [];
+        rows = [...rows].sort((a, b) => {
+          for (const key of orderKeys) {
+            const [field, dir] = Object.entries(key)[0] ?? [];
+            if (!field) continue;
+            const av = (a as unknown as Record<string, unknown>)[field];
+            const bv = (b as unknown as Record<string, unknown>)[field];
+            let cmp =
+              typeof av === "number" && typeof bv === "number"
+                ? av - bv
+                : String(av).localeCompare(String(bv));
+            if (dir === "desc") cmp = -cmp;
+            if (cmp !== 0) return cmp;
+          }
+          return 0;
+        });
+        return rows.map((r) => projectLossReason(r, select));
+      },
+      create: async ({ data, select }: { data: Where; select?: Where }) => {
+        const row = store.addLossReason({
+          organizationId,
+          label: data.label as string,
+          sortOrder: (data.sortOrder as number | undefined) ?? 0,
+          isActive: (data.isActive as boolean | undefined) ?? true,
+        });
+        return projectLossReason(row, select);
+      },
+      update: async ({ where, data, select }: { where: Where; data: Where; select?: Where }) => {
+        const row = store.lossReasons.find(
+          (r) => r.id === where.id && r.organizationId === organizationId,
+        );
+        if (!row) throw makeP2025();
+        if (typeof data.label === "string") row.label = data.label;
+        if (typeof data.isActive === "boolean") row.isActive = data.isActive;
+        if (typeof data.sortOrder === "number") row.sortOrder = data.sortOrder;
+        return projectLossReason(row, select);
+      },
     },
     pipelineStageConfig: {
       findUnique: async ({ where, select }: { where: Where; select?: Where }) => {
@@ -644,6 +713,18 @@ function projectStageConfig(
   return out;
 }
 
+/** Project a loss-reason row to the requested `select` (or the full row). */
+function projectLossReason(row: LossReasonRow, select?: Where): Record<string, unknown> {
+  if (!select) {
+    return { ...row };
+  }
+  const out: Record<string, unknown> = {};
+  for (const key of Object.keys(select)) {
+    if (select[key]) out[key] = (row as unknown as Record<string, unknown>)[key];
+  }
+  return out;
+}
+
 /** A Prisma-shaped P2025 ("record not found") for `update`/`delete` misses. */
 function makeP2025(): Error {
   const err = new Error("Record to update not found.") as Error & { code: string };
@@ -690,5 +771,17 @@ export function buildFakePipelineDeps(
       actor: { organizationId, userId },
     },
     audits,
+  };
+}
+
+/** Build LossReasonDeps bound to a tenant, backed by the shared store (no audit — docs/00 §1, `LossReasonDeps`). */
+export function buildFakeLossReasonDeps(
+  store: LeadStore,
+  organizationId: string,
+  userId: string,
+): LossReasonDeps {
+  return {
+    prisma: tenantClientFor(store, organizationId),
+    actor: { organizationId, userId },
   };
 }
