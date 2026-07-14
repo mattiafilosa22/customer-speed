@@ -35,13 +35,13 @@ import { AppointmentsPanel } from "@/components/leads/detail/appointments-panel"
  * Lead detail (docs/02 §2.5). Layout "Note colonna centrale Attività":
  *  - header (avatar + name + stage pill + primary/overflow actions),
  *  - "Sintesi" read-only key-fact strip (stage + days, capital, source, created),
- *  - main/central column (the activity stream — most prominent): Notes first
- *    ("diario attività" pattern), then Appointments, then Invoices (if WON),
+ *  - main/central column (the activity stream — most prominent): Appointments first,
+ *    then Notes ("diario attività" pattern), then Invoices (if WON),
  *  - side/reference column: Contact, Dettagli lead (capital + source editors),
  *    Aggiornamento dati (external refs), Stage history.
  *
  * The main column comes FIRST in the DOM so that, when the grid collapses to a
- * single column on mobile/tablet, Notes land at the top right under "Sintesi".
+ * single column on mobile/tablet, Appointments land at the top right under "Sintesi".
  *
  * No fact is duplicated as an editor + a display in the same place: the summary
  * is read-only; the editable capital/source live once in "Dettagli lead".
@@ -190,19 +190,19 @@ export default async function LeadDetailPage({
 
       {/* Two columns on desktop (main/central wider), stacked on mobile/tablet.
           The main column is declared FIRST so it stacks above the reference
-          column on mobile → Notes sit right under "Sintesi". */}
+          column on mobile → Appointments sit right under "Sintesi". */}
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-[1.6fr_1fr]">
-        {/* Main/central column: the activity stream — Notes, Appointments,
-            Invoices (if WON). Notes are the most prominent block. */}
+        {/* Main/central column: the activity stream — Appointments, Notes,
+            Invoices (if WON). Appointments are the most prominent block. */}
         <div className="flex flex-col gap-4">
+          {showAppointments ? (
+            <AppointmentsPanel leadId={lead.id} appointments={appointments} />
+          ) : null}
           <NotesPanel
             leadId={lead.id}
             notes={lead.notes.map((n) => ({ id: n.id, body: n.body, createdAt: n.createdAt }))}
             canNote={perms.canNote}
           />
-          {showAppointments ? (
-            <AppointmentsPanel leadId={lead.id} appointments={appointments} />
-          ) : null}
           {showInvoices ? <InvoicesPanel leadId={lead.id} invoices={invoices} /> : null}
         </div>
 
