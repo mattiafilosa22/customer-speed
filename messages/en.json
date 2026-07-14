@@ -405,7 +405,10 @@
       "title": "Update stage",
       "stageLabel": "New stage",
       "lossReasonLabel": "Loss reason",
-      "lossReasonPlaceholder": "Select a reason"
+      "lossReasonPlaceholder": "Select a reason",
+      "lossReasonOther": "Other",
+      "lossReasonCustomLabel": "Custom reason",
+      "lossReasonCustomPlaceholder": "Write the reason..."
     },
     "timeline": {
       "title": "Stage history",
@@ -535,7 +538,10 @@
     "lossReason": {
       "title": "Loss reason",
       "label": "Why was the lead lost?",
-      "placeholder": "Select a reason"
+      "placeholder": "Select a reason",
+      "other": "Other",
+      "customLabel": "Custom reason",
+      "customPlaceholder": "Write the reason..."
     },
     "announce": {
       "moved": "{name} moved to {stage}.",

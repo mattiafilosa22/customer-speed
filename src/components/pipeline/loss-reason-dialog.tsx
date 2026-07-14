@@ -4,17 +4,21 @@ import { useState } from "react";
 import { useTranslations } from "next-intl";
 
 import { LeadStage } from "@/generated/prisma/enums";
-import { Button, Modal, Select } from "@/components/ui";
+import { Button, Input, Modal, Select } from "@/components/ui";
 import { FormAlert } from "@/components/auth/form-alert";
 import { useMessage } from "@/components/auth/use-message";
 import { useBoard } from "@/components/pipeline/board-context";
+
+/** Sentinel Select value for "Altro" (free-text loss reason), never sent as-is. */
+const OTHER_REASON_VALUE = "__other__";
 
 /**
  * Loss-reason dialog (docs/02 §2.5) — reused by the board whenever a lead is
  * moved to LOST (both via drag&drop and via the keyboard "Sposta in…" menu),
  * mirroring the Fase-2 detail dialog. A reason is REQUIRED (the server enforces
- * it too). On confirm it performs the optimistic move; it stays open and shows
- * a localized error if the move fails.
+ * it too): either a reason from the list, or free text via the "Altro" option
+ * (mutually exclusive — `changeStageSchema`). On confirm it performs the
+ * optimistic move; it stays open and shows a localized error if the move fails.
  */
 export function LossReasonDialog({
   leadId,
@@ -29,20 +33,31 @@ export function LossReasonDialog({
   const tm = useMessage();
   const { moveLead, lossReasons } = useBoard();
   const [reasonId, setReasonId] = useState("");
+  const [customText, setCustomText] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
+  const isOtherReason = reasonId === OTHER_REASON_VALUE;
+
+  const reset = () => {
+    setReasonId("");
+    setCustomText("");
+  };
 
   const confirm = async () => {
-    if (!reasonId) {
+    if (!reasonId || (isOtherReason && !customText.trim())) {
       setError("pipeline.errors.lossReasonRequired");
       return;
     }
     setPending(true);
     setError(null);
     try {
-      await moveLead({ leadId, stage: LeadStage.LOST, lossReasonId: reasonId });
+      await moveLead(
+        isOtherReason
+          ? { leadId, stage: LeadStage.LOST, lossReasonCustomText: customText.trim() }
+          : { leadId, stage: LeadStage.LOST, lossReasonId: reasonId },
+      );
       onOpenChange(false);
-      setReasonId("");
+      reset();
     } catch (e) {
       setError(e instanceof Error ? e.message : "pipeline.errors.generic");
     } finally {
@@ -67,7 +82,19 @@ export function LossReasonDialog({
               {reason.label}
             </option>
           ))}
+          <option value={OTHER_REASON_VALUE}>{t("pipeline.lossReason.other")}</option>
         </Select>
+
+        {isOtherReason ? (
+          <Input
+            label={t("pipeline.lossReason.customLabel")}
+            placeholder={t("pipeline.lossReason.customPlaceholder")}
+            required
+            maxLength={500}
+            value={customText}
+            onChange={(e) => setCustomText(e.currentTarget.value)}
+          />
+        ) : null}
 
         <div className="flex justify-end gap-2">
           <Button variant="ghost" type="button" onClick={() => onOpenChange(false)}>

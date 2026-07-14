@@ -113,13 +113,22 @@ export function PipelineBoard({
   );
 
   const mutation = useMutation({
-    mutationFn: (args: { leadId: string; stage: LeadStage; lossReasonId?: string }) =>
-      moveLeadStageAction(args),
+    mutationFn: (args: {
+      leadId: string;
+      stage: LeadStage;
+      lossReasonId?: string;
+      lossReasonCustomText?: string;
+    }) => moveLeadStageAction(args),
   });
 
   /** Optimistic move with rollback + ARIA announcement. Rejects on failure. */
   const moveLead = useCallback(
-    async (args: { leadId: string; stage: LeadStage; lossReasonId?: string }) => {
+    async (args: {
+      leadId: string;
+      stage: LeadStage;
+      lossReasonId?: string;
+      lossReasonCustomText?: string;
+    }) => {
       // The current `columns` (closed over via the deps) is the pre-move snapshot
       // we roll back to on failure — no ref needed.
       const snapshot = columns;

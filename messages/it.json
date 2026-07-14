@@ -405,7 +405,10 @@
       "title": "Aggiorna lo stage",
       "stageLabel": "Nuovo stage",
       "lossReasonLabel": "Motivo della perdita",
-      "lossReasonPlaceholder": "Seleziona un motivo"
+      "lossReasonPlaceholder": "Seleziona un motivo",
+      "lossReasonOther": "Altro",
+      "lossReasonCustomLabel": "Motivo personalizzato",
+      "lossReasonCustomPlaceholder": "Scrivi il motivo..."
     },
     "timeline": {
       "title": "Cronologia stage",
@@ -535,7 +538,10 @@
     "lossReason": {
       "title": "Motivo della perdita",
       "label": "Perché il lead è stato perso?",
-      "placeholder": "Seleziona un motivo"
+      "placeholder": "Seleziona un motivo",
+      "other": "Altro",
+      "customLabel": "Motivo personalizzato",
+      "customPlaceholder": "Scrivi il motivo..."
     },
     "announce": {
       "moved": "{name} spostato in {stage}.",

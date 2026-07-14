@@ -116,4 +116,53 @@ describe("changeStage", () => {
     expect(store.leads.find((l) => l.id === otherLead.id)?.stage).toBe(LeadStage.TO_HANDLE);
     expect(store.stageHistory).toHaveLength(0);
   });
+
+  it("rejects LOST with both lossReasonId and lossReasonCustomText", async () => {
+    const store = new LeadStore();
+    const lead = store.addLead({ organizationId: ORG_A, stage: LeadStage.WAITING_DECISION });
+    const reason = store.addLossReason({ organizationId: ORG_A, label: "Non ha più risposto" });
+    const deps = buildFakeLeadDeps(store, ORG_A, USER_A);
+
+    await expect(
+      changeStage(deps, lead.id, {
+        stage: LeadStage.LOST,
+        lossReasonId: reason.id,
+        lossReasonCustomText: "Non risponde più alle chiamate",
+      }),
+    ).rejects.toBeInstanceOf(ValidationError);
+    // No write happened.
+    expect(store.lead().stage).toBe(LeadStage.WAITING_DECISION);
+    expect(store.stageHistory).toHaveLength(0);
+  });
+
+  it("accepts LOST with only lossReasonCustomText (no lossReasonId)", async () => {
+    const store = new LeadStore();
+    const lead = store.addLead({ organizationId: ORG_A, stage: LeadStage.WAITING_DECISION });
+    const deps = buildFakeLeadDeps(store, ORG_A, USER_A);
+
+    const result = await changeStage(deps, lead.id, {
+      stage: LeadStage.LOST,
+      lossReasonCustomText: "Non risponde più alle chiamate",
+    });
+
+    expect(result.changed).toBe(true);
+    expect(store.lead().stage).toBe(LeadStage.LOST);
+    expect(store.lead().lossReasonId).toBeNull();
+    expect(store.lead().lossReasonCustomText).toBe("Non risponde più alle chiamate");
+  });
+
+  it("clears lossReasonCustomText when moving away from LOST", async () => {
+    const store = new LeadStore();
+    const lead = store.addLead({ organizationId: ORG_A, stage: LeadStage.WAITING_DECISION });
+    const deps = buildFakeLeadDeps(store, ORG_A, USER_A);
+
+    await changeStage(deps, lead.id, {
+      stage: LeadStage.LOST,
+      lossReasonCustomText: "Prezzo troppo alto",
+    });
+    await changeStage(deps, lead.id, { stage: LeadStage.WAITING_DECISION });
+
+    expect(store.lead().lossReasonCustomText).toBeNull();
+    expect(store.lead().lossReasonId).toBeNull();
+  });
 });
