@@ -86,6 +86,49 @@ describe("UpdateStageDialog", () => {
     expect(submitted.get("lossReasonId")).toBeNull();
   });
 
+  it("blocks submit and shows an inline error when the free-text reason is whitespace-only", async () => {
+    renderDialog();
+    openDialog();
+
+    fireEvent.change(screen.getByRole("combobox", { name: "Nuovo stage" }), {
+      target: { value: LeadStage.LOST },
+    });
+    fireEvent.change(screen.getByRole("combobox", { name: "Motivo della perdita" }), {
+      target: { value: "__other__" },
+    });
+
+    const customInput = screen.getByRole("textbox", { name: "Motivo personalizzato" });
+    fireEvent.change(customInput, { target: { value: "   " } });
+
+    fireEvent.click(screen.getByRole("button", { name: "Salva" }));
+
+    expect(await screen.findByText("Inserisci il motivo della perdita.")).toBeInTheDocument();
+    expect(changeStageAction).not.toHaveBeenCalled();
+  });
+
+  it("clears the whitespace-only error once the user types real text and lets the submit through", async () => {
+    renderDialog();
+    openDialog();
+
+    fireEvent.change(screen.getByRole("combobox", { name: "Nuovo stage" }), {
+      target: { value: LeadStage.LOST },
+    });
+    fireEvent.change(screen.getByRole("combobox", { name: "Motivo della perdita" }), {
+      target: { value: "__other__" },
+    });
+
+    const customInput = screen.getByRole("textbox", { name: "Motivo personalizzato" });
+    fireEvent.change(customInput, { target: { value: "   " } });
+    fireEvent.click(screen.getByRole("button", { name: "Salva" }));
+    expect(await screen.findByText("Inserisci il motivo della perdita.")).toBeInTheDocument();
+
+    fireEvent.change(customInput, { target: { value: "Budget insufficiente" } });
+    expect(screen.queryByText("Inserisci il motivo della perdita.")).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "Salva" }));
+    await waitFor(() => expect(changeStageAction).toHaveBeenCalledTimes(1));
+  });
+
   it("switches back to the Select (and hides the free-text input) when a real reason is chosen after Altro", () => {
     renderDialog();
     openDialog();
