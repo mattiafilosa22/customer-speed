@@ -550,7 +550,8 @@
       "placeholder": "Select a reason",
       "other": "Other",
       "customLabel": "Custom reason",
-      "customPlaceholder": "Write the reason..."
+      "customPlaceholder": "Write the reason...",
+      "customRequired": "Enter the loss reason."
     },
     "announce": {
       "moved": "{name} moved to {stage}.",

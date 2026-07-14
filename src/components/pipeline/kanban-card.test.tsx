@@ -3,6 +3,7 @@ import { fireEvent, render, screen, within } from "@testing-library/react";
 import { DndContext } from "@dnd-kit/core";
 import { NextIntlClientProvider } from "next-intl";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { axe } from "vitest-axe";
 
 import itMessages from "../../../messages/it.json";
 import { AppointmentStatus, LeadStage } from "@/generated/prisma/enums";
@@ -203,5 +204,15 @@ describe("KanbanCard", () => {
       timeZone: "Europe/Rome",
     }).format(new Date(startAt));
     expect(screen.getByText(expected)).toBeInTheDocument();
+  });
+
+  it("has no axe violations, including with the next-appointment row shown", async () => {
+    const { container } = renderCard({
+      card: {
+        ...CARD,
+        nextAppointment: { startAt: "2026-08-20T10:30:00.000Z", status: AppointmentStatus.PENDING },
+      },
+    });
+    expect(await axe(container)).toHaveNoViolations();
   });
 });

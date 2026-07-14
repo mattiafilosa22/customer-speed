@@ -46,7 +46,67 @@ describe("LossReasonDialog", () => {
     expect(customInput).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("button", { name: "Salva" }));
+    // A reason WAS picked (Altro) — the error must describe the actual problem
+    // (blank text), not the unrelated "select a reason" message. Same field-level
+    // pattern (and same copy) as `UpdateStageDialog`.
+    expect(screen.getByText("Inserisci il motivo della perdita.")).toBeInTheDocument();
+    expect(customInput).toHaveAccessibleDescription("Inserisci il motivo della perdita.");
+    expect(screen.queryByText("Seleziona un motivo della perdita.")).not.toBeInTheDocument();
+  });
+
+  it("shows a field-level error on the Select when no reason at all is picked", () => {
+    renderDialog(vi.fn());
+    const select = screen.getByRole("combobox", { name: "Perché il lead è stato perso?" });
+
+    fireEvent.click(screen.getByRole("button", { name: "Salva" }));
+
     expect(screen.getByText("Seleziona un motivo della perdita.")).toBeInTheDocument();
+    expect(select).toHaveAccessibleDescription("Seleziona un motivo della perdita.");
+  });
+
+  it("clears the blank-text error once the user types real text", () => {
+    renderDialog(vi.fn());
+    fireEvent.change(screen.getByRole("combobox"), { target: { value: "__other__" } });
+    fireEvent.click(screen.getByRole("button", { name: "Salva" }));
+    expect(screen.getByText("Inserisci il motivo della perdita.")).toBeInTheDocument();
+
+    fireEvent.change(screen.getByRole("textbox", { name: "Motivo personalizzato" }), {
+      target: { value: "Budget insufficiente" },
+    });
+    expect(screen.queryByText("Inserisci il motivo della perdita.")).not.toBeInTheDocument();
+  });
+
+  it("resets a stale selection and error when reopened (dialog stays mounted across opens in move-stage-menu)", () => {
+    const { rerender } = render(
+      <NextIntlClientProvider locale="it" messages={itMessages}>
+        <BoardContext.Provider value={{ moveLead: vi.fn(), lossReasons: LOSS_REASONS }}>
+          <LossReasonDialog leadId="lead_1" open={true} onOpenChange={vi.fn()} />
+        </BoardContext.Provider>
+      </NextIntlClientProvider>,
+    );
+
+    // First attempt: leave it blank and trigger the field error.
+    fireEvent.click(screen.getByRole("button", { name: "Salva" }));
+    expect(screen.getByText("Seleziona un motivo della perdita.")).toBeInTheDocument();
+
+    // Cancel closes the dialog (state is NOT cleared by Cancel itself).
+    rerender(
+      <NextIntlClientProvider locale="it" messages={itMessages}>
+        <BoardContext.Provider value={{ moveLead: vi.fn(), lossReasons: LOSS_REASONS }}>
+          <LossReasonDialog leadId="lead_1" open={false} onOpenChange={vi.fn()} />
+        </BoardContext.Provider>
+      </NextIntlClientProvider>,
+    );
+
+    // Reopening must start fresh: no stale error visible.
+    rerender(
+      <NextIntlClientProvider locale="it" messages={itMessages}>
+        <BoardContext.Provider value={{ moveLead: vi.fn(), lossReasons: LOSS_REASONS }}>
+          <LossReasonDialog leadId="lead_1" open={true} onOpenChange={vi.fn()} />
+        </BoardContext.Provider>
+      </NextIntlClientProvider>,
+    );
+    expect(screen.queryByText("Seleziona un motivo della perdita.")).not.toBeInTheDocument();
   });
 
   it("moves the lead with lossReasonCustomText (not lossReasonId) when Altro + text are confirmed", async () => {
