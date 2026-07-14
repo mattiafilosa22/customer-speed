@@ -110,6 +110,38 @@ describe("DateRangeFilter", () => {
     expect(screen.getByRole("status")).toHaveTextContent("Filtro per intervallo attivo");
   });
 
+  it("does NOT show the active-range notice when only 'from' is filled (no 'to' yet)", () => {
+    currentSearch = "from=2026-07-01";
+    renderWithIntl(<DateRangeFilter />);
+    expect(screen.queryByRole("status")).not.toBeInTheDocument();
+  });
+
+  it("does NOT show the active-range notice when only 'to' is filled (no 'from' yet)", () => {
+    currentSearch = "to=2026-07-10";
+    renderWithIntl(<DateRangeFilter />);
+    expect(screen.queryByRole("status")).not.toBeInTheDocument();
+  });
+
+  it("shows an inline error and no active-range notice when 'from' is after 'to'", () => {
+    currentSearch = "from=2026-07-10&to=2026-07-01";
+    renderWithIntl(<DateRangeFilter />);
+
+    expect(
+      screen.getByText('La data "Al" deve essere uguale o successiva alla data "Dal"'),
+    ).toBeInTheDocument();
+    expect(screen.queryByRole("status")).not.toBeInTheDocument();
+  });
+
+  it("does not show the inverted-range error for a valid, non-inverted range", () => {
+    currentSearch = "from=2026-07-01&to=2026-07-10";
+    renderWithIntl(<DateRangeFilter />);
+
+    expect(
+      screen.queryByText('La data "Al" deve essere uguale o successiva alla data "Dal"'),
+    ).not.toBeInTheDocument();
+    expect(screen.getByRole("status")).toHaveTextContent("Filtro per intervallo attivo");
+  });
+
   it("has no axe violations", async () => {
     currentSearch = "";
     const { container } = renderWithIntl(<DateRangeFilter />);

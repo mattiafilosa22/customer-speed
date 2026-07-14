@@ -625,7 +625,9 @@
       "to": "To",
       "lastWeek": "Last week",
       "all": "All",
-      "activeRangeNotice": "Range filter active"
+      "activeRangeNotice": "Range filter active",
+      "invertedRangeError": "The \"To\" date must be on or after the \"From\" date",
+      "invalidDateError": "Invalid date"
     }
   },
   "invoices": {
