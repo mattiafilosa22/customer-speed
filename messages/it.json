@@ -535,7 +535,10 @@
       "more": "+{count} altri"
     },
     "card": {
-      "label": "Lead {name}, stage {stage}"
+      "label": "Lead {name}, stage {stage}",
+      "nextAppointment": {
+        "label": "Prossimo appuntamento:"
+      }
     },
     "moveMenu": {
       "label": "Sposta in un altro stage",

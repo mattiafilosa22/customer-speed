@@ -535,7 +535,10 @@
       "more": "+{count} more"
     },
     "card": {
-      "label": "Lead {name}, stage {stage}"
+      "label": "Lead {name}, stage {stage}",
+      "nextAppointment": {
+        "label": "Next appointment:"
+      }
     },
     "moveMenu": {
       "label": "Move to another stage",

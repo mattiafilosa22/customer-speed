@@ -3,7 +3,7 @@
 import { useRef } from "react";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { useTranslations } from "next-intl";
+import { useFormatter, useTranslations } from "next-intl";
 
 import type { PipelineCard } from "@/server/pipeline";
 import { Link, useRouter } from "@/i18n/navigation";
@@ -54,6 +54,7 @@ export function KanbanCard({
   canMove: boolean;
 }) {
   const t = useTranslations();
+  const format = useFormatter();
   const router = useRouter();
   const capitalDisplay = useCapitalDisplay();
   const stageLabel = useLeadStageLabel();
@@ -189,6 +190,14 @@ export function KanbanCard({
           <span className="label-mono text-muted inline-flex items-center">{card.source.label}</span>
         ) : null}
       </div>
+
+      {card.nextAppointment ? (
+        <p className="label-mono text-muted flex items-center gap-1">
+          <span aria-hidden="true">🗓</span>
+          <span className="sr-only">{t("pipeline.card.nextAppointment.label")}</span>
+          {format.dateTime(new Date(card.nextAppointment.startAt), "dateTime")}
+        </p>
+      ) : null}
     </article>
   );
 }
