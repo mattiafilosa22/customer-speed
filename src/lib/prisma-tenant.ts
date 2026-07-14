@@ -251,17 +251,28 @@ export function applyTenantScope(
   }
 
   let nextArgs = baseArgs;
-  if (WHERE_OPERATIONS.has(operation)) {
-    nextArgs = injectWhere(nextArgs, organizationId);
-  }
   if (operation in FIND_UNIQUE_REWRITE) {
     // This operation is about to be rewritten to findFirst* (see
     // `rewriteOperationForTenant`) — flatten any compound-unique-key wrapper in
     // `where` now, since findFirst's `WhereInput` cannot parse it.
+    //
+    // MUST run BEFORE `injectWhere` below, not after. `flattenCompoundUniqueWhere`
+    // spreads the wrapper's nested fields onto the top level with `Object.assign`,
+    // which — if it ran after injection — could reintroduce a stale/attacker-
+    // controlled `organizationId` from inside the wrapper (e.g. a hypothetical
+    // `{ organizationId: "x", organizationId_stage: { organizationId: "evil", ... } }`)
+    // and silently overwrite the real tenant id. Flattening first means
+    // `injectWhere`'s own `{ ...where, organizationId }` literal is always the
+    // LAST write to that key, so the real tenant id always wins regardless of
+    // what shape the caller's `where` had. See prisma-tenant.test.ts for the
+    // regression test.
     nextArgs = {
       ...nextArgs,
       where: flattenCompoundUniqueWhere((nextArgs.where as AnyArgs | undefined) ?? {}),
     };
+  }
+  if (WHERE_OPERATIONS.has(operation)) {
+    nextArgs = injectWhere(nextArgs, organizationId);
   }
   if (CREATE_DATA_OPERATIONS.has(operation)) {
     nextArgs = injectCreateData(nextArgs, organizationId);
