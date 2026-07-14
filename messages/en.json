@@ -924,6 +924,39 @@
       "generic": "Operation failed. Please try again."
     }
   },
+  "lossReasons": {
+    "title": "Loss reasons",
+    "description": "Manage the list of loss reasons used when a lead is moved to \"Lost\": add, rename, deactivate and reorder them.",
+    "manageLink": "Manage loss reasons",
+    "listHeading": "Reason list",
+    "listDescription": "Deactivated reasons stay visible on leads that already use them, but no longer appear when marking a new lead as lost.",
+    "listLabel": "Loss reason list",
+    "empty": "No loss reason configured yet.",
+    "moveUp": "Move up: {label}",
+    "moveDown": "Move down: {label}",
+    "renameFieldLabel": "New label for {label}",
+    "rename": "Rename",
+    "renameAria": "Rename: {label}",
+    "save": "Save",
+    "cancel": "Cancel",
+    "statusActive": "Active",
+    "statusInactive": "Inactive",
+    "deactivate": "Deactivate",
+    "reactivate": "Reactivate",
+    "deactivateAria": "Deactivate: {label}",
+    "reactivateAria": "Reactivate: {label}",
+    "addHeading": "Add reason",
+    "addLabel": "Label",
+    "add": "Add",
+    "adding": "Adding…",
+    "errors": {
+      "invalid": "Invalid data.",
+      "unauthorized": "You don't have permission for this operation.",
+      "notFound": "Loss reason not found.",
+      "duplicateLabel": "A loss reason with this label already exists.",
+      "generic": "Operation failed. Please try again."
+    }
+  },
   "admin": {
     "brand": "CustomerSpeed Admin",
     "brandSub": "Cross-tenant console",

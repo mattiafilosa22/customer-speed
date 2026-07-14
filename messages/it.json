@@ -924,6 +924,39 @@
       "generic": "Operazione non riuscita. Riprova."
     }
   },
+  "lossReasons": {
+    "title": "Motivi di perdita",
+    "description": "Gestisci l'elenco dei motivi di perdita usati quando un lead viene spostato in \"Perso\": aggiungi, rinomina, disattiva e riordina.",
+    "manageLink": "Gestisci motivi di perdita",
+    "listHeading": "Elenco motivi",
+    "listDescription": "I motivi disattivati restano visibili sui lead che li usano già, ma non compaiono più nella selezione per i nuovi lead persi.",
+    "listLabel": "Elenco motivi di perdita",
+    "empty": "Nessun motivo di perdita configurato.",
+    "moveUp": "Sposta in alto: {label}",
+    "moveDown": "Sposta in basso: {label}",
+    "renameFieldLabel": "Nuova etichetta per {label}",
+    "rename": "Rinomina",
+    "renameAria": "Rinomina: {label}",
+    "save": "Salva",
+    "cancel": "Annulla",
+    "statusActive": "Attivo",
+    "statusInactive": "Disattivato",
+    "deactivate": "Disattiva",
+    "reactivate": "Riattiva",
+    "deactivateAria": "Disattiva: {label}",
+    "reactivateAria": "Riattiva: {label}",
+    "addHeading": "Aggiungi motivo",
+    "addLabel": "Etichetta",
+    "add": "Aggiungi",
+    "adding": "Aggiunta…",
+    "errors": {
+      "invalid": "Dati non validi.",
+      "unauthorized": "Non hai i permessi per questa operazione.",
+      "notFound": "Motivo di perdita non trovato.",
+      "duplicateLabel": "Esiste già un motivo di perdita con questa etichetta.",
+      "generic": "Operazione non riuscita. Riprova."
+    }
+  },
   "admin": {
     "brand": "CustomerSpeed Admin",
     "brandSub": "Console cross-tenant",
