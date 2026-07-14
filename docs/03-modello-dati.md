@@ -325,6 +325,9 @@ Lo schema reale in `prisma/schema.prisma` **estende** la bozza §3.3 per soddisf
 - **Prisma 7**: la `datasource` non contiene più `url` (spostata in `prisma.config.ts`); il runtime usa un **driver adapter** (`@prisma/adapter-pg`). Il client è generato dal generator `prisma-client` in `src/generated/prisma` (gitignored, rigenerato da `postinstall`).
 - **`onDelete` espliciti**: `Organization → *` = `Cascade`; `Lead.owner/source/lossReason` = `SetNull`; `Appointment.lead` = `SetNull`; `Note/Invoice/ExternalCrmRef/StageHistory → Lead` = `Cascade`; `AuditLog → Organization` = `SetNull` (l'audit sopravvive alla cancellazione del tenant).
 - **Indici aggiuntivi** modellati sui pattern reali (vedi §3.4 "Indicizzazione").
+- **`LeadStage.PRESENTATION_CALL_2` e `LeadStage.STANDBY`**: due nuovi stage pipeline (migrazione `20260714120000_pipeline_extras`, additiva — solo `ADD VALUE`, nessun rename/rimozione). `PRESENTATION_CALL_2` ("Seconda call") segue `PRESENTATION_CALL`; `STANDBY` ("Stand by") segue `WAITING_DECISION` e precede `WAITING_PAYMENT`. Label IT/EN nel layer i18n (Task 2), non nel DB.
+- **`lossReasonCustomText String?` su `Lead`** (`@db.VarChar(500)`): motivo di perdita a testo libero, alternativa a `lossReasonId` quando l'utente sceglie "Altro". Mutuamente esclusivo con `lossReasonId` — vincolo validato in `changeStageSchema` (Zod), non a livello DB (evita un CHECK complesso su due colonne opzionali per un caso applicativo, non strutturale).
+- **`LossReason.isActive Boolean @default(true)` e `LossReason.sortOrder Int @default(0)`**: allineano `LossReason` a `LeadSource`/`PipelineStageConfig` per la gestione CRUD da Impostazioni. `isActive=false` nasconde il motivo dal picker per i nuovi lead senza toccare i lead esistenti che lo referenziano (nessuna perdita di storico). Indice `@@index([organizationId, sortOrder])` per l'elenco ordinato in Settings e nel select "sposta in Perso", stesso pattern di `LeadSource_organizationId_sortOrder_idx`.
 
 ## 3.4 Note di modellazione
 
@@ -357,6 +360,7 @@ Tutti gli indici composti sono **prefissati da `organizationId`** (multi-tenant)
 | Appointment | `[organizationId, status, startAt]` | agenda filtrata per stato |
 | Appointment | `[organizationId, provider, externalEventId]` | idempotenza sync provider |
 | Invoice | `[organizationId, issuedAt]` | KPI fatturato per periodo (aggregate) |
+| LossReason | `[organizationId, sortOrder]` | elenco motivi ordinato (Settings + select "sposta in Perso") |
 | LeadSource | `[organizationId, sortOrder]` | select sorgenti ordinato |
 | PipelineStageConfig | `[organizationId, sortOrder]` | ordinamento colonne kanban |
 | Consent | `[organizationId, userId, type]` | storico consensi |

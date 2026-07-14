@@ -44,7 +44,9 @@ enum LeadStage {
   CALL_SCHEDULED // Call schedulata
   WAITING_DOCS // Attesa documenti
   PRESENTATION_CALL // Call presentazione
+  PRESENTATION_CALL_2 // Seconda call
   WAITING_DECISION // Attesa decisione
+  STANDBY // Stand by
   WAITING_PAYMENT // Attesa pagamento
   WON // Vinta (terminale)
   LOST // Persa (terminale)
@@ -196,6 +198,11 @@ model Lead {
   // Dati per lead persi.
   lossReasonId String?
   lossReason   LossReason? @relation(fields: [lossReasonId], references: [id], onDelete: SetNull)
+
+  // Motivo di perdita PERSONALIZZATO (testo libero, alternativa a lossReasonId
+  // quando l'utente sceglie "Altro"). Mutuamente esclusivo con lossReasonId —
+  // validato in changeStageSchema, non a livello DB.
+  lossReasonCustomText String? @db.VarChar(500)
 
   // Soft delete (audit/GDPR). Filtro di default iniettato dall'extension.
   deletedAt DateTime?
@@ -354,10 +361,14 @@ model LossReason {
   organizationId String
   organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
 
-  label String // es. "Non ha più risposto"
-  leads Lead[]
+  label     String // es. "Non ha più risposto"
+  isActive  Boolean @default(true) // disattivato: resta sui lead esistenti, sparisce dal picker per i nuovi
+  sortOrder Int     @default(0)
+  leads     Lead[]
 
   @@unique([organizationId, label]) // motivo unico per tenant
+  // Elenco motivi del tenant ordinato + filtro attivi (Settings + select "sposta in Perso").
+  @@index([organizationId, sortOrder])
 }
 
 model LeadSource {
