@@ -21,7 +21,7 @@ describe("getBoard", () => {
 
     const { columns } = await getBoard(deps, {});
 
-    expect(columns).toHaveLength(8); // 9 - 1 hidden
+    expect(columns).toHaveLength(10); // 11 - 1 hidden
     expect(columns.map((c) => c.stage)).not.toContain(LeadStage.CALL_SCHEDULED);
     expect(columns.find((c) => c.stage === LeadStage.TO_HANDLE)?.count).toBe(2);
     expect(columns.find((c) => c.stage === LeadStage.TO_HANDLE)?.cards).toHaveLength(2);

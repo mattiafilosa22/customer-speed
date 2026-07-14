@@ -19,7 +19,7 @@ describe("getPipelineDistribution", () => {
     const deps = buildFakeDashboardDeps(store, ORG_A);
     const { stages } = await getPipelineDistribution(deps, { year: "2026" });
 
-    expect(stages).toHaveLength(9);
+    expect(stages).toHaveLength(11);
     expect(stages[0]?.stage).toBe(LeadStage.TO_HANDLE); // sorted by sortOrder
     expect(stages.find((s) => s.stage === LeadStage.TO_HANDLE)?.count).toBe(2);
     expect(stages.find((s) => s.stage === LeadStage.TAKEN)?.count).toBe(1);
@@ -37,7 +37,7 @@ describe("getPipelineDistribution", () => {
     const deps = buildFakeDashboardDeps(store, ORG_A);
     const { stages } = await getPipelineDistribution(deps, { year: "2026" });
 
-    expect(stages).toHaveLength(8);
+    expect(stages).toHaveLength(10);
     expect(stages.map((s) => s.stage)).not.toContain(LeadStage.CALL_SCHEDULED);
   });
 

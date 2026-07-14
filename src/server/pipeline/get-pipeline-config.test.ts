@@ -19,14 +19,16 @@ describe("getPipelineConfig", () => {
 
     const { stages } = await getPipelineConfig(deps);
 
-    expect(stages).toHaveLength(9);
+    expect(stages).toHaveLength(11);
     expect(stages.map((s) => s.stage)).toEqual([
       LeadStage.TO_HANDLE,
       LeadStage.TAKEN,
       LeadStage.CALL_SCHEDULED,
       LeadStage.WAITING_DOCS,
       LeadStage.PRESENTATION_CALL,
+      LeadStage.PRESENTATION_CALL_2,
       LeadStage.WAITING_DECISION,
+      LeadStage.STANDBY,
       LeadStage.WAITING_PAYMENT,
       LeadStage.WON,
       LeadStage.LOST,
@@ -36,6 +38,49 @@ describe("getPipelineConfig", () => {
     expect(stages.find((s) => s.stage === LeadStage.WON)?.isTerminal).toBe(true);
     expect(stages.find((s) => s.stage === LeadStage.LOST)?.isTerminal).toBe(true);
     expect(stages.find((s) => s.stage === LeadStage.TAKEN)?.isTerminal).toBe(false);
+  });
+
+  it("synthesizes a default sortOrder for stages missing a config row (pre-existing tenant), placing them at their canonical position rather than at the tail", async () => {
+    const store = new LeadStore();
+    // Simulates a tenant seeded BEFORE PRESENTATION_CALL_2/STANDBY existed: it
+    // has config rows only for the original 9 stages.
+    const legacyStages = [
+      LeadStage.TO_HANDLE,
+      LeadStage.TAKEN,
+      LeadStage.CALL_SCHEDULED,
+      LeadStage.WAITING_DOCS,
+      LeadStage.PRESENTATION_CALL,
+      LeadStage.WAITING_DECISION,
+      LeadStage.WAITING_PAYMENT,
+      LeadStage.WON,
+      LeadStage.LOST,
+    ];
+    legacyStages.forEach((stage, index) => {
+      store.addStageConfig({ organizationId: ORG_A, stage, sortOrder: index });
+    });
+    const { deps } = buildFakePipelineDeps(store, ORG_A, USER_A);
+
+    const { stages } = await getPipelineConfig(deps);
+
+    expect(stages.map((s) => s.stage)).toEqual([
+      LeadStage.TO_HANDLE,
+      LeadStage.TAKEN,
+      LeadStage.CALL_SCHEDULED,
+      LeadStage.WAITING_DOCS,
+      LeadStage.PRESENTATION_CALL,
+      LeadStage.PRESENTATION_CALL_2,
+      LeadStage.WAITING_DECISION,
+      LeadStage.STANDBY,
+      LeadStage.WAITING_PAYMENT,
+      LeadStage.WON,
+      LeadStage.LOST,
+    ]);
+    const call2 = stages.find((s) => s.stage === LeadStage.PRESENTATION_CALL_2);
+    expect(call2?.isVisible).toBe(true);
+    expect(call2?.colorToken).toBeNull();
+    const standby = stages.find((s) => s.stage === LeadStage.STANDBY);
+    expect(standby?.isVisible).toBe(true);
+    expect(standby?.colorToken).toBeNull();
   });
 
   it("reflects a custom sortOrder and colorToken", async () => {

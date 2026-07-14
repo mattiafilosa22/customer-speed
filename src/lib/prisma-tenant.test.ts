@@ -122,6 +122,45 @@ describe("applyTenantScope (isolation logic)", () => {
     const out = applyTenantScope("Lead", "findUnique", { where: { id: "lead_1" } }, ORG);
     expect(out.where).toMatchObject({ id: "lead_1", organizationId: ORG });
   });
+
+  it("flattens a compound-unique-key where on findUnique (rewritten to findFirst, whose WhereInput can't parse the synthetic key)", () => {
+    // Regression: PipelineStageConfig.findUnique({ where: { organizationId_stage:
+    // { organizationId, stage } } }) used to reach Prisma as
+    // `{ organizationId_stage: {...}, organizationId }` — invalid for findFirst
+    // ("Unknown argument `organizationId_stage`"), breaking setStageColor /
+    // updateStageVisibility for EVERY stage in production (never caught before
+    // because no test exercised a compound-key findUnique).
+    const out = applyTenantScope(
+      "PipelineStageConfig",
+      "findUnique",
+      { where: { organizationId_stage: { organizationId: "org_EVIL", stage: "TAKEN" } } },
+      ORG,
+    );
+    expect(out.where).toEqual({ organizationId: ORG, stage: "TAKEN" });
+    expect(out.where).not.toHaveProperty("organizationId_stage");
+  });
+
+  it("flattens a compound-unique-key where on findUniqueOrThrow too", () => {
+    const out = applyTenantScope(
+      "User",
+      "findUniqueOrThrow",
+      { where: { organizationId_email: { organizationId: "org_EVIL", email: "a@b.test" } } },
+      ORG,
+    );
+    expect(out.where).toEqual({ organizationId: ORG, email: "a@b.test" });
+  });
+
+  it("does NOT flatten a compound-unique-key where on update/upsert (they keep WhereUniqueInput, never rewritten)", () => {
+    const out = applyTenantScope(
+      "PipelineStageConfig",
+      "update",
+      { where: { organizationId_stage: { organizationId: ORG, stage: "TAKEN" } }, data: {} },
+      ORG,
+    );
+    expect(out.where).toMatchObject({
+      organizationId_stage: { organizationId: ORG, stage: "TAKEN" },
+    });
+  });
 });
 
 describe("rewriteOperationForTenant (findUnique → findFirst)", () => {

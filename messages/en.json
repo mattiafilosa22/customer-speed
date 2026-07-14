@@ -247,7 +247,9 @@
       "CALL_SCHEDULED": "Call scheduled",
       "WAITING_DOCS": "Waiting for documents",
       "PRESENTATION_CALL": "Presentation call",
+      "PRESENTATION_CALL_2": "Second call",
       "WAITING_DECISION": "Waiting for decision",
+      "STANDBY": "Standby",
       "WAITING_PAYMENT": "Waiting for payment",
       "WON": "Won",
       "LOST": "Lost"

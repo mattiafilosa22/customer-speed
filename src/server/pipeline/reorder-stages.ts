@@ -41,13 +41,27 @@ export async function reorderStages(deps: PipelineDeps, input: unknown): Promise
     }
   }
 
+  // `upsert`, not `update`: a tenant that predates one of these stages being
+  // added to the `LeadStage` enum has no persisted config row for it yet
+  // (docs/03 §3.3 "tenant esistenti") — `update` would throw "record not
+  // found" mid-transaction and abort the whole reorder. A full reorder always
+  // supplies the complete desired state, so materializing any missing row here
+  // (visible by default) is exactly right — no separate self-heal defaulting
+  // needed, unlike the single-stage mutations in `setStageColor` /
+  // `updateStageVisibility`.
   await deps.prisma.$transaction(
     data.order.map((stage, index) =>
-      deps.prisma.pipelineStageConfig.update({
+      deps.prisma.pipelineStageConfig.upsert({
         where: {
           organizationId_stage: { organizationId: deps.actor.organizationId, stage },
         },
-        data: { sortOrder: index },
+        update: { sortOrder: index },
+        create: {
+          organizationId: deps.actor.organizationId,
+          stage,
+          isVisible: true,
+          sortOrder: index,
+        },
       }),
     ),
   );

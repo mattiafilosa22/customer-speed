@@ -64,7 +64,9 @@ const STAGE_ORDER: readonly LeadStage[] = [
   LeadStage.CALL_SCHEDULED,
   LeadStage.WAITING_DOCS,
   LeadStage.PRESENTATION_CALL,
+  LeadStage.PRESENTATION_CALL_2,
   LeadStage.WAITING_DECISION,
+  LeadStage.STANDBY,
   LeadStage.WAITING_PAYMENT,
   LeadStage.WON,
   LeadStage.LOST,
@@ -133,7 +135,7 @@ export class DashboardStore {
     return row;
   }
 
-  /** Seed the canonical 9 stage configs (all visible) for a tenant. */
+  /** Seed the canonical 11 stage configs (all visible) for a tenant. */
   seedStageConfigs(organizationId: string): void {
     STAGE_ORDER.forEach((stage, index) => {
       this.stageConfigs.push({

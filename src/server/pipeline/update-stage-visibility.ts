@@ -1,8 +1,9 @@
-import { ConflictError, NotFoundError } from "@/lib/errors";
+import { ConflictError } from "@/lib/errors";
 import { parseInput } from "@/server/validation";
 import { isTerminalStage } from "@/server/leads/stage";
 import type { PipelineDeps } from "@/server/pipeline/deps";
 import { updateStageVisibilitySchema } from "@/server/pipeline/schemas";
+import { synthesizeSortOrderForStage } from "@/server/pipeline/stage-order";
 
 /**
  * Show/hide a single pipeline stage for the tenant (docs/02 §2.3).
@@ -51,9 +52,6 @@ export async function updateStageVisibility(
       where: { organizationId_stage: { organizationId: deps.actor.organizationId, stage: data.stage } },
       select: { id: true },
     });
-    if (!config) {
-      throw new NotFoundError("Stage config not found");
-    }
 
     if (!data.isVisible) {
       const activeLeads = await tx.lead.count({ where: { stage: data.stage } });
@@ -62,17 +60,43 @@ export async function updateStageVisibility(
       }
     }
 
-    await tx.pipelineStageConfig.update({
-      where: { id: config.id },
-      data: { isVisible: data.isVisible },
-    });
+    let configId: string;
+    if (config) {
+      await tx.pipelineStageConfig.update({
+        where: { id: config.id },
+        data: { isVisible: data.isVisible },
+      });
+      configId = config.id;
+    } else {
+      // Self-heal (docs/03 §3.3 "tenant esistenti"): this tenant predates
+      // `data.stage` being added to the `LeadStage` enum, so it has no config
+      // row for it yet — `getPipelineConfig` only SYNTHESIZES a default for
+      // display, it never persists one. Create the row now (sortOrder
+      // interpolated to match where the tenant already sees it on the board)
+      // so the mutation has something to attach to instead of 404ing.
+      const existing = await tx.pipelineStageConfig.findMany({
+        where: { organizationId: deps.actor.organizationId },
+        select: { stage: true, sortOrder: true },
+      });
+      const sortOrder = synthesizeSortOrderForStage(data.stage, existing);
+      const created = await tx.pipelineStageConfig.create({
+        data: {
+          organizationId: deps.actor.organizationId,
+          stage: data.stage,
+          isVisible: data.isVisible,
+          sortOrder,
+        },
+        select: { id: true },
+      });
+      configId = created.id;
+    }
 
     await deps.audit.record({
       action: "pipeline.stage.visibility",
       organizationId: deps.actor.organizationId,
       actorId: deps.actor.userId,
       entity: "PipelineStageConfig",
-      entityId: config.id,
+      entityId: configId,
       meta: { stage: data.stage, isVisible: data.isVisible },
     });
 
