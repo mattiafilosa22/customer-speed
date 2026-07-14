@@ -203,6 +203,7 @@ export async function changeStageAction(
     await changeStage(deps, leadId, {
       stage: str(form, "stage"),
       lossReasonId: str(form, "lossReasonId") || undefined,
+      lossReasonCustomText: str(form, "lossReasonCustomText") || undefined,
     });
 
     leadPaths(leadId);

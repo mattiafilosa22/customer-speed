@@ -35,6 +35,7 @@ export interface LeadRow {
   capitalAmount: number | null;
   sourceId: string | null;
   lossReasonId: string | null;
+  lossReasonCustomText: string | null;
   adminNotes: string | null;
   deletedAt: Date | null;
   createdAt: Date;
@@ -126,6 +127,7 @@ export class LeadStore {
       capitalAmount: partial.capitalAmount ?? null,
       sourceId: partial.sourceId ?? null,
       lossReasonId: partial.lossReasonId ?? null,
+      lossReasonCustomText: partial.lossReasonCustomText ?? null,
       adminNotes: partial.adminNotes ?? null,
       deletedAt: partial.deletedAt ?? null,
       createdAt: now,
@@ -618,6 +620,8 @@ function applyLeadUpdate(row: LeadRow, data: Where): void {
   if ("stage" in data) row.stage = data.stage as LeadStage;
   if ("stageChangedAt" in data) row.stageChangedAt = data.stageChangedAt as Date;
   if ("lossReasonId" in data) row.lossReasonId = (data.lossReasonId as string | null) ?? null;
+  if ("lossReasonCustomText" in data)
+    row.lossReasonCustomText = (data.lossReasonCustomText as string | null) ?? null;
   if (data.source && typeof data.source === "object") {
     const op = data.source as { connect?: { id: string }; disconnect?: boolean };
     if (op.connect) row.sourceId = op.connect.id;

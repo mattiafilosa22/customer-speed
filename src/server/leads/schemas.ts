@@ -141,19 +141,31 @@ export type SetCapitalInput = z.infer<typeof setCapitalSchema>;
 // --- Change stage ----------------------------------------------------------
 
 /**
- * Stage change. When the target is `LOST`, `lossReasonId` is REQUIRED
- * (docs/02 §2.5, docs/04 §4.3) — enforced here at the schema level via a
- * discriminated refine, and the id is then verified to belong to the tenant in
- * the use case.
+ * Stage change. When the target is `LOST`, a reason is REQUIRED (docs/02 §2.5,
+ * §2.5-bis, docs/04 §4.3) — EITHER a tenant `lossReasonId` (from the list) OR a
+ * free-text `lossReasonCustomText` ("Altro"), never both. Enforced here at the
+ * schema level via a discriminated `superRefine`; when an id is present it is
+ * further verified to belong to the tenant in the use case.
  */
 export const changeStageSchema = z
   .object({
     stage,
     lossReasonId: optionalId,
+    lossReasonCustomText: z.string().trim().min(1).max(500).optional(),
   })
-  .refine((data) => data.stage !== LeadStage.LOST || Boolean(data.lossReasonId), {
-    message: "lossReasonId is required when moving to LOST",
-    path: ["lossReasonId"],
+  .superRefine((data, ctx) => {
+    if (data.stage !== LeadStage.LOST) return;
+    const hasId = data.lossReasonId !== undefined;
+    const hasCustom = data.lossReasonCustomText !== undefined;
+    if (hasId === hasCustom) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: hasId
+          ? "Specify either lossReasonId or lossReasonCustomText, not both"
+          : "lossReasonId or lossReasonCustomText is required when moving to LOST",
+        path: ["lossReasonId"],
+      });
+    }
   });
 export type ChangeStageInput = z.infer<typeof changeStageSchema>;
 
