@@ -606,7 +606,8 @@
     "lost": {
       "title": "Lost sales",
       "empty": "No lost sales in this period.",
-      "unspecified": "Unspecified"
+      "unspecified": "Unspecified",
+      "other": "Other"
     },
     "active": {
       "title": "Total leads",
