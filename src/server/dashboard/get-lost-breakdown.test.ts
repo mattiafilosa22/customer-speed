@@ -36,23 +36,83 @@ describe("getLostBreakdown", () => {
     const { items } = await getLostBreakdown(deps, { year: "2026" });
 
     expect(items).toHaveLength(2);
-    expect(items[0]).toEqual({ reasonId: r1.id, label: "Non ha più risposto", count: 2 });
-    expect(items[1]).toEqual({ reasonId: r2.id, label: "Budget insufficiente", count: 1 });
+    expect(items[0]).toEqual({
+      reasonId: r1.id,
+      label: "Non ha più risposto",
+      isCustom: false,
+      count: 2,
+    });
+    expect(items[1]).toEqual({
+      reasonId: r2.id,
+      label: "Budget insufficiente",
+      isCustom: false,
+      count: 1,
+    });
   });
 
-  it("buckets LOST leads with no reason as reasonId null / label null", async () => {
+  it("buckets LOST leads with no reason at all as reasonId null / isCustom false (Non specificato)", async () => {
     const store = new DashboardStore();
     store.addLead({
       organizationId: ORG_A,
       stage: LeadStage.LOST,
       lossReasonId: null,
+      lossReasonCustomText: null,
       createdAt: jun(1),
     });
 
     const deps = buildFakeDashboardDeps(store, ORG_A);
     const { items } = await getLostBreakdown(deps, { year: "2026" });
 
-    expect(items).toEqual([{ reasonId: null, label: null, count: 1 }]);
+    expect(items).toEqual([{ reasonId: null, label: null, isCustom: false, count: 1 }]);
+  });
+
+  it('buckets LOST leads with only lossReasonCustomText as reasonId null / isCustom true ("Altro"), NOT "Non specificato"', async () => {
+    const store = new DashboardStore();
+    store.addLead({
+      organizationId: ORG_A,
+      stage: LeadStage.LOST,
+      lossReasonId: null,
+      lossReasonCustomText: "Non risponde più alle chiamate",
+      createdAt: jun(1),
+    });
+
+    const deps = buildFakeDashboardDeps(store, ORG_A);
+    const { items } = await getLostBreakdown(deps, { year: "2026" });
+
+    expect(items).toEqual([{ reasonId: null, label: null, isCustom: true, count: 1 }]);
+  });
+
+  it('splits the null-reasonId bucket into "Altro" and "Non specificato" when both kinds are present', async () => {
+    const store = new DashboardStore();
+    store.addLead({
+      organizationId: ORG_A,
+      stage: LeadStage.LOST,
+      lossReasonId: null,
+      lossReasonCustomText: "Budget insufficiente (testo libero)",
+      createdAt: jun(1),
+    });
+    store.addLead({
+      organizationId: ORG_A,
+      stage: LeadStage.LOST,
+      lossReasonId: null,
+      lossReasonCustomText: "Budget insufficiente (testo libero 2)",
+      createdAt: jun(2),
+    });
+    store.addLead({
+      organizationId: ORG_A,
+      stage: LeadStage.LOST,
+      lossReasonId: null,
+      lossReasonCustomText: null,
+      createdAt: jun(3),
+    });
+
+    const deps = buildFakeDashboardDeps(store, ORG_A);
+    const { items } = await getLostBreakdown(deps, { year: "2026" });
+
+    expect(items).toEqual([
+      { reasonId: null, label: null, isCustom: true, count: 2 },
+      { reasonId: null, label: null, isCustom: false, count: 1 },
+    ]);
   });
 
   it("only includes LOST leads (ignores WON / active)", async () => {
@@ -70,7 +130,7 @@ describe("getLostBreakdown", () => {
     const deps = buildFakeDashboardDeps(store, ORG_A);
     const { items } = await getLostBreakdown(deps, { year: "2026" });
 
-    expect(items).toEqual([{ reasonId: r1.id, label: "X", count: 1 }]);
+    expect(items).toEqual([{ reasonId: r1.id, label: "X", isCustom: false, count: 1 }]);
   });
 
   it("returns empty when there are no lost leads in the period", async () => {

@@ -606,7 +606,8 @@
     "lost": {
       "title": "Vendite perse",
       "empty": "Nessuna vendita persa nel periodo.",
-      "unspecified": "Non specificato"
+      "unspecified": "Non specificato",
+      "other": "Altro"
     },
     "active": {
       "title": "Lead totali",
