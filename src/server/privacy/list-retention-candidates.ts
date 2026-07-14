@@ -11,8 +11,10 @@ import { clockNow, type PrivacyDeps } from "@/server/privacy/deps";
  *
  * Selection criteria (all required):
  *  - `stage === LOST`
- *  - `lossReasonId` set (a LOST lead without a reason is NOT a candidate — it
- *    may still need triage/follow-up, so we never purge it automatically)
+ *  - a documented loss reason of EITHER kind — `lossReasonId` (predefined) OR
+ *    `lossReasonCustomText` ("Altro", free text) — set (a LOST lead with
+ *    neither is NOT a candidate — it may still need triage/follow-up, so we
+ *    never purge it automatically)
  *  - `stageChangedAt <= now - months` (aged past the retention window)
  *  - not already soft-deleted (`deletedAt: null`)
  *  - not already anonymized (`anonymizedAt: null`) — nothing left to purge
@@ -92,7 +94,7 @@ export async function listRetentionCandidates(
   const leads = await deps.prisma.lead.findMany({
     where: {
       stage: LeadStage.LOST,
-      lossReasonId: { not: null },
+      OR: [{ lossReasonId: { not: null } }, { lossReasonCustomText: { not: null } }],
       stageChangedAt: { lte: cutoff },
       deletedAt: null,
       anonymizedAt: null,

@@ -42,7 +42,7 @@ export async function countRetentionCandidates(
   const count = await deps.prisma.lead.count({
     where: {
       stage: LeadStage.LOST,
-      lossReasonId: { not: null },
+      OR: [{ lossReasonId: { not: null } }, { lossReasonCustomText: { not: null } }],
       stageChangedAt: { lte: cutoff },
       deletedAt: null,
       anonymizedAt: null,
