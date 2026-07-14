@@ -15,6 +15,11 @@ export {
   type PeriodInput,
   type PeriodRange,
 } from "@/server/dashboard/period";
+export {
+  resolveDateRangeBounds,
+  type DateRangeInput,
+  type DateRangeBounds,
+} from "@/server/dashboard/date-range";
 
 export { getDashboardKpis, type DashboardKpis } from "@/server/dashboard/get-kpis";
 export {

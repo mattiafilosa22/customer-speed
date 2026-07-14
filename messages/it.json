@@ -619,6 +619,13 @@
     "active": {
       "title": "Lead totali",
       "empty": "Nessun lead attivo al momento."
+    },
+    "dateRange": {
+      "from": "Dal",
+      "to": "Al",
+      "lastWeek": "Ultima settimana",
+      "all": "Tutto",
+      "activeRangeNotice": "Filtro per intervallo attivo"
     }
   },
   "invoices": {

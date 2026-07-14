@@ -619,6 +619,13 @@
     "active": {
       "title": "Total leads",
       "empty": "No active leads right now."
+    },
+    "dateRange": {
+      "from": "From",
+      "to": "To",
+      "lastWeek": "Last week",
+      "all": "All",
+      "activeRangeNotice": "Range filter active"
     }
   },
   "invoices": {
