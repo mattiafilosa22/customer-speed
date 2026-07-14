@@ -18,6 +18,7 @@
 - Responsive mobile/tablet/desktop — CLAUDE.md.
 - Migrazioni Prisma additive, mai modificate a posteriori — CLAUDE.md.
 - Commit piccoli e atomici — CLAUDE.md.
+- **Sicurezza dati al rilascio**: tutte le migrazioni di questo piano sono additive (nuovi valori enum, nuove colonne nullable) — nessun drop, nessuna rinomina, nessuna trasformazione distruttiva. Prima di eseguire `prisma migrate deploy` contro la produzione (Supabase, nessun backup automatico sul piano free), lanciare `DATABASE_URL="<prod>" pnpm db:backup pre-<nome-migrazione>` (script `scripts/backup-db.sh`, verificato in questa sessione) come rete di sicurezza.
 
 ---
 
