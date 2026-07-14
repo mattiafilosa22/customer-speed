@@ -3,25 +3,22 @@
 import { useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
 
-import { LeadStage } from "@/generated/prisma/enums";
+import type { LeadStage } from "@/generated/prisma/enums";
 import type { LeadListResult } from "@/server/leads";
+import { STAGE_ORDER } from "@/server/leads/stage";
 import { Link } from "@/i18n/navigation";
 import { usePathname } from "@/i18n/navigation";
 import { useLeadStageLabel } from "@/i18n/enum-labels";
 import { cn } from "@/lib/cn";
 
-/** Canonical tab order (mirrors the pipeline order, docs/02 §2.3). */
-const TAB_ORDER: readonly LeadStage[] = [
-  LeadStage.TO_HANDLE,
-  LeadStage.TAKEN,
-  LeadStage.CALL_SCHEDULED,
-  LeadStage.WAITING_DOCS,
-  LeadStage.PRESENTATION_CALL,
-  LeadStage.WAITING_DECISION,
-  LeadStage.WAITING_PAYMENT,
-  LeadStage.WON,
-  LeadStage.LOST,
-];
+/**
+ * Canonical tab order (mirrors the pipeline order, docs/02 §2.3). Imported
+ * directly from `@/server/leads/stage` (not the `@/server/leads` barrel,
+ * which pulls in Prisma-backed use cases unsuitable for a client bundle) so
+ * the ordering has a single source of truth shared with `changeStage` and
+ * the pipeline config — a newly added stage can no longer be missed here.
+ */
+const TAB_ORDER: readonly LeadStage[] = STAGE_ORDER;
 
 /**
  * Status tabs (docs/02 §2.4): "Tutti (n)" + one tab per stage that has leads in
