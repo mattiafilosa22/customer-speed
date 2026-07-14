@@ -401,6 +401,10 @@
     "details": {
       "title": "Lead details"
     },
+    "edit": {
+      "cta": "Edit",
+      "title": "Edit lead"
+    },
     "updateStage": {
       "cta": "Update stage",
       "title": "Update stage",

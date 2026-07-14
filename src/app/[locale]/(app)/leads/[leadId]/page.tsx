@@ -26,6 +26,7 @@ import { NotesPanel } from "@/components/leads/detail/notes-panel";
 import { ExternalRefsPanel } from "@/components/leads/detail/external-refs-panel";
 import { StageTimeline } from "@/components/leads/detail/stage-timeline";
 import { UpdateStageDialog } from "@/components/leads/detail/update-stage-dialog";
+import { EditLeadDialog } from "@/components/leads/detail/edit-lead-dialog";
 import { LeadOverflowActions } from "@/components/leads/detail/lead-overflow-actions";
 import { InvoicesPanel } from "@/components/leads/detail/invoices-panel";
 import { AppointmentsPanel } from "@/components/leads/detail/appointments-panel";
@@ -149,8 +150,18 @@ export default async function LeadDetailPage({
         </div>
         {/* One primary button ("Aggiorna stage"); everything else lives behind
             the "⋯" overflow menu (audit P0.1) so the header reads cleanly and
-            destructive actions never collide with the accent primary. */}
+            destructive actions never collide with the accent primary.
+            "Modifica" (anagrafica) is a secondary/ghost action next to it. */}
         <div className="flex flex-wrap items-center gap-2">
+          {perms.canUpdate ? (
+            <EditLeadDialog
+              leadId={lead.id}
+              firstName={lead.firstName}
+              lastName={lead.lastName}
+              email={lead.email}
+              phone={lead.phone}
+            />
+          ) : null}
           {perms.canMove ? (
             <UpdateStageDialog
               leadId={lead.id}
