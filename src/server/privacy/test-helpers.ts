@@ -29,6 +29,7 @@ export interface PLead {
   adminNotes: string | null;
   sourceId: string | null;
   lossReasonId: string | null;
+  lossReasonCustomText: string | null;
   deletedAt: Date | null;
   anonymizedAt: Date | null;
   createdAt: Date;
@@ -126,6 +127,7 @@ export class PrivacyStore {
       adminNotes: p.adminNotes ?? "nota interna",
       sourceId: p.sourceId ?? null,
       lossReasonId: p.lossReasonId ?? null,
+      lossReasonCustomText: p.lossReasonCustomText ?? null,
       deletedAt: p.deletedAt ?? null,
       anonymizedAt: p.anonymizedAt ?? null,
       createdAt: p.createdAt ?? D("2026-01-01T00:00:00.000Z"),
@@ -214,6 +216,24 @@ export class PrivacyStore {
 
 type Where = Record<string, unknown>;
 
+/**
+ * Evaluates a Prisma-style `OR: [...]` array of `{ field: { not: value } }`
+ * clauses against a lead row — mirrors `listRetentionCandidates`'/
+ * `countRetentionCandidates`' `OR: [{ lossReasonId: { not: null } },
+ * { lossReasonCustomText: { not: null } }]`. Only the `{ not }` shape is
+ * modelled since it's the only one these two use cases emit.
+ */
+function matchesOrClauses(row: PLead, clauses: Where[]): boolean {
+  return clauses.some((clause) =>
+    Object.entries(clause).every(([field, cond]) => {
+      if (cond && typeof cond === "object" && "not" in cond) {
+        return (row as unknown as Record<string, unknown>)[field] !== (cond as { not: unknown }).not;
+      }
+      return (row as unknown as Record<string, unknown>)[field] === cond;
+    }),
+  );
+}
+
 export function privacyClientFor(
   store: PrivacyStore,
   organizationId: string,
@@ -286,6 +306,9 @@ export function privacyClientFor(
           const cond = where.lossReasonId as { not?: unknown };
           if ("not" in cond) rows = rows.filter((l) => l.lossReasonId !== cond.not);
         }
+        if (Array.isArray(where.OR)) {
+          rows = rows.filter((l) => matchesOrClauses(l, where.OR as Where[]));
+        }
         if (where.anonymizedAt !== undefined) {
           rows = rows.filter((l) => l.anonymizedAt === where.anonymizedAt);
         }
@@ -334,6 +357,9 @@ export function privacyClientFor(
         if (where.lossReasonId && typeof where.lossReasonId === "object") {
           const cond = where.lossReasonId as { not?: unknown };
           if ("not" in cond) rows = rows.filter((l) => l.lossReasonId !== cond.not);
+        }
+        if (Array.isArray(where.OR)) {
+          rows = rows.filter((l) => matchesOrClauses(l, where.OR as Where[]));
         }
         if (where.anonymizedAt !== undefined) {
           rows = rows.filter((l) => l.anonymizedAt === where.anonymizedAt);
