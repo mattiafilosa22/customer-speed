@@ -550,7 +550,8 @@
       "placeholder": "Seleziona un motivo",
       "other": "Altro",
       "customLabel": "Motivo personalizzato",
-      "customPlaceholder": "Scrivi il motivo..."
+      "customPlaceholder": "Scrivi il motivo...",
+      "customRequired": "Inserisci il motivo della perdita."
     },
     "announce": {
       "moved": "{name} spostato in {stage}.",
