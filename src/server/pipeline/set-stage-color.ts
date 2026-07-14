@@ -41,13 +41,29 @@ export async function setStageColor(
     // it never persists one. Create the row now (visible by default, sortOrder
     // interpolated to match where the tenant already sees it on the board) so
     // the mutation has something to attach to instead of 404ing.
+    //
+    // `upsert`, not `create`: the `findUnique` above and this write are NOT
+    // atomic together, so two concurrent requests for the SAME not-yet-
+    // materialized row (realistic right after this stage is deployed, when
+    // every pre-existing tenant is missing it) can both observe `config ===
+    // null` and both reach this branch. A plain `create` would then throw an
+    // unhandled `P2002` against `@@unique([organizationId, stage])` for
+    // whichever request loses the race (raw 500, not a clean application
+    // error). `upsert` is race-safe: Postgres executes it as a single
+    // `INSERT ... ON CONFLICT (organizationId, stage) DO UPDATE`, so the
+    // losing request atomically updates the winner's just-inserted row
+    // instead of throwing (same pattern as `reorder-stages.ts`).
     const existing = await deps.prisma.pipelineStageConfig.findMany({
       where: { organizationId: deps.actor.organizationId },
       select: { stage: true, sortOrder: true },
     });
     const sortOrder = synthesizeSortOrderForStage(data.stage, existing);
-    const created = await deps.prisma.pipelineStageConfig.create({
-      data: {
+    const upserted = await deps.prisma.pipelineStageConfig.upsert({
+      where: {
+        organizationId_stage: { organizationId: deps.actor.organizationId, stage: data.stage },
+      },
+      update: { colorToken: data.colorToken },
+      create: {
         organizationId: deps.actor.organizationId,
         stage: data.stage,
         isVisible: true,
@@ -56,7 +72,7 @@ export async function setStageColor(
       },
       select: { id: true },
     });
-    configId = created.id;
+    configId = upserted.id;
   }
 
   await deps.audit.record({
