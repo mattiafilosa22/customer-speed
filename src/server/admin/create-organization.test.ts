@@ -35,7 +35,7 @@ describe("admin/createOrganization", () => {
     // Default lists provisioned.
     expect(db.leadSources.length).toBeGreaterThan(0);
     expect(db.lossReasons.length).toBeGreaterThan(0);
-    expect(db.stageConfigs).toHaveLength(9);
+    expect(db.stageConfigs).toHaveLength(11);
 
     // Invite token issued + emailed.
     expect(db.resetTokens).toHaveLength(1);

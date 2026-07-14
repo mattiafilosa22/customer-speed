@@ -207,7 +207,7 @@ export class LeadStore {
     return row;
   }
 
-  /** Seed the canonical 9 stage configs (all visible) for a tenant. */
+  /** Seed the canonical 11 stage configs (all visible) for a tenant. */
   seedStageConfigs(organizationId: string): PipelineStageConfigRow[] {
     return PIPELINE_STAGE_ORDER.map((stage, index) =>
       this.addStageConfig({ organizationId, stage, sortOrder: index }),
@@ -236,7 +236,9 @@ const PIPELINE_STAGE_ORDER = [
   "CALL_SCHEDULED",
   "WAITING_DOCS",
   "PRESENTATION_CALL",
+  "PRESENTATION_CALL_2",
   "WAITING_DECISION",
+  "STANDBY",
   "WAITING_PAYMENT",
   "WON",
   "LOST",
@@ -537,6 +539,44 @@ export function tenantClientFor(store: LeadStore, organizationId: string): Tenan
         if ("sortOrder" in data) row.sortOrder = data.sortOrder as number;
         if ("colorToken" in data) row.colorToken = (data.colorToken as string | null) ?? null;
         return { id: row.id };
+      },
+      create: async ({ data }: { data: Where }) => {
+        const row = store.addStageConfig({
+          organizationId,
+          stage: data.stage as LeadStage,
+          sortOrder: data.sortOrder as number,
+          isVisible: (data.isVisible as boolean | undefined) ?? true,
+          colorToken: (data.colorToken as string | null | undefined) ?? null,
+        });
+        return { id: row.id };
+      },
+      upsert: async ({
+        where,
+        update,
+        create,
+      }: {
+        where: Where;
+        update: Where;
+        create: Where;
+      }) => {
+        const compound = where.organizationId_stage as { stage: LeadStage } | undefined;
+        const row = store.stageConfigs.find(
+          (c) => c.organizationId === organizationId && compound !== undefined && c.stage === compound.stage,
+        );
+        if (row) {
+          if ("isVisible" in update) row.isVisible = update.isVisible as boolean;
+          if ("sortOrder" in update) row.sortOrder = update.sortOrder as number;
+          if ("colorToken" in update) row.colorToken = (update.colorToken as string | null) ?? null;
+          return { id: row.id };
+        }
+        const created = store.addStageConfig({
+          organizationId,
+          stage: create.stage as LeadStage,
+          sortOrder: create.sortOrder as number,
+          isVisible: (create.isVisible as boolean | undefined) ?? true,
+          colorToken: (create.colorToken as string | null | undefined) ?? null,
+        });
+        return { id: created.id };
       },
     },
     // Transaction: supports BOTH the callback form (run against this same fake

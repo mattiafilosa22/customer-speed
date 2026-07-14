@@ -21,7 +21,7 @@ import {
  *
  * Creates:
  *   - the demo tenant `CustomerSpeed` (Indigo theme, feature flags, default
- *     lead sources + 9 pipeline stage configs),
+ *     lead sources + 11 pipeline stage configs),
  *   - a global `superAdmin` user (lives in the demo tenant for FK purposes;
  *     role drives the cross-tenant admin context),
  *   - the `Fabio` tenant (proUser) with `calendarIntegrations=false`, its proUser

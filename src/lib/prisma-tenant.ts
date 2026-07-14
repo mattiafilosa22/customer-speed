@@ -159,6 +159,50 @@ function injectWhere(args: AnyArgs, organizationId: string): AnyArgs {
   };
 }
 
+/**
+ * True when `value` is Prisma's synthetic COMPOUND-unique-key wrapper — the
+ * object Prisma generates for a `@@unique([a, b])` constraint, addressed as
+ * `where: { a_b: { a, b } }`. Detected structurally: an underscore-joined key
+ * whose value is a plain nested object. Every compound key in this schema
+ * follows that exact naming convention and no scalar field name contains an
+ * underscore, so this heuristic is unambiguous for this codebase.
+ */
+function isCompoundUniqueKeyWrapper(key: string, value: unknown): value is AnyArgs {
+  return (
+    key.includes("_") &&
+    typeof value === "object" &&
+    value !== null &&
+    !Array.isArray(value) &&
+    value.constructor === Object
+  );
+}
+
+/**
+ * Flattens any Prisma compound-unique-key wrapper(s) in a `where` clause to
+ * their constituent top-level fields.
+ *
+ * Needed ONLY for `findUnique`/`findUniqueOrThrow`: those get REWRITTEN to
+ * `findFirst`/`findFirstOrThrow` once we inject the (non-unique) tenant filter
+ * (see `FIND_UNIQUE_REWRITE`), and `findFirst`'s `WhereInput` — unlike
+ * `WhereUniqueInput` — does not understand the synthetic compound-key field
+ * name at all ("Unknown argument"). E.g.
+ * `{ organizationId_stage: { organizationId, stage } }` → `{ organizationId, stage }`.
+ * `update`/`delete`/`upsert` keep `WhereUniqueInput` semantics (never rewritten)
+ * so their compound-key `where` must NOT be flattened — this is only called for
+ * the two rewritten operations.
+ */
+function flattenCompoundUniqueWhere(where: AnyArgs): AnyArgs {
+  const result: AnyArgs = {};
+  for (const [key, value] of Object.entries(where)) {
+    if (isCompoundUniqueKeyWrapper(key, value)) {
+      Object.assign(result, value);
+    } else {
+      result[key] = value;
+    }
+  }
+  return result;
+}
+
 function injectCreateData(args: AnyArgs, organizationId: string): AnyArgs {
   const next: AnyArgs = { ...args };
 
@@ -209,6 +253,15 @@ export function applyTenantScope(
   let nextArgs = baseArgs;
   if (WHERE_OPERATIONS.has(operation)) {
     nextArgs = injectWhere(nextArgs, organizationId);
+  }
+  if (operation in FIND_UNIQUE_REWRITE) {
+    // This operation is about to be rewritten to findFirst* (see
+    // `rewriteOperationForTenant`) — flatten any compound-unique-key wrapper in
+    // `where` now, since findFirst's `WhereInput` cannot parse it.
+    nextArgs = {
+      ...nextArgs,
+      where: flattenCompoundUniqueWhere((nextArgs.where as AnyArgs | undefined) ?? {}),
+    };
   }
   if (CREATE_DATA_OPERATIONS.has(operation)) {
     nextArgs = injectCreateData(nextArgs, organizationId);
