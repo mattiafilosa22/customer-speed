@@ -62,3 +62,6 @@ tmp/
 
 # superpowers subagent-driven-development scratch (progress ledger, task briefs, review packages)
 .superpowers/
+
+# Database backups (scripts/backup-db.sh) — may contain real customer data, never commit
+/backups/
