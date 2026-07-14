@@ -25,7 +25,23 @@ import { z } from "zod";
 export const periodSchema = z.object({
   year: z.coerce.number().int().min(2000).max(2100).optional(),
   month: z.coerce.number().int().min(1).max(12).optional(),
-  range: z.object({ gte: z.date(), lt: z.date() }).optional(),
+  // Defense in depth (docs/00 "Zod on every boundary"): `z.date()` alone only
+  // checks `instanceof Date`, NOT that the date is a valid instant — an
+  // `Invalid Date` (e.g. `new Date("bogus")`) passes it. In normal operation
+  // `range` only ever arrives via `resolveDateRangeBounds`, which already
+  // rejects malformed/inverted input and returns `null` instead — but this
+  // schema is a boundary in its own right (any future caller could build a
+  // `range` a different way), so it re-validates both invariants itself
+  // rather than relying on the caller having done so.
+  range: z
+    .object({ gte: z.date(), lt: z.date() })
+    .refine((r) => !Number.isNaN(r.gte.getTime()) && !Number.isNaN(r.lt.getTime()), {
+      message: "range.gte/range.lt must be valid dates",
+    })
+    .refine((r) => r.gte < r.lt, {
+      message: "range.gte must be before range.lt",
+    })
+    .optional(),
 });
 
 export type PeriodInput = z.infer<typeof periodSchema>;

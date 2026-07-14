@@ -30,3 +30,32 @@ describe("periodFilter", () => {
     expect(result).toEqual(range);
   });
 });
+
+describe("periodSchema range validation", () => {
+  it("rejects a range containing an Invalid Date", () => {
+    const result = periodSchema.safeParse({
+      range: { gte: new Date("not-a-date"), lt: new Date("2026-07-10T00:00:00.000Z") },
+    });
+    expect(result.success).toBe(false);
+  });
+
+  it("rejects an inverted range (gte on/after lt)", () => {
+    const result = periodSchema.safeParse({
+      range: {
+        gte: new Date("2026-07-10T00:00:00.000Z"),
+        lt: new Date("2026-07-01T00:00:00.000Z"),
+      },
+    });
+    expect(result.success).toBe(false);
+  });
+
+  it("accepts a valid, non-inverted range", () => {
+    const result = periodSchema.safeParse({
+      range: {
+        gte: new Date("2026-07-01T00:00:00.000Z"),
+        lt: new Date("2026-07-10T00:00:00.000Z"),
+      },
+    });
+    expect(result.success).toBe(true);
+  });
+});
