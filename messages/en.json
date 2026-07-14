@@ -359,6 +359,7 @@
         "email": "Enter a valid email.",
         "phone": "Enter a valid phone number.",
         "lossReasonId": "Select a loss reason.",
+        "lossReasonCustomText": "Enter a valid loss reason.",
         "form": "Check the entered data."
       }
     },
@@ -408,7 +409,8 @@
       "lossReasonPlaceholder": "Select a reason",
       "lossReasonOther": "Other",
       "lossReasonCustomLabel": "Custom reason",
-      "lossReasonCustomPlaceholder": "Write the reason..."
+      "lossReasonCustomPlaceholder": "Write the reason...",
+      "lossReasonCustomRequired": "Enter the loss reason."
     },
     "timeline": {
       "title": "Stage history",

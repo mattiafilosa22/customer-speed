@@ -359,6 +359,7 @@
         "email": "Inserisci un'email valida.",
         "phone": "Inserisci un telefono valido.",
         "lossReasonId": "Seleziona il motivo della perdita.",
+        "lossReasonCustomText": "Inserisci un motivo della perdita valido.",
         "form": "Controlla i dati inseriti."
       }
     },
@@ -408,7 +409,8 @@
       "lossReasonPlaceholder": "Seleziona un motivo",
       "lossReasonOther": "Altro",
       "lossReasonCustomLabel": "Motivo personalizzato",
-      "lossReasonCustomPlaceholder": "Scrivi il motivo..."
+      "lossReasonCustomPlaceholder": "Scrivi il motivo...",
+      "lossReasonCustomRequired": "Inserisci il motivo della perdita."
     },
     "timeline": {
       "title": "Cronologia stage",
