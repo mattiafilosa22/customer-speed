@@ -80,6 +80,11 @@ export interface PSource {
   organizationId: string;
   label: string;
 }
+export interface PLossReason {
+  id: string;
+  organizationId: string;
+  label: string;
+}
 export interface POrg {
   id: string;
   leadRetentionMonths: number | null;
@@ -95,6 +100,7 @@ export class PrivacyStore {
   invoices: PInvoice[] = [];
   stageHistory: PStageHist[] = [];
   sources: PSource[] = [];
+  lossReasons: PLossReason[] = [];
   organizations: POrg[] = [];
   private seq = 0;
   private id(p: string): string {
@@ -142,6 +148,15 @@ export class PrivacyStore {
       label: p.label ?? "Funnel",
     };
     this.sources.push(row);
+    return row;
+  }
+  addLossReason(p: Pick<PLossReason, "organizationId"> & Partial<PLossReason>): PLossReason {
+    const row: PLossReason = {
+      id: p.id ?? this.id("lossreason"),
+      organizationId: p.organizationId,
+      label: p.label ?? "Non ha più risposto",
+    };
+    this.lossReasons.push(row);
     return row;
   }
   addNote(p: Pick<PNote, "organizationId" | "leadId"> & Partial<PNote>): PNote {
@@ -255,6 +270,11 @@ export function privacyClientFor(
             ? (store.sources.find((s) => s.id === row.sourceId) ?? null)
             : null;
         }
+        if (select?.lossReason) {
+          base.lossReason = row.lossReasonId
+            ? (store.lossReasons.find((r) => r.id === row.lossReasonId) ?? null)
+            : null;
+        }
         if (select?.notes) {
           base.notes = store.notes
             .filter((n) => n.organizationId === organizationId && n.leadId === row.id)
@@ -342,6 +362,8 @@ export function privacyClientFor(
         if ("email" in data) row.email = (data.email as string | null) ?? null;
         if ("phone" in data) row.phone = (data.phone as string | null) ?? null;
         if ("adminNotes" in data) row.adminNotes = (data.adminNotes as string | null) ?? null;
+        if ("lossReasonCustomText" in data)
+          row.lossReasonCustomText = (data.lossReasonCustomText as string | null) ?? null;
         if ("anonymizedAt" in data) row.anonymizedAt = (data.anonymizedAt as Date | null) ?? null;
         if ("deletedAt" in data) row.deletedAt = (data.deletedAt as Date | null) ?? null;
         return { id: row.id };
