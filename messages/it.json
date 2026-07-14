@@ -625,7 +625,9 @@
       "to": "Al",
       "lastWeek": "Ultima settimana",
       "all": "Tutto",
-      "activeRangeNotice": "Filtro per intervallo attivo"
+      "activeRangeNotice": "Filtro per intervallo attivo",
+      "invertedRangeError": "La data \"Al\" deve essere uguale o successiva alla data \"Dal\"",
+      "invalidDateError": "Data non valida"
     }
   },
   "invoices": {
