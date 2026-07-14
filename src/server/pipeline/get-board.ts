@@ -1,12 +1,12 @@
 import { z } from "zod";
 
 import { Prisma } from "@/generated/prisma/client";
-import type { LeadStage } from "@/generated/prisma/enums";
+import { AppointmentStatus, type LeadStage } from "@/generated/prisma/enums";
 import { parseInput } from "@/server/validation";
 import { daysInStage } from "@/lib/days";
 import type { PipelineDeps } from "@/server/pipeline/deps";
 import { getPipelineConfig, type PipelineStageConfigItem } from "@/server/pipeline/get-pipeline-config";
-import { pipelineCardSelect } from "@/server/pipeline/selectors";
+import { nextAppointmentSelect, pipelineCardSelect } from "@/server/pipeline/selectors";
 
 /**
  * Kanban board data (docs/02 §2.3).
@@ -20,6 +20,9 @@ import { pipelineCardSelect } from "@/server/pipeline/selectors";
  *  - cards: ONE `findMany` over all visible stages, capped at `MAX_CARDS_PER_COLUMN`
  *    per stage via a window over a single ordered scan — NO query-per-column,
  *  - counts: ONE `groupBy`.
+ *  - next appointment: ONE batched `findMany` over the lead ids of the fetched
+ *    cards — NO query-per-card — keeping only the earliest future, non-cancelled
+ *    appointment per lead (docs/02 §2.3).
  * Cards are bucketed into columns in memory; the day counter is computed from
  * `stageChangedAt` (no extra query). Columns are capped so a huge stage cannot
  * load thousands of rows into the board (deep browsing happens in "I miei lead").
@@ -53,6 +56,12 @@ export interface PipelineCard {
    */
   readonly capitalAmount: number | null;
   readonly source: { id: string; label: string } | null;
+  /**
+   * Earliest future, non-cancelled appointment for the lead, if any (docs/02
+   * §2.3). `startAt` is serialized to ISO (Date is not serializable across the
+   * RSC boundary). Null when there is no such appointment.
+   */
+  readonly nextAppointment: { startAt: string; status: AppointmentStatus } | null;
 }
 
 type PipelineCardRowCapital =
@@ -121,25 +130,63 @@ export async function getBoard(deps: PipelineDeps, input: unknown): Promise<Pipe
     counts.set(group.stage, group._count._all);
   }
 
-  const buckets = new Map<LeadStage, PipelineCard[]>();
+  // First pass: bucket the RAW rows (respecting the per-column cap) so the
+  // appointment lookup below is scoped to exactly the leads that end up on the
+  // board — never the over-fetched, later-discarded tail of the window.
+  const includedRows = new Map<LeadStage, typeof rows>();
   for (const stage of visibleStages) {
-    buckets.set(stage, []);
+    includedRows.set(stage, []);
   }
   for (const row of rows) {
-    const bucket = buckets.get(row.stage);
-    if (!bucket || bucket.length >= MAX_CARDS_PER_COLUMN) {
+    const list = includedRows.get(row.stage);
+    if (!list || list.length >= MAX_CARDS_PER_COLUMN) {
       continue;
     }
-    bucket.push({
-      id: row.id,
-      firstName: row.firstName,
-      lastName: row.lastName,
-      stage: row.stage,
-      daysInStage: daysInStage(row.stageChangedAt, now),
-      capitalBracket: row.capitalBracket,
-      capitalAmount: row.capitalAmount === null ? null : row.capitalAmount.toNumber(),
-      source: row.source,
-    });
+    list.push(row);
+  }
+  const visibleLeadIds = [...includedRows.values()].flatMap((list) => list.map((row) => row.id));
+
+  // Second, batched query: the earliest future, non-cancelled appointment per
+  // lead — ONE `findMany` for the whole board, never a query per card (docs/00
+  // §3). Kept only when there is at least one lead to look up.
+  const upcomingAppointments =
+    visibleLeadIds.length > 0
+      ? await deps.prisma.appointment.findMany({
+          where: {
+            leadId: { in: visibleLeadIds },
+            startAt: { gte: now },
+            status: { not: AppointmentStatus.CANCELED },
+          },
+          orderBy: { startAt: "asc" },
+          select: nextAppointmentSelect,
+        })
+      : [];
+  const nextAppointmentByLead = new Map<string, { startAt: string; status: AppointmentStatus }>();
+  for (const appt of upcomingAppointments) {
+    if (appt.leadId && !nextAppointmentByLead.has(appt.leadId)) {
+      nextAppointmentByLead.set(appt.leadId, {
+        startAt: appt.startAt.toISOString(),
+        status: appt.status,
+      });
+    }
+  }
+
+  const buckets = new Map<LeadStage, PipelineCard[]>();
+  for (const [stage, list] of includedRows) {
+    buckets.set(
+      stage,
+      list.map((row) => ({
+        id: row.id,
+        firstName: row.firstName,
+        lastName: row.lastName,
+        stage: row.stage,
+        daysInStage: daysInStage(row.stageChangedAt, now),
+        capitalBracket: row.capitalBracket,
+        capitalAmount: row.capitalAmount === null ? null : row.capitalAmount.toNumber(),
+        source: row.source,
+        nextAppointment: nextAppointmentByLead.get(row.id) ?? null,
+      })),
+    );
   }
 
   const columns: PipelineColumn[] = visible.map((cfg) => {

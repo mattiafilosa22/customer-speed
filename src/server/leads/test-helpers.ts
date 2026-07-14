@@ -1,5 +1,5 @@
 import { Prisma } from "@/generated/prisma/client";
-import type { CapitalBracket, LeadStage } from "@/generated/prisma/enums";
+import { AppointmentStatus, type CapitalBracket, type LeadStage } from "@/generated/prisma/enums";
 import type { TenantPrismaClient } from "@/lib/prisma-tenant";
 import type { AuditEvent, AuditLogger } from "@/server/audit/audit-log";
 import type { LeadDeps } from "@/server/leads/deps";
@@ -98,6 +98,15 @@ export interface PipelineStageConfigRow {
   colorToken: string | null;
 }
 
+/** Minimal appointment row for the pipeline board's "next appointment" lookup. */
+export interface AppointmentRow {
+  id: string;
+  organizationId: string;
+  leadId: string | null;
+  startAt: Date;
+  status: AppointmentStatus;
+}
+
 /** Shared, cross-tenant store. Build per-tenant clients against the same store. */
 export class LeadStore {
   leads: LeadRow[] = [];
@@ -107,6 +116,7 @@ export class LeadStore {
   leadSources: LeadSourceRow[] = [];
   lossReasons: LossReasonRow[] = [];
   stageConfigs: PipelineStageConfigRow[] = [];
+  appointments: AppointmentRow[] = [];
   private seq = 0;
 
   nextId(prefix: string): string {
@@ -219,6 +229,20 @@ export class LeadStore {
     return PIPELINE_STAGE_ORDER.map((stage, index) =>
       this.addStageConfig({ organizationId, stage, sortOrder: index }),
     );
+  }
+
+  addAppointment(
+    partial: Partial<AppointmentRow> & Pick<AppointmentRow, "organizationId">,
+  ): AppointmentRow {
+    const row: AppointmentRow = {
+      id: partial.id ?? this.nextId("appt"),
+      organizationId: partial.organizationId,
+      leadId: partial.leadId ?? null,
+      startAt: partial.startAt ?? new Date("2026-06-10T09:00:00.000Z"),
+      status: partial.status ?? AppointmentStatus.PENDING,
+    };
+    this.appointments.push(row);
+    return row;
   }
 
   lead(index = 0): LeadRow {
@@ -389,6 +413,39 @@ export function tenantClientFor(store: LeadStore, organizationId: string): Tenan
         }
         applyLeadUpdate(row, data);
         return { id: row.id };
+      },
+    },
+    appointment: {
+      findMany: async ({
+        where = {},
+        orderBy,
+      }: {
+        where?: Where;
+        orderBy?: Record<string, "asc" | "desc">;
+      }) => {
+        let rows = store.appointments.filter((a) => a.organizationId === organizationId);
+        const leadIdCond = where.leadId as { in?: string[] } | undefined;
+        if (leadIdCond?.in) {
+          const allowed = new Set(leadIdCond.in);
+          rows = rows.filter((a) => a.leadId !== null && allowed.has(a.leadId));
+        }
+        if (where.startAt && typeof where.startAt === "object") {
+          const range = where.startAt as { gte?: Date };
+          if (range.gte) rows = rows.filter((a) => a.startAt >= range.gte!);
+        }
+        const statusCond = where.status as { not?: AppointmentStatus } | undefined;
+        if (statusCond?.not !== undefined) {
+          rows = rows.filter((a) => a.status !== statusCond.not);
+        }
+        if (orderBy?.startAt) {
+          const dir = orderBy.startAt;
+          rows = [...rows].sort((a, b) =>
+            dir === "asc"
+              ? a.startAt.getTime() - b.startAt.getTime()
+              : b.startAt.getTime() - a.startAt.getTime(),
+          );
+        }
+        return rows.map((a) => ({ leadId: a.leadId, startAt: a.startAt, status: a.status }));
       },
     },
     note: {
