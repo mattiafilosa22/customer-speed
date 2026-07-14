@@ -35,6 +35,11 @@ export interface LeadDataExport {
     readonly capitalBracket: string | null;
     readonly source: string | null;
     readonly adminNotes: string | null;
+    // Motivo di perdita: `lossReasonId` (predefined, resolved to its label) and
+    // `lossReasonCustomText` (free text, "Altro") are mutually exclusive on the
+    // lead (docs/03), so we surface whichever one is set as a single field —
+    // same pattern as `source` above.
+    readonly lossReason: string | null;
     readonly createdAt: string;
   };
   readonly notes: ReadonlyArray<{ body: string; createdAt: string }>;
@@ -87,6 +92,8 @@ export async function collectLeadDataForExport(
       adminNotes: true,
       createdAt: true,
       source: { select: { label: true } },
+      lossReason: { select: { label: true } },
+      lossReasonCustomText: true,
       notes: {
         orderBy: { createdAt: "asc" },
         select: { body: true, createdAt: true },
@@ -129,6 +136,7 @@ export async function collectLeadDataForExport(
       capitalBracket: lead.capitalBracket,
       source: lead.source?.label ?? null,
       adminNotes: lead.adminNotes,
+      lossReason: lead.lossReason?.label ?? lead.lossReasonCustomText ?? null,
       createdAt: lead.createdAt.toISOString(),
     },
     notes: lead.notes.map((n) => ({ body: n.body, createdAt: n.createdAt.toISOString() })),

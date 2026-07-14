@@ -89,7 +89,9 @@
   --stage-call-scheduled: #0ea5e9; /* sky */
   --stage-waiting-docs: #d97706; /* amber (warn) */
   --stage-presentation: #7a4e9e; /* violet */
+  --stage-presentation-2: #ca8a04; /* gold */
   --stage-waiting-decision: #db2777; /* pink (exec) */
+  --stage-standby: #78716c; /* taupe */
   --stage-waiting-payment: #0d9488; /* teal (doc) */
   --stage-won: #16a34a; /* green (ok) */
   --stage-lost: #e5533b; /* red */
@@ -163,7 +165,9 @@
   --stage-call-scheduled: #38bdf8;
   --stage-waiting-docs: #fbbf24;
   --stage-presentation: #c084fc;
+  --stage-presentation-2: #eab308;
   --stage-waiting-decision: #f472b6;
+  --stage-standby: #a8a29e;
   --stage-waiting-payment: #2dd4bf;
   --stage-won: #34d399;
   --stage-lost: #fb7185;

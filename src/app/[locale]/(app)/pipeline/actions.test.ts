@@ -80,6 +80,24 @@ describe("moveLeadStageAction", () => {
     });
   });
 
+  it("forwards a free-text lossReasonCustomText when moving to LOST via 'Altro'", async () => {
+    requireTenantContext.mockResolvedValue(TENANT);
+    requirePermission.mockReturnValue(undefined);
+    changeStage.mockResolvedValue({ id: "lead_1", changed: true });
+
+    await moveLeadStageAction({
+      leadId: "lead_1",
+      stage: LeadStage.LOST,
+      lossReasonCustomText: "Non risponde più alle chiamate",
+    });
+
+    expect(changeStage).toHaveBeenCalledWith({ kind: "lead" }, "lead_1", {
+      stage: LeadStage.LOST,
+      lossReasonId: undefined,
+      lossReasonCustomText: "Non risponde più alle chiamate",
+    });
+  });
+
   it("throws an unauthorized key when unauthenticated", async () => {
     requireTenantContext.mockRejectedValue(new UnauthorizedError());
     await expect(

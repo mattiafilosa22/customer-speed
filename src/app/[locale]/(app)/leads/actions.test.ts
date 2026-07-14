@@ -203,4 +203,25 @@ describe("changeStageAction", () => {
     });
     expect(res).toEqual({ status: "success", messageKey: "leads.stage.success" });
   });
+
+  it("forwards lossReasonCustomText (free-text 'Altro' reason)", async () => {
+    requireTenantContext.mockResolvedValue(TENANT);
+    requirePermission.mockReturnValue(undefined);
+    changeStage.mockResolvedValue({ id: "lead_1", changed: true });
+
+    const res = await changeStageAction(
+      { status: "idle" },
+      fd({
+        leadId: "lead_1",
+        stage: "LOST",
+        lossReasonCustomText: "Non risponde più alle chiamate",
+      }),
+    );
+    expect(changeStage).toHaveBeenCalledWith({ deps: true }, "lead_1", {
+      stage: "LOST",
+      lossReasonId: undefined,
+      lossReasonCustomText: "Non risponde più alle chiamate",
+    });
+    expect(res).toEqual({ status: "success", messageKey: "leads.stage.success" });
+  });
 });

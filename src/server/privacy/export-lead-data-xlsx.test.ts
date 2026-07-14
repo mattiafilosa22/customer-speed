@@ -19,6 +19,7 @@ function seed(): { store: PrivacyStore; leadAId: string } {
     phone: "+39111",
     sourceId: src.id,
     adminNotes: "VIP",
+    lossReasonCustomText: "Preferisce un altro consulente",
   });
   store.addNote({ organizationId: ORG_A, leadId: leadA.id, body: "Prima nota" });
   store.addNote({ organizationId: ORG_A, leadId: leadA.id, body: "Seconda nota" });
@@ -81,6 +82,7 @@ describe("exportLeadDataXlsx", () => {
     expect(leadValues).toContain("Mario");
     expect(leadValues).toContain("mario@example.com");
     expect(leadValues).toContain("Instagram");
+    expect(leadValues).toContain("Preferisce un altro consulente");
 
     // Note sheet: 2 data rows under the header (col 1 = body).
     const notesSheet = wb.getWorksheet("Note")!;

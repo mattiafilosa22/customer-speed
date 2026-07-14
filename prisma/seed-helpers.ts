@@ -46,7 +46,9 @@ export const INDIGO_THEME = {
     CALL_SCHEDULED: "#0ea5e9",
     WAITING_DOCS: "#d97706",
     PRESENTATION_CALL: "#7a4e9e",
+    PRESENTATION_CALL_2: "#ca8a04",
     WAITING_DECISION: "#db2777",
+    STANDBY: "#78716c",
     WAITING_PAYMENT: "#0d9488",
     WON: "#16a34a",
     LOST: "#e5533b",
@@ -92,10 +94,12 @@ export const PIPELINE_STAGES: ReadonlyArray<{
   { stage: LeadStage.CALL_SCHEDULED, sortOrder: 2, colorToken: "--stage-call-scheduled" },
   { stage: LeadStage.WAITING_DOCS, sortOrder: 3, colorToken: "--stage-waiting-docs" },
   { stage: LeadStage.PRESENTATION_CALL, sortOrder: 4, colorToken: "--stage-presentation" },
-  { stage: LeadStage.WAITING_DECISION, sortOrder: 5, colorToken: "--stage-waiting-decision" },
-  { stage: LeadStage.WAITING_PAYMENT, sortOrder: 6, colorToken: "--stage-waiting-payment" },
-  { stage: LeadStage.WON, sortOrder: 7, colorToken: "--stage-won" },
-  { stage: LeadStage.LOST, sortOrder: 8, colorToken: "--stage-lost" },
+  { stage: LeadStage.PRESENTATION_CALL_2, sortOrder: 5, colorToken: "--stage-presentation-2" },
+  { stage: LeadStage.WAITING_DECISION, sortOrder: 6, colorToken: "--stage-waiting-decision" },
+  { stage: LeadStage.STANDBY, sortOrder: 7, colorToken: "--stage-standby" },
+  { stage: LeadStage.WAITING_PAYMENT, sortOrder: 8, colorToken: "--stage-waiting-payment" },
+  { stage: LeadStage.WON, sortOrder: 9, colorToken: "--stage-won" },
+  { stage: LeadStage.LOST, sortOrder: 10, colorToken: "--stage-lost" },
 ];
 
 /**

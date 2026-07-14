@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { NotFoundError, ValidationError } from "@/lib/errors";
+import { ValidationError } from "@/lib/errors";
 import { LeadStage } from "@/generated/prisma/enums";
 import {
   PIPELINE_CONFIG_ERRORS,
@@ -74,14 +74,23 @@ describe("updateStageVisibility", () => {
     expect(store.stageConfig(ORG_A, LeadStage.TAKEN).isVisible).toBe(false);
   });
 
-  it("returns NotFound when the config does not belong to the tenant", async () => {
+  it("self-heals a missing config row (pre-existing tenant, docs/03 §3.3) without touching another tenant's row", async () => {
     const store = new LeadStore();
-    store.seedStageConfigs(ORG_B); // configs exist only for ORG_B
-    const { deps } = buildFakePipelineDeps(store, ORG_A, USER_A);
+    // ORG_A has NO config rows at all (simulates a tenant seeded before this
+    // stage existed); ORG_B has its own, distinct, seeded row for the SAME
+    // stage. Hiding it for ORG_A must CREATE ORG_A's own row and must NEVER
+    // read/touch ORG_B's.
+    store.seedStageConfigs(ORG_B);
+    const { deps, audits } = buildFakePipelineDeps(store, ORG_A, USER_A);
 
-    await expect(
-      updateStageVisibility(deps, { stage: LeadStage.TAKEN, isVisible: false }),
-    ).rejects.toBeInstanceOf(NotFoundError);
+    const result = await updateStageVisibility(deps, { stage: LeadStage.TAKEN, isVisible: false });
+
+    expect(result).toEqual({ stage: LeadStage.TAKEN, isVisible: false });
+    expect(store.stageConfig(ORG_A, LeadStage.TAKEN).isVisible).toBe(false);
+    expect(store.stageConfig(ORG_A, LeadStage.TAKEN).organizationId).toBe(ORG_A);
+    // ORG_B's own row is untouched.
+    expect(store.stageConfig(ORG_B, LeadStage.TAKEN).isVisible).toBe(true);
+    expect(audits.some((a) => a.action === "pipeline.stage.visibility")).toBe(true);
   });
 
   it("rejects invalid input (non-enum stage)", async () => {

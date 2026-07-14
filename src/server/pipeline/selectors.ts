@@ -18,3 +18,18 @@ export const pipelineCardSelect = {
 } satisfies Prisma.LeadSelect;
 
 export type PipelineCardRow = Prisma.LeadGetPayload<{ select: typeof pipelineCardSelect }>;
+
+/**
+ * Shared `select` for the batched "next appointment per lead" lookup (docs/00
+ * §3: zero N+1 — ONE `findMany` over all cards' lead ids, never a query per
+ * card). Only the fields the kanban card needs.
+ */
+export const nextAppointmentSelect = {
+  leadId: true,
+  startAt: true,
+  status: true,
+} satisfies Prisma.AppointmentSelect;
+
+export type NextAppointmentRow = Prisma.AppointmentGetPayload<{
+  select: typeof nextAppointmentSelect;
+}>;

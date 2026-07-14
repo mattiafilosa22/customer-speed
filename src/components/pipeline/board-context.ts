@@ -15,13 +15,16 @@ export interface LossReasonOption {
  * `moveLead` performs the optimistic move (cache update + Server Action + rollback
  * on error). It returns a promise that REJECTS on failure so callers (e.g. the
  * loss-reason dialog) can keep themselves open and show the localized error.
- * `lossReasons` are the tenant's loss reasons (required when moving to LOST).
+ * `lossReasons` are the tenant's loss reasons (required when moving to LOST,
+ * unless the caller supplies a free-text `lossReasonCustomText` instead — the
+ * two are mutually exclusive, enforced server-side).
  */
 export interface BoardContextValue {
   moveLead: (args: {
     leadId: string;
     stage: LeadStage;
     lossReasonId?: string;
+    lossReasonCustomText?: string;
   }) => Promise<void>;
   lossReasons: readonly LossReasonOption[];
 }

@@ -24,7 +24,7 @@ const stage = z.nativeEnum(LeadStage);
 const colorToken = z
   .string()
   .trim()
-  .regex(/^--stage-[a-z-]+$/, "Invalid color token")
+  .regex(/^--stage-[a-z0-9-]+$/, "Invalid color token")
   .nullable()
   .or(z.literal("").transform(() => null));
 
@@ -40,9 +40,10 @@ export type UpdateStageVisibilityInput = z.infer<typeof updateStageVisibilitySch
 
 /**
  * Full ordering payload: the complete list of stages in the desired order. We
- * require ALL nine stages exactly once so the resulting `sortOrder` is total and
- * unambiguous (no gaps, no duplicates) — validated here as a set, the per-stage
- * persistence happens atomically in the use case.
+ * require every `LeadStage` exactly once (length checked dynamically against the
+ * enum, never hard-coded) so the resulting `sortOrder` is total and unambiguous
+ * (no gaps, no duplicates) — validated here as a set, the per-stage persistence
+ * happens atomically in the use case.
  */
 export const reorderStagesSchema = z.object({
   order: z

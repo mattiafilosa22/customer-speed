@@ -69,6 +69,7 @@ export interface MoveLeadStageArgs {
   readonly leadId: string;
   readonly stage: LeadStage;
   readonly lossReasonId?: string;
+  readonly lossReasonCustomText?: string;
 }
 
 /**
@@ -87,6 +88,7 @@ export async function moveLeadStageAction(
     await changeStage(deps, args.leadId, {
       stage: args.stage,
       lossReasonId: args.lossReasonId,
+      lossReasonCustomText: args.lossReasonCustomText,
     });
     pipelinePaths();
     revalidatePath(`/[locale]/(app)/leads/${args.leadId}`, "page");

@@ -16,6 +16,7 @@ function seed(): { store: PrivacyStore; leadAId: string } {
     email: "mario@example.com",
     phone: "+39111",
     adminNotes: "internal",
+    lossReasonCustomText: "Preferisce un consulente vicino a Mario Rossi",
   });
   store.addNote({ organizationId: ORG_A, leadId: leadA.id, body: "n1" });
   store.addNote({ organizationId: ORG_A, leadId: leadA.id, body: "n2" });
@@ -49,6 +50,10 @@ describe("eraseLeadData", () => {
     expect(lead.email).toBeNull();
     expect(lead.phone).toBeNull();
     expect(lead.adminNotes).toBeNull();
+    // Free-text custom loss reason may carry PII (e.g. name the person) — same
+    // risk class as Note.body/Appointment.reason — must be cleared, not left
+    // intact on an "anonymized" lead.
+    expect(lead.lossReasonCustomText).toBeNull();
     expect(lead.anonymizedAt).not.toBeNull();
     expect(lead.deletedAt).not.toBeNull();
 
@@ -127,6 +132,7 @@ describe("eraseLeadData", () => {
     expect(meta).toContain("anonymized");
     expect(meta).toContain("legal-accounting-retention");
     // No PII in the audit trail.
+    expect(meta).not.toContain("Preferisce un consulente vicino a Mario Rossi");
     expect(meta).not.toContain("mario@example.com");
   });
 

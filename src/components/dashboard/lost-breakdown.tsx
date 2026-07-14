@@ -6,7 +6,8 @@ import { Card, CardBody, Pill } from "@/components/ui";
 /**
  * "Vendite perse" (docs/02 §2.2): LOST leads grouped by loss reason, with counts,
  * most frequent first. Reasons are tenant data (already localized as stored);
- * the null-reason bucket renders a localized "Non specificato".
+ * the null-reason buckets render a localized "Altro" (a free-text reason was
+ * recorded, `isCustom`) or "Non specificato" (no reason at all — legacy leads).
  *
  * Server component; empty state when there are no lost leads in the period.
  */
@@ -24,11 +25,11 @@ export async function LostBreakdown({ breakdown }: { breakdown: LostBreakdownRes
           <ul className="flex flex-col gap-2">
             {breakdown.items.map((item) => (
               <li
-                key={item.reasonId ?? "__none__"}
+                key={item.reasonId ?? (item.isCustom ? "__custom__" : "__none__")}
                 className="border-line flex items-center justify-between gap-3 border-t pt-2 first:border-t-0 first:pt-0"
               >
                 <span className="font-body text-ink text-[13.5px]">
-                  {item.label ?? t("unspecified")}
+                  {item.label ?? (item.isCustom ? t("other") : t("unspecified"))}
                 </span>
                 <Pill tone="exec">{item.count}</Pill>
               </li>

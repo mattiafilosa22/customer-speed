@@ -11,6 +11,7 @@ import {
   getInvoiceSummary,
   getLostBreakdown,
   getPipelineDistribution,
+  resolveDateRangeBounds,
 } from "@/server/dashboard";
 import { PeriodFilter } from "@/components/pipeline/period-filter";
 import { Card, CardBody } from "@/components/ui";
@@ -19,6 +20,7 @@ import { PipelineDistribution } from "@/components/dashboard/pipeline-distributi
 import { InvoiceSummary } from "@/components/dashboard/invoice-summary";
 import { LostBreakdown } from "@/components/dashboard/lost-breakdown";
 import { ActiveLeads } from "@/components/dashboard/active-leads";
+import { DateRangeFilter } from "@/components/dashboard/date-range-filter";
 
 /**
  * Dashboard (docs/02 §2.2). Server Component: resolves the tenant context,
@@ -27,6 +29,14 @@ import { ActiveLeads } from "@/components/dashboard/active-leads";
  * with the pipeline + lead list) and renders the KPI tiles, the pipeline
  * distribution, the invoice summary, the "vendite perse" breakdown and the
  * active-leads list.
+ *
+ * Two INDEPENDENT, URL-driven filters coexist: the year/month `PeriodFilter`
+ * (shared with pipeline/lead list) and the dashboard-only `DateRangeFilter`
+ * (free `from`/`to` range or the "last week" preset). When `from`/`to`/`preset`
+ * are present, `resolveDateRangeBounds` wins and its bounds are threaded through
+ * `periodSchema`'s `range` override to every widget query, in place of the
+ * year/month bounds (docs/02 §2.2); otherwise the year/month behaviour is
+ * unchanged.
  *
  * All figures come from the dashboard use cases, which compute aggregates
  * DB-side (docs/00 §3) — the page never touches Prisma. The five reads run
@@ -56,10 +66,20 @@ export default async function DashboardPage({
 
   const currentYear = new Date().getUTCFullYear();
   // Default to the current year so the data matches the period filter's default.
-  const period = {
+  const yearMonthPeriod = {
     year: flat("year") ?? String(currentYear),
     month: flat("month"),
   };
+
+  // The free date-range filter, when active in the URL, takes precedence over
+  // year/month (docs/02 §2.2). `range`, once resolved, is threaded through
+  // `periodSchema` so every widget keeps a single "period input" shape.
+  const dateRange = resolveDateRangeBounds({
+    from: flat("from"),
+    to: flat("to"),
+    preset: flat("preset") === "lastWeek" ? "lastWeek" : undefined,
+  });
+  const period = dateRange ? { range: dateRange } : yearMonthPeriod;
 
   const deps = buildDashboardDeps(ctx);
 
@@ -84,8 +104,9 @@ export default async function DashboardPage({
       </header>
 
       <Card>
-        <CardBody>
+        <CardBody className="flex flex-col gap-3">
           <PeriodFilter currentYear={currentYear} />
+          <DateRangeFilter />
         </CardBody>
       </Card>
 
