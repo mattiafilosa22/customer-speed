@@ -39,9 +39,10 @@ export function romeDayRangeUtc(isoDate: string): { gte: Date; lt: Date } {
 /**
  * The Europe/Rome UTC offset (in ms) in effect at the given UTC instant.
  * Computed by formatting the instant in the app zone and diffing against the
- * same wall-clock interpreted as UTC.
+ * same wall-clock interpreted as UTC. Exported for reuse by
+ * `datetime-local.ts` (converting a local wall-clock string back to UTC).
  */
-function romeOffsetMs(utcMs: number): number {
+export function romeOffsetMs(utcMs: number): number {
   const parts = new Intl.DateTimeFormat("en-CA", {
     timeZone: APP_TIME_ZONE,
     year: "numeric",

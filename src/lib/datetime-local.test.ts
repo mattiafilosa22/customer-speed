@@ -1,6 +1,39 @@
 import { describe, expect, it } from "vitest";
 
-import { toDatetimeLocalValue } from "@/lib/datetime-local";
+import { fromDatetimeLocalValue, toDatetimeLocalValue } from "@/lib/datetime-local";
+
+describe("fromDatetimeLocalValue", () => {
+  // Regression: these must NOT depend on the process's own TZ (e.g. UTC on
+  // Vercel vs Europe/Rome on a dev machine) — that divergence was the bug.
+  it("interprets a bare value as Europe/Rome in summer (CEST, +02:00)", () => {
+    expect(fromDatetimeLocalValue("2026-06-20T10:30").toISOString()).toBe(
+      "2026-06-20T08:30:00.000Z",
+    );
+  });
+
+  it("interprets a bare value as Europe/Rome in winter (CET, +01:00)", () => {
+    expect(fromDatetimeLocalValue("2026-01-15T10:00").toISOString()).toBe(
+      "2026-01-15T09:00:00.000Z",
+    );
+  });
+
+  it("round-trips with toDatetimeLocalValue", () => {
+    const original = new Date("2026-06-20T08:30:00.000Z");
+    expect(fromDatetimeLocalValue(toDatetimeLocalValue(original)).getTime()).toBe(
+      original.getTime(),
+    );
+  });
+
+  it("passes an already-offset ISO string straight through", () => {
+    expect(fromDatetimeLocalValue("2026-06-20T08:30:00.000Z").toISOString()).toBe(
+      "2026-06-20T08:30:00.000Z",
+    );
+  });
+
+  it("produces an Invalid Date for garbage input (validated upstream)", () => {
+    expect(Number.isNaN(fromDatetimeLocalValue("not-a-date").getTime())).toBe(true);
+  });
+});
 
 describe("toDatetimeLocalValue", () => {
   it("formats a UTC instant in Europe/Rome (CEST, +02:00 in summer)", () => {
