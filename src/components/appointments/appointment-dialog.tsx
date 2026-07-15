@@ -1,6 +1,12 @@
 "use client";
 
-import { useActionState, useState, type ReactNode } from "react";
+import {
+  useActionState,
+  useRef,
+  useState,
+  type ChangeEvent,
+  type ReactNode,
+} from "react";
 import { useLocale, useTranslations } from "next-intl";
 
 import { Button, Input, Modal, Select } from "@/components/ui";
@@ -94,7 +100,52 @@ export function AppointmentDialog({
   const fieldError = (name: string): string | undefined =>
     isError && state.fieldErrors?.[name] ? tm(state.fieldErrors[name]) : undefined;
 
-  const defaultStart = appointment?.startAt ?? "";
+  // The `datetime-local` value (`YYYY-MM-DDTHH:mm`) is edited as two separate
+  // native inputs (date + time) so that finishing the date can auto-advance
+  // focus to the time field — a single `datetime-local` input exposes no way to
+  // jump its internal segments programmatically. Both are UNCONTROLLED
+  // (`defaultValue`, not `value`): a native multi-segment date/time input
+  // re-rendered with a new `value` prop on every keystroke (React "controlled"
+  // style) fights the browser's own per-segment typing buffer and corrupts
+  // digits mid-entry (e.g. typing a 4-digit year lands as "0002"). Instead the
+  // hidden `startAt` field the Server Action reads is kept in sync imperatively
+  // via refs, so the visible inputs are never force-reset while the user types.
+  const [defaultDate, defaultTime] = (appointment?.startAt ?? "").split("T");
+  const dateInputRef = useRef<HTMLInputElement>(null);
+  const timeInputRef = useRef<HTMLInputElement>(null);
+  const startAtHiddenRef = useRef<HTMLInputElement>(null);
+
+  const syncStartAtHidden = () => {
+    if (!startAtHiddenRef.current) return;
+    const date = dateInputRef.current?.value ?? "";
+    const time = timeInputRef.current?.value ?? "";
+    startAtHiddenRef.current.value = `${date}T${time}`;
+  };
+
+  /**
+   * Is `value` (the date input's `YYYY-MM-DD`) a REAL, fully-typed date rather
+   * than Chromium's odometer-style padding of a still-mid-entry year?
+   *
+   * Chrome's `type="date"` year sub-field shifts digits in one at a time as you
+   * type, and `.value` reports the padded result on every keystroke: typing
+   * "2026" one digit at a time yields "0002", "0020", "0202", "2026" in turn —
+   * all four are syntactically-complete 10-char date strings. Checking
+   * `value.length === 10` alone therefore fires on the FIRST digit, not the
+   * last. Appointments are always in the 2000–2100 range (mirrors the server
+   * `startAt` schema), so requiring a plausible year filters out every
+   * mid-typing intermediate value without needing a debounce/timer.
+   */
+  const isCompleteDate = (value: string): boolean => {
+    if (value.length !== 10) return false;
+    const year = Number.parseInt(value.slice(0, 4), 10);
+    return year >= 2000 && year <= 2100;
+  };
+
+  const onDateChange = (event: ChangeEvent<HTMLInputElement>) => {
+    syncStartAtHidden();
+    if (isCompleteDate(event.currentTarget.value)) timeInputRef.current?.focus();
+  };
+
   const defaultLeadId = lockedLeadId ?? appointment?.leadId ?? "";
   const showLeadSelect = !lockedLeadId;
 
@@ -117,14 +168,33 @@ export function AppointmentDialog({
           <FormAlert tone="error">{tm(state.formError)}</FormAlert>
         ) : null}
 
-        <Input
-          label={t("form.startAt")}
+        <input
+          ref={startAtHiddenRef}
+          type="hidden"
           name="startAt"
-          type="datetime-local"
-          required
-          defaultValue={defaultStart}
-          error={fieldError("startAt")}
+          defaultValue={appointment?.startAt ?? ""}
         />
+        <div className="flex gap-3">
+          <Input
+            ref={dateInputRef}
+            label={t("form.startAtDate")}
+            type="date"
+            required
+            defaultValue={defaultDate ?? ""}
+            onChange={onDateChange}
+            error={fieldError("startAt")}
+            className="flex-1"
+          />
+          <Input
+            ref={timeInputRef}
+            label={t("form.startAtTime")}
+            type="time"
+            required
+            defaultValue={defaultTime ?? ""}
+            onChange={syncStartAtHidden}
+            className="flex-1"
+          />
+        </div>
         <Input
           label={t("form.reason")}
           name="reason"

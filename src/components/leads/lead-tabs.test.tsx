@@ -68,7 +68,7 @@ describe("LeadTabs", () => {
     expect(tabs).toEqual([
       "Tutti (6)",
       "Da gestire(3)",
-      "Preso in carico(1)",
+      "Telefonata fissata(1)",
       "Vinta(2)",
     ]);
   });
