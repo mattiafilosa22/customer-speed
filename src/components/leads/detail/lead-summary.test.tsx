@@ -48,7 +48,7 @@ describe("LeadSummary", () => {
   it("renders the stage label with days-in-stage as one fact", async () => {
     await renderSummary({ stage: LeadStage.TAKEN, daysInStage: 3 });
     // IT stage label for TAKEN + "3 giorni nello stage".
-    expect(screen.getByText(/preso in carico/i)).toBeInTheDocument();
+    expect(screen.getByText(/telefonata fissata/i)).toBeInTheDocument();
     expect(screen.getByText(/3 giorni nello stage/i)).toBeInTheDocument();
   });
 

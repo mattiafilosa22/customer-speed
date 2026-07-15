@@ -1,6 +1,7 @@
 import { z } from "zod";
 
 import { AppointmentStatus } from "@/generated/prisma/enums";
+import { fromDatetimeLocalValue } from "@/lib/datetime-local";
 
 /**
  * Zod schemas for the appointment domain (docs/02 §2.6, docs/04 §4.5) — the
@@ -22,13 +23,18 @@ const reason = z.string().trim().min(1, "Required").max(280);
 
 /**
  * `startAt` arrives from a `datetime-local` input (`YYYY-MM-DDTHH:mm`) or an ISO
- * string. We coerce to a `Date`, reject invalid / absurd values, and store in
- * UTC (docs/00 §3). A bare `datetime-local` is interpreted by `new Date(...)` in
- * the runtime's local zone, which is fine: the value is rendered back through the
- * localized formatter (Europe/Rome) on read.
+ * string (REST API / calendar sync). A bare `datetime-local` value carries no
+ * offset, so it MUST be interpreted as Europe/Rome wall-clock time explicitly
+ * (`fromDatetimeLocalValue`) rather than coerced with a bare `new Date(...)`,
+ * which parses in the RUNNING PROCESS's zone — UTC on the server (Vercel), not
+ * Europe/Rome — and would silently shift every manually-entered time. A value
+ * that already carries an offset/`Z` is unambiguous and passed straight through.
  */
-const startAt = z.coerce
-  .date()
+const startAt = z
+  .preprocess(
+    (value) => (typeof value === "string" ? fromDatetimeLocalValue(value) : value),
+    z.date(),
+  )
   .refine((date) => !Number.isNaN(date.getTime()), { message: "Invalid date" })
   .refine((date) => date.getUTCFullYear() >= 2000 && date.getUTCFullYear() <= 2100, {
     message: "Date out of range",
