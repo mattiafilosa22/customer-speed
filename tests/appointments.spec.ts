@@ -32,14 +32,13 @@ test.describe("appointments — create + status + mini-calendar", () => {
     await page.goto("/appointments");
 
     const unique = `E2E-${Date.now()}`;
-    // Tomorrow at 10:30 local, as a datetime-local value.
+    // Tomorrow at 10:30 local, as separate date/time input values.
     const dt = new Date();
     dt.setDate(dt.getDate() + 1);
     dt.setHours(10, 30, 0, 0);
     const pad = (n: number) => String(n).padStart(2, "0");
-    const localValue = `${dt.getFullYear()}-${pad(dt.getMonth() + 1)}-${pad(dt.getDate())}T${pad(
-      dt.getHours(),
-    )}:${pad(dt.getMinutes())}`;
+    const dateValue = `${dt.getFullYear()}-${pad(dt.getMonth() + 1)}-${pad(dt.getDate())}`;
+    const timeValue = `${pad(dt.getHours())}:${pad(dt.getMinutes())}`;
 
     await page
       .getByRole("button", { name: /nuovo appuntamento|new appointment/i })
@@ -47,7 +46,11 @@ test.describe("appointments — create + status + mini-calendar", () => {
       .click();
 
     const dialog = page.getByRole("dialog");
-    await dialog.getByLabel(/data e ora|date and time/i).fill(localValue);
+    // The start is edited as two separate native inputs (date + time), not a
+    // single `datetime-local` field, so the auto-focus jump can move focus to
+    // the time field once the date is fully entered (docs/02 §2.6).
+    await dialog.getByLabel(/^data$|^date$/i).fill(dateValue);
+    await dialog.getByLabel(/^ora$|^time$/i).fill(timeValue);
     await dialog.getByLabel(/motivo|reason/i).fill(unique);
     await dialog.getByRole("button", { name: /salva appuntamento|save appointment/i }).click();
 
