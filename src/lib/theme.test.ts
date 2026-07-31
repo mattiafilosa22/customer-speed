@@ -8,6 +8,7 @@ import {
   themeSchema,
   themeToCssVars,
 } from "@/lib/theme";
+import { FONT_PAIRS } from "@/lib/theme-fonts";
 
 describe("theme", () => {
   it("Indigo preset is a valid, complete theme", () => {
@@ -28,6 +29,26 @@ describe("theme", () => {
     expect(vars["--panel"]).toBeUndefined();
     expect(vars["--ink"]).toBeUndefined();
     expect(vars["--stage-taken"]).toBeUndefined();
+  });
+
+  it("themeToCssVars maps the tenant's font pair onto the role tokens", () => {
+    // Brand pair → the next/font family variables emitted by the layout.
+    const brand = themeToCssVars(INDIGO_THEME);
+    expect(brand["--f-display"]).toContain("var(--f-bebas)");
+    expect(brand["--f-body"]).toContain("var(--f-montserrat)");
+    expect(brand["--f-mono"]).toContain("var(--f-plex-mono)");
+
+    // Switching the pair MUST change the emitted vars — the bug this covers is a
+    // font selector that saves but never takes effect.
+    const inter = themeToCssVars({ ...INDIGO_THEME, fonts: FONT_PAIRS.inter });
+    expect(inter["--f-display"]).toContain("var(--f-inter)");
+    expect(inter["--f-body"]).toContain("var(--f-inter)");
+    expect(inter["--f-body"]).not.toBe(brand["--f-body"]);
+
+    // The system stack is not self-hosted: it passes through verbatim.
+    const system = themeToCssVars({ ...INDIGO_THEME, fonts: FONT_PAIRS.system });
+    expect(system["--f-body"]).toBe(FONT_PAIRS.system.body);
+    expect(system["--f-body"]).not.toContain("var(");
   });
 
   it("themeToCssVars neutralizes shadows when softShadows is off", () => {

@@ -13,12 +13,20 @@
  * Source: docs/05-design-system.md §5.2 / §5.3. Dark-mode mirrors are defined
  * under [data-theme="dark"] (Fabio uses light, but the tokens are ready).
  *
- * The --f-* font-family tokens are NOT declared here: they are provided by
- * next/font (src/app/layout.tsx) so the font files are self-hosted and the
- * CSS variables (--f-display/--f-body/--f-mono) are emitted on :root.
+ * Fonts: the FAMILY variables (--f-bebas, --f-montserrat, --f-inter,
+ * --f-manrope, --f-plex-mono) are emitted by next/font on <html>
+ * (src/app/[locale]/layout.tsx) so the files are self-hosted. The ROLE tokens
+ * below (--f-display/--f-body/--f-mono) default to the brand pair and are
+ * overridden per tenant by themeToCssVars (src/lib/theme.ts) — that is what
+ * makes the appearance panel's font selector take effect.
  */
 
 :root {
+  /* ── Fonts — role tokens (default pair: Bebas Neue / Montserrat) ──── */
+  --f-display: var(--f-bebas), -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --f-body: var(--f-montserrat), -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --f-mono: var(--f-plex-mono), ui-monospace, monospace;
+
   /* ── Colors — base ─────────────────────────────────────────────────── */
   --accent: #5b5bd6; /* indigo — primary actions */
   --accent-ink: #4a48c4; /* hover / pressed */

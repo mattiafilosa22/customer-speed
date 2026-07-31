@@ -34,7 +34,19 @@ export function ThemeProvider({ theme, mode, children }: ThemeProviderProps) {
   const cssVars = themeToCssVars(theme) as CSSProperties;
 
   return (
-    <div {...themeDataAttributes(theme, mode)} style={cssVars} className="contents">
+    <div
+      {...themeDataAttributes(theme, mode)}
+      /*
+       * `fontFamily` is re-declared here, not only as a variable: `body` in
+       * globals.css resolves `var(--f-body)` at the BODY level (above this
+       * wrapper), and descendants then inherit the already-computed family.
+       * Re-declaring it on the wrapper makes the tenant's --f-body actually win
+       * for body text. Headings/mono re-declare their own family in globals.css,
+       * so they resolve against this subtree already.
+       */
+      style={{ ...cssVars, fontFamily: "var(--f-body)" }}
+      className="contents"
+    >
       {children}
     </div>
   );

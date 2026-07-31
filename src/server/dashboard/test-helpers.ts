@@ -28,6 +28,7 @@ export interface DLeadRow {
   email: string | null;
   stage: LeadStage;
   stageChangedAt: Date;
+  sourceId: string | null;
   lossReasonId: string | null;
   /** Free-text "Altro" loss reason (docs/02 §2.5-bis) — mutually exclusive with `lossReasonId`. */
   lossReasonCustomText: string | null;
@@ -60,6 +61,12 @@ export interface DLossReasonRow {
   label: string;
 }
 
+export interface DLeadSourceRow {
+  id: string;
+  organizationId: string;
+  label: string;
+}
+
 const STAGE_ORDER: readonly LeadStage[] = [
   LeadStage.TO_HANDLE,
   LeadStage.TAKEN,
@@ -79,6 +86,7 @@ export class DashboardStore {
   invoices: DInvoiceRow[] = [];
   stageConfigs: DStageConfigRow[] = [];
   lossReasons: DLossReasonRow[] = [];
+  leadSources: DLeadSourceRow[] = [];
   private seq = 0;
 
   nextId(prefix: string): string {
@@ -96,6 +104,7 @@ export class DashboardStore {
       email: partial.email ?? null,
       stage: partial.stage ?? LeadStage.TO_HANDLE,
       stageChangedAt: partial.stageChangedAt ?? createdAt,
+      sourceId: partial.sourceId ?? null,
       lossReasonId: partial.lossReasonId ?? null,
       lossReasonCustomText: partial.lossReasonCustomText ?? null,
       deletedAt: partial.deletedAt ?? null,
@@ -135,6 +144,18 @@ export class DashboardStore {
       label: partial.label,
     };
     this.lossReasons.push(row);
+    return row;
+  }
+
+  addLeadSource(
+    partial: Partial<DLeadSourceRow> & Pick<DLeadSourceRow, "organizationId" | "label">,
+  ): DLeadSourceRow {
+    const row: DLeadSourceRow = {
+      id: partial.id ?? this.nextId("src"),
+      organizationId: partial.organizationId,
+      label: partial.label,
+    };
+    this.leadSources.push(row);
     return row;
   }
 
@@ -184,6 +205,11 @@ function leadMatches(lead: DLeadRow, where: Where): boolean {
   if (where.createdAt && typeof where.createdAt === "object") {
     if (!inDateRange(lead.createdAt, where.createdAt as { gte?: Date; lt?: Date })) return false;
   }
+  // Source ("provenienza") filter — an exact id, or `null` for the
+  // "Non specificato" bucket (`leadSourceFilter`, docs/02 §2.2).
+  if (where.sourceId !== undefined && lead.sourceId !== where.sourceId) {
+    return false;
+  }
   if (where.lossReasonId !== undefined && lead.lossReasonId !== where.lossReasonId) {
     return false;
   }
@@ -221,11 +247,17 @@ export function dashboardClientFor(
     }
     if (where.leadId !== undefined && invoice.leadId !== where.leadId) return false;
     if (where.id !== undefined && invoice.id !== where.id) return false;
-    // Relation filter: { lead: { is: { stage } } }
-    const leadFilter = where.lead as { is?: { stage?: LeadStage } } | undefined;
-    if (leadFilter?.is?.stage !== undefined) {
+    // Relation filter: { lead: { is: { stage, sourceId? } } } — the invoice-anchored
+    // widgets scope by the LEAD's stage and (when filtering) its source.
+    const leadFilter = where.lead as { is?: { stage?: LeadStage; sourceId?: string | null } };
+    if (leadFilter?.is) {
       const lead = invoiceLead(invoice);
-      if (!lead || lead.stage !== leadFilter.is.stage) return false;
+      // A dangling invoice (no visible lead) never satisfies a relation filter.
+      if (!lead) return false;
+      if (leadFilter.is.stage !== undefined && lead.stage !== leadFilter.is.stage) return false;
+      if (leadFilter.is.sourceId !== undefined && lead.sourceId !== leadFilter.is.sourceId) {
+        return false;
+      }
     }
     return true;
   };
@@ -240,15 +272,21 @@ export function dashboardClientFor(
         where?: Where;
       }) => {
         const rows = ownLeads().filter((l) => leadMatches(l, where));
-        const key = by[0] as "stage" | "lossReasonId";
-        const counts = new Map<unknown, number>();
+        // Group by the FULL key tuple (`by` can be multi-column, e.g.
+        // ["sourceId", "stage"]), exactly like Prisma: one row per distinct
+        // combination, with its count.
+        const keys = by as (keyof DLeadRow)[];
+        const cells = new Map<string, { values: unknown[]; count: number }>();
         for (const lead of rows) {
-          const value = lead[key];
-          counts.set(value, (counts.get(value) ?? 0) + 1);
+          const values = keys.map((key) => lead[key]);
+          const cacheKey = JSON.stringify(values);
+          const cell = cells.get(cacheKey) ?? { values, count: 0 };
+          cell.count += 1;
+          cells.set(cacheKey, cell);
         }
-        return [...counts.entries()].map(([value, n]) => ({
-          [key]: value,
-          _count: { _all: n },
+        return [...cells.values()].map((cell) => ({
+          ...Object.fromEntries(keys.map((key, index) => [key, cell.values[index]])),
+          _count: { _all: cell.count },
         }));
       },
       findMany: async ({
@@ -389,6 +427,18 @@ export function dashboardClientFor(
               (idFilter?.in === undefined || idFilter.in.includes(r.id)),
           )
           .map((r) => ({ id: r.id, label: r.label }));
+      },
+    },
+    leadSource: {
+      findMany: async ({ where = {} }: { where?: Where }) => {
+        const idFilter = where.id as { in?: string[] } | undefined;
+        return store.leadSources
+          .filter(
+            (s) =>
+              s.organizationId === organizationId &&
+              (idFilter?.in === undefined || idFilter.in.includes(s.id)),
+          )
+          .map((s) => ({ id: s.id, label: s.label }));
       },
     },
   };

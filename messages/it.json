@@ -537,8 +537,11 @@
     "card": {
       "label": "Lead {name}, stage {stage}",
       "nextAppointment": {
-        "label": "Prossimo appuntamento:"
-      }
+        "label": "Prossimo appuntamento:",
+        "overdue": "Appuntamento scaduto:",
+        "overdueBadge": "Da aggiornare"
+      },
+      "overdueLabel": "Lead {name}, stage {stage}, appuntamento scaduto"
     },
     "moveMenu": {
       "label": "Sposta in un altro stage",
@@ -617,6 +620,17 @@
       "unspecified": "Non specificato",
       "other": "Altro"
     },
+    "sources": {
+      "title": "Provenienza lead",
+      "caption": "Lead del periodo per provenienza, con vinte, perse e tasso di conversione",
+      "empty": "Nessun lead nel periodo.",
+      "source": "Provenienza",
+      "leads": "Lead",
+      "won": "Vinte",
+      "lost": "Perse",
+      "convRate": "Conv. rate",
+      "unspecified": "Non specificato"
+    },
     "active": {
       "title": "Lead totali",
       "empty": "Nessun lead attivo al momento."
@@ -629,6 +643,11 @@
       "activeRangeNotice": "Filtro per intervallo attivo",
       "invertedRangeError": "La data \"Al\" deve essere uguale o successiva alla data \"Dal\"",
       "invalidDateError": "Data non valida"
+    },
+    "sourceFilter": {
+      "label": "Provenienza",
+      "all": "Tutte le provenienze",
+      "unspecified": "Non specificato"
     }
   },
   "invoices": {

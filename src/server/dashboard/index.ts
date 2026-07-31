@@ -16,6 +16,14 @@ export {
   type PeriodRange,
 } from "@/server/dashboard/period";
 export {
+  dashboardFilterSchema,
+  sourceFilterSchema,
+  leadSourceFilter,
+  UNSPECIFIED_SOURCE,
+  type DashboardFilterInput,
+  type SourceFilterInput,
+} from "@/server/dashboard/filters";
+export {
   resolveDateRangeBounds,
   dateRangeInputError,
   type DateRangeInput,
@@ -34,6 +42,11 @@ export {
   type LostBreakdownItem,
   type LostBreakdownResult,
 } from "@/server/dashboard/get-lost-breakdown";
+export {
+  getSourceBreakdown,
+  type SourceBreakdownItem,
+  type SourceBreakdownResult,
+} from "@/server/dashboard/get-source-breakdown";
 export {
   getInvoiceSummary,
   type InvoiceSummary,

@@ -11,26 +11,36 @@ import {
   getInvoiceSummary,
   getLostBreakdown,
   getPipelineDistribution,
+  getSourceBreakdown,
   resolveDateRangeBounds,
 } from "@/server/dashboard";
+import { buildLeadDeps, listLeadSources } from "@/server/leads";
 import { PeriodFilter } from "@/components/pipeline/period-filter";
 import { Card, CardBody } from "@/components/ui";
 import { KpiCards } from "@/components/dashboard/kpi-cards";
 import { PipelineDistribution } from "@/components/dashboard/pipeline-distribution";
 import { InvoiceSummary } from "@/components/dashboard/invoice-summary";
 import { LostBreakdown } from "@/components/dashboard/lost-breakdown";
+import { SourceBreakdown } from "@/components/dashboard/source-breakdown";
 import { ActiveLeads } from "@/components/dashboard/active-leads";
 import { DateRangeFilter } from "@/components/dashboard/date-range-filter";
+import { SourceFilter } from "@/components/dashboard/source-filter";
 
 /**
  * Dashboard (docs/02 §2.2). Server Component: resolves the tenant context,
  * enforces `dashboard.view` (server-authoritative; 404 avoids revealing the
  * area), reads the period from the URL `searchParams` (shared `year`/`month`
  * with the pipeline + lead list) and renders the KPI tiles, the pipeline
- * distribution, the invoice summary, the "vendite perse" breakdown and the
- * active-leads list.
+ * distribution, the invoice summary, the "vendite perse" breakdown, the lead
+ * source breakdown and the active-leads list.
  *
- * Two INDEPENDENT, URL-driven filters coexist: the year/month `PeriodFilter`
+ * THREE independent, URL-driven filters coexist. Two of them pick the PERIOD
+ * (mutually exclusive, see below); the third — `SourceFilter` (`sourceId`) —
+ * picks the lead SOURCE and is orthogonal to both: it narrows EVERY widget,
+ * including the source breakdown (which then collapses to the selected row), so
+ * the whole page always reads as one coherently filtered view.
+ *
+ * Two INDEPENDENT, URL-driven filters coexist for the period: the year/month `PeriodFilter`
  * (shared with pipeline/lead list) and the dashboard-only `DateRangeFilter`
  * (free `from`/`to` range or the "last week" preset). When `from`/`to`/`preset`
  * are present, `resolveDateRangeBounds` wins and its bounds are threaded through
@@ -39,7 +49,7 @@ import { DateRangeFilter } from "@/components/dashboard/date-range-filter";
  * unchanged.
  *
  * All figures come from the dashboard use cases, which compute aggregates
- * DB-side (docs/00 §3) — the page never touches Prisma. The five reads run
+ * DB-side (docs/00 §3) — the page never touches Prisma. The six reads run
  * concurrently. The period defaults to the CURRENT year when no `year` param is
  * present, so the data matches the period filter's default selection.
  *
@@ -81,15 +91,41 @@ export default async function DashboardPage({
   });
   const period = dateRange ? { range: dateRange } : yearMonthPeriod;
 
-  const deps = buildDashboardDeps(ctx);
+  // Second, INDEPENDENT filter dimension: the lead source ("provenienza",
+  // docs/02 §2.2). It is a plain opaque id (or the `UNSPECIFIED_SOURCE`
+  // sentinel) validated by `dashboardFilterSchema` inside each use case — the
+  // page only forwards it. Combined with the period into a single input object
+  // so every widget keeps ONE entrypoint. `getActiveLeads` is not period-scoped
+  // but IS source-scoped, so it receives the source alone.
+  // `|| undefined` collapses an EMPTY param (`?sourceId=`, which the select
+  // produces on "Tutte" before it is stripped) onto "no filter" — the schema
+  // rejects the empty string rather than treating it as a wildcard.
+  const sourceFilter = { sourceId: flat("sourceId") || undefined };
+  const filter = { ...period, ...sourceFilter };
 
-  const [user, kpis, distribution, invoiceSummary, lostBreakdown, activeLeads] = await Promise.all([
+  const deps = buildDashboardDeps(ctx);
+  const leadDeps = buildLeadDeps(ctx);
+
+  const [
+    user,
+    kpis,
+    distribution,
+    invoiceSummary,
+    lostBreakdown,
+    sourceBreakdown,
+    activeLeads,
+    sources,
+  ] = await Promise.all([
     getSessionUser(),
-    getDashboardKpis(deps, period),
-    getPipelineDistribution(deps, period),
-    getInvoiceSummary(deps, period),
-    getLostBreakdown(deps, period),
-    getActiveLeads(deps),
+    getDashboardKpis(deps, filter),
+    getPipelineDistribution(deps, filter),
+    getInvoiceSummary(deps, filter),
+    getLostBreakdown(deps, filter),
+    getSourceBreakdown(deps, filter),
+    getActiveLeads(deps, sourceFilter),
+    // Options for the source select: the tenant's ACTIVE sources, ordered —
+    // the same list the lead list/form use (one implementation, docs/00 §1).
+    listLeadSources(leadDeps),
   ]);
 
   return (
@@ -107,6 +143,7 @@ export default async function DashboardPage({
         <CardBody className="flex flex-col gap-3">
           <PeriodFilter currentYear={currentYear} />
           <DateRangeFilter />
+          <SourceFilter sources={sources} />
         </CardBody>
       </Card>
 
@@ -118,6 +155,8 @@ export default async function DashboardPage({
         <InvoiceSummary summary={invoiceSummary} />
         <LostBreakdown breakdown={lostBreakdown} />
       </div>
+
+      <SourceBreakdown breakdown={sourceBreakdown} />
 
       <ActiveLeads active={activeLeads} />
     </div>

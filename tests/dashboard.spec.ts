@@ -63,6 +63,47 @@ test.describe("dashboard — KPIs coherent with the seed", () => {
     await expect(page.getByRole("heading", { name: /^(lead totali|total leads)$/i })).toBeVisible();
   });
 
+  test("groups the period's leads by source (4 leads, one per seeded source)", async ({ page }) => {
+    await page.goto("/dashboard");
+
+    const heading = page.getByRole("heading", { name: /provenienza lead|lead source/i });
+    await expect(heading).toBeVisible();
+
+    // The kpidemo seed has exactly one lead per source (Instagram, Funnel,
+    // Google, Referenza), so each row shows 1 lead; "Referenza" is the WON one.
+    const table = page.getByRole("table", { name: /provenienza|source/i });
+    await expect(table).toBeVisible();
+    for (const label of ["Instagram", "Funnel", "Google", "Referenza"]) {
+      await expect(table.getByRole("rowheader", { name: label })).toBeVisible();
+    }
+    // Won row: 1 lead, 1 won → 100% conversion.
+    const referral = table.getByRole("row", { name: /Referenza/ });
+    await expect(referral).toContainText("100%");
+  });
+
+  test("the source filter narrows every block to the selected provenance", async ({ page }) => {
+    await page.goto("/dashboard");
+
+    // Exact label so it matches the filter <select> and NOT the "Provenienza"
+    // column header of the source-breakdown table.
+    const sourceSelect = page.getByLabel(/^(provenienza|source)$/i);
+    await expect(sourceSelect).toBeVisible();
+
+    // "Referenza" is the kpidemo seed's single WON lead (net 5.000 €), so
+    // selecting it must leave 1 lead at 100% conversion with the revenue intact.
+    await sourceSelect.selectOption({ label: "Referenza" });
+    await page.waitForLoadState("networkidle");
+
+    const kpis = page.getByRole("region", { name: /indicatori principali|key indicators/i });
+    await expect(kpis.getByText("100%")).toBeVisible();
+    await expect(kpis.getByText(/5[.,]?000/)).toBeVisible();
+
+    // The breakdown collapses to the selected source only.
+    const table = page.getByRole("table", { name: /provenienza|source/i });
+    await expect(table.getByRole("rowheader", { name: "Referenza" })).toBeVisible();
+    await expect(table.getByRole("rowheader", { name: "Instagram" })).toBeHidden();
+  });
+
   test("the period filter is present and updates the data", async ({ page }) => {
     await page.goto("/dashboard");
     // Exact label so it matches the period <select> ("Mese"/"Month") and NOT the

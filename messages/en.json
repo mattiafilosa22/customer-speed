@@ -537,8 +537,11 @@
     "card": {
       "label": "Lead {name}, stage {stage}",
       "nextAppointment": {
-        "label": "Next appointment:"
-      }
+        "label": "Next appointment:",
+        "overdue": "Overdue appointment:",
+        "overdueBadge": "Needs update"
+      },
+      "overdueLabel": "Lead {name}, stage {stage}, overdue appointment"
     },
     "moveMenu": {
       "label": "Move to another stage",
@@ -617,6 +620,17 @@
       "unspecified": "Unspecified",
       "other": "Other"
     },
+    "sources": {
+      "title": "Lead source",
+      "caption": "Leads of the period by source, with won, lost and conversion rate",
+      "empty": "No leads in this period.",
+      "source": "Source",
+      "leads": "Leads",
+      "won": "Won",
+      "lost": "Lost",
+      "convRate": "Conv. rate",
+      "unspecified": "Not specified"
+    },
     "active": {
       "title": "Total leads",
       "empty": "No active leads right now."
@@ -629,6 +643,11 @@
       "activeRangeNotice": "Range filter active",
       "invertedRangeError": "The \"To\" date must be on or after the \"From\" date",
       "invalidDateError": "Invalid date"
+    },
+    "sourceFilter": {
+      "label": "Source",
+      "all": "All sources",
+      "unspecified": "Not specified"
     }
   },
   "invoices": {

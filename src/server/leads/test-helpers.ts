@@ -429,13 +429,30 @@ export function tenantClientFor(store: LeadStore, organizationId: string): Tenan
           const allowed = new Set(leadIdCond.in);
           rows = rows.filter((a) => a.leadId !== null && allowed.has(a.leadId));
         }
-        if (where.startAt && typeof where.startAt === "object") {
-          const range = where.startAt as { gte?: Date };
-          if (range.gte) rows = rows.filter((a) => a.startAt >= range.gte!);
-        }
-        const statusCond = where.status as { not?: AppointmentStatus } | undefined;
-        if (statusCond?.not !== undefined) {
-          rows = rows.filter((a) => a.status !== statusCond.not);
+        // `startAt` / `status` conditions, applicable either at the top level or
+        // inside an OR branch (the board asks for "future non-cancelled OR past
+        // still-pending" in a single query).
+        const matchesTimeAndStatus = (a: AppointmentRow, cond: Where): boolean => {
+          if (cond.startAt && typeof cond.startAt === "object") {
+            const range = cond.startAt as { gte?: Date; lt?: Date };
+            if (range.gte && a.startAt < range.gte) return false;
+            if (range.lt && a.startAt >= range.lt) return false;
+          }
+          if (cond.status !== undefined) {
+            const statusCond = cond.status as AppointmentStatus | { not?: AppointmentStatus };
+            if (typeof statusCond === "object" && statusCond !== null) {
+              if (statusCond.not !== undefined && a.status === statusCond.not) return false;
+            } else if (a.status !== statusCond) {
+              return false;
+            }
+          }
+          return true;
+        };
+
+        rows = rows.filter((a) => matchesTimeAndStatus(a, where));
+        const orBranches = where.OR as Where[] | undefined;
+        if (orBranches) {
+          rows = rows.filter((a) => orBranches.some((branch) => matchesTimeAndStatus(a, branch)));
         }
         if (orderBy?.startAt) {
           const dir = orderBy.startAt;

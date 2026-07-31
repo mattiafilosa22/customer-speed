@@ -68,6 +68,12 @@ export function KanbanCard({
   // Pointer position at the start of a gesture, used to tell a click from a drag.
   const pointerDownAt = useRef<{ x: number; y: number } | null>(null);
 
+  // The appointment's date/time has passed and its outcome was never recorded
+  // (PENDING): the card is flagged in the danger color so it reads, at a glance
+  // on the board, as "this lead needs its status updated" (server-computed —
+  // `getBoard` compares against a single `now`, so all cards agree).
+  const isOverdue = card.nextAppointment?.isOverdue === true;
+
   const fullName = `${card.firstName} ${card.lastName}`;
   const initials = `${card.firstName.charAt(0)}${card.lastName.charAt(0)}`.toUpperCase();
   const href = `/leads/${card.id}`;
@@ -128,9 +134,15 @@ export function KanbanCard({
     <article
       ref={isOverlay ? undefined : setNodeRef}
       style={style}
-      aria-label={t("pipeline.card.label", { name: fullName, stage: stageLabel(card.stage) })}
+      aria-label={t(isOverdue ? "pipeline.card.overdueLabel" : "pipeline.card.label", {
+        name: fullName,
+        stage: stageLabel(card.stage),
+      })}
       className={[
-        "bg-panel border-line relative flex flex-col gap-2 rounded-[calc(var(--radius)-4px)] border p-3 shadow-[var(--sh-sm)] transition-colors",
+        "bg-panel relative flex flex-col gap-2 rounded-[calc(var(--radius)-4px)] border p-3 shadow-[var(--sh-sm)] transition-colors",
+        // The overdue state is NOT signalled by color alone (WCAG 1.4.1): the
+        // card also carries a "Da aggiornare" badge and an ⚠ icon on the date.
+        isOverdue ? "border-danger" : "border-line",
         isOverlay
           ? "shadow-[var(--sh)] rotate-1 cursor-grabbing"
           : canMove
@@ -192,11 +204,28 @@ export function KanbanCard({
       </div>
 
       {card.nextAppointment ? (
-        <p className="label-mono text-muted flex items-center gap-1">
-          <span aria-hidden="true">🗓</span>
-          <span className="sr-only">{t("pipeline.card.nextAppointment.label")}</span>
-          {format.dateTime(new Date(card.nextAppointment.startAt), "dateTime")}
-        </p>
+        <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+          <p
+            className={`label-mono flex items-center gap-1 ${
+              isOverdue ? "text-danger-ink font-semibold" : "text-muted"
+            }`}
+          >
+            <span aria-hidden="true">{isOverdue ? "⚠" : "🗓"}</span>
+            <span className="sr-only">
+              {t(
+                isOverdue
+                  ? "pipeline.card.nextAppointment.overdue"
+                  : "pipeline.card.nextAppointment.label",
+              )}
+            </span>
+            {format.dateTime(new Date(card.nextAppointment.startAt), "dateTime")}
+          </p>
+          {isOverdue ? (
+            <span className="label-mono bg-danger-soft text-danger-ink rounded-pill inline-flex items-center px-2 py-0.5">
+              {t("pipeline.card.nextAppointment.overdueBadge")}
+            </span>
+          ) : null}
+        </div>
       ) : null}
     </article>
   );

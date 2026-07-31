@@ -192,7 +192,7 @@ describe("KanbanCard", () => {
     renderCard({
       card: {
         ...CARD,
-        nextAppointment: { startAt, status: AppointmentStatus.PENDING },
+        nextAppointment: { startAt, status: AppointmentStatus.PENDING, isOverdue: false },
       },
     });
     // Accessible label ("Prossimo appuntamento:") is sr-only; the visible text
@@ -206,11 +206,35 @@ describe("KanbanCard", () => {
     expect(screen.getByText(expected)).toBeInTheDocument();
   });
 
+  it("flags an overdue appointment in the danger color, with a non-color cue", () => {
+    const startAt = "2026-07-31T15:30:00.000Z";
+    renderCard({
+      card: {
+        ...CARD,
+        nextAppointment: { startAt, status: AppointmentStatus.PENDING, isOverdue: true },
+      },
+    });
+
+    // Non-color cues (WCAG 1.4.1): the "needs update" badge, the overdue
+    // accessible label and a card aria-label that says the lead is overdue.
+    expect(screen.getByText(/da aggiornare/i)).toBeInTheDocument();
+    expect(screen.getByText(/appuntamento scaduto/i)).toBeInTheDocument();
+    const article = screen.getByRole("article");
+    expect(article.getAttribute("aria-label")).toMatch(/appuntamento scaduto/i);
+    // Color cue: the danger border replaces the default one.
+    expect(article.className).toContain("border-danger");
+    expect(article.className).not.toContain("border-line");
+  });
+
   it("has no axe violations, including with the next-appointment row shown", async () => {
     const { container } = renderCard({
       card: {
         ...CARD,
-        nextAppointment: { startAt: "2026-08-20T10:30:00.000Z", status: AppointmentStatus.PENDING },
+        nextAppointment: {
+          startAt: "2026-08-20T10:30:00.000Z",
+          status: AppointmentStatus.PENDING,
+          isOverdue: false,
+        },
       },
     });
     expect(await axe(container)).toHaveNoViolations();

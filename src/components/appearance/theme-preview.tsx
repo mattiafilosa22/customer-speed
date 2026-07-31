@@ -25,7 +25,9 @@ export function ThemePreview({ theme }: { theme: Theme }) {
   return (
     <div
       {...themeDataAttributes(theme)}
-      style={cssVars}
+      // Same reason as ThemeProvider: body text inherits the family computed on
+      // <body>, so the preview must re-declare it to show the candidate font.
+      style={{ ...cssVars, fontFamily: "var(--f-body)" }}
       className="rounded border border-line bg-bg p-4"
       data-testid="theme-preview"
     >

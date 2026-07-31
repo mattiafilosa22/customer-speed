@@ -44,17 +44,23 @@ export async function generateMetadata(): Promise<Metadata> {
  * write is recorded by the use cases.
  */
 
+/*
+ * The admin context is NOT white-label (no tenant theme), so it loads only the
+ * brand pair. Like the tenant layout it exposes FAMILY variables; the ROLE
+ * tokens (--f-display/--f-body/--f-mono) come from tokens.css, which already
+ * points them at this pair.
+ */
 const fontDisplay = Bebas_Neue({
   subsets: ["latin"],
   weight: "400",
-  variable: "--f-display",
+  variable: "--f-bebas",
   display: "swap",
 });
-const fontBody = Montserrat({ subsets: ["latin"], variable: "--f-body", display: "swap" });
+const fontBody = Montserrat({ subsets: ["latin"], variable: "--f-montserrat", display: "swap" });
 const fontMono = IBM_Plex_Mono({
   subsets: ["latin"],
   weight: ["400", "500", "600"],
-  variable: "--f-mono",
+  variable: "--f-plex-mono",
   display: "swap",
 });
 
