@@ -2,7 +2,8 @@ import { Prisma } from "@/generated/prisma/client";
 import type { LeadStage } from "@/generated/prisma/enums";
 import { parseInput } from "@/server/validation";
 import type { DashboardDeps } from "@/server/dashboard/deps";
-import { periodFilter, periodSchema } from "@/server/dashboard/period";
+import { dashboardFilterSchema, leadSourceFilter } from "@/server/dashboard/filters";
+import { periodFilter } from "@/server/dashboard/period";
 
 /**
  * Pipeline distribution (docs/02 §2.2): one counter per VISIBLE stage with the
@@ -35,9 +36,12 @@ export async function getPipelineDistribution(
   deps: DashboardDeps,
   input: unknown,
 ): Promise<PipelineDistributionResult> {
-  const period = parseInput(periodSchema, input);
-  const range = periodFilter(period);
-  const where: Prisma.LeadWhereInput = range ? { createdAt: range } : {};
+  const filter = parseInput(dashboardFilterSchema, input);
+  const range = periodFilter(filter);
+  const where: Prisma.LeadWhereInput = {
+    ...leadSourceFilter(filter),
+    ...(range ? { createdAt: range } : {}),
+  };
 
   const [configs, grouped] = await Promise.all([
     deps.prisma.pipelineStageConfig.findMany({

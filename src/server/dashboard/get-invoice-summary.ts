@@ -2,7 +2,8 @@ import { Prisma } from "@/generated/prisma/client";
 import { LeadStage } from "@/generated/prisma/enums";
 import { parseInput } from "@/server/validation";
 import type { DashboardDeps } from "@/server/dashboard/deps";
-import { periodFilter, periodSchema } from "@/server/dashboard/period";
+import { dashboardFilterSchema, leadSourceFilter } from "@/server/dashboard/filters";
+import { periodFilter } from "@/server/dashboard/period";
 
 /**
  * "Riepilogo fatture" (docs/02 §2.2): count + gross/net totals of the invoices of
@@ -30,10 +31,12 @@ export async function getInvoiceSummary(
   deps: DashboardDeps,
   input: unknown,
 ): Promise<InvoiceSummary> {
-  const period = parseInput(periodSchema, input);
-  const range = periodFilter(period);
+  const filter = parseInput(dashboardFilterSchema, input);
+  const range = periodFilter(filter);
+  // The source lives on the LEAD, so it joins the existing relation filter —
+  // keeping `totalNet` identical to the `netRevenue` KPI under the same filters.
   const where: Prisma.InvoiceWhereInput = {
-    lead: { is: { stage: LeadStage.WON } },
+    lead: { is: { stage: LeadStage.WON, ...leadSourceFilter(filter) } },
     ...(range ? { issuedAt: range } : {}),
   };
 
