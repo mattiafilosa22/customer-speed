@@ -5,6 +5,7 @@ import { Prisma } from "@/generated/prisma/client";
 import { daysInStage } from "@/lib/days";
 import { parseInput } from "@/server/validation";
 import { clockNow, type DashboardDeps } from "@/server/dashboard/deps";
+import { leadSourceFilter, sourceFilterSchema } from "@/server/dashboard/filters";
 import { TERMINAL_STAGES } from "@/server/leads/stage";
 
 /**
@@ -29,9 +30,14 @@ import { TERMINAL_STAGES } from "@/server/leads/stage";
 const DEFAULT_LIMIT = 5;
 const MAX_LIMIT = 50;
 
-export const activeLeadsSchema = z.object({
-  limit: z.coerce.number().int().min(1).max(MAX_LIMIT).default(DEFAULT_LIMIT),
-});
+export const activeLeadsSchema = z
+  .object({
+    limit: z.coerce.number().int().min(1).max(MAX_LIMIT).default(DEFAULT_LIMIT),
+  })
+  // The list is NOT period-scoped (see above) but IS source-scoped: the source
+  // filter asks "show me this channel", which is orthogonal to time. Composed
+  // from the shared shape so the field has ONE definition (docs/00 §1).
+  .extend(sourceFilterSchema.shape);
 export type ActiveLeadsInput = z.infer<typeof activeLeadsSchema>;
 
 export interface ActiveLeadItem {
@@ -60,11 +66,11 @@ export async function getActiveLeads(
   deps: DashboardDeps,
   input: unknown = {},
 ): Promise<ActiveLeadsResult> {
-  const { limit } = parseInput(activeLeadsSchema, input);
+  const { limit, ...source } = parseInput(activeLeadsSchema, input);
   const now = clockNow(deps);
 
   const rows = await deps.prisma.lead.findMany({
-    where: { stage: { notIn: [...TERMINAL_STAGES] } },
+    where: { stage: { notIn: [...TERMINAL_STAGES] }, ...leadSourceFilter(source) },
     select: activeLeadSelect,
     orderBy: { stageChangedAt: "asc" }, // oldest stageChangedAt → most days → on top
     take: limit,

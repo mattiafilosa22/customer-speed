@@ -2,7 +2,8 @@ import { Prisma } from "@/generated/prisma/client";
 import { LeadStage } from "@/generated/prisma/enums";
 import { parseInput } from "@/server/validation";
 import type { DashboardDeps } from "@/server/dashboard/deps";
-import { periodFilter, periodSchema } from "@/server/dashboard/period";
+import { dashboardFilterSchema, leadSourceFilter } from "@/server/dashboard/filters";
+import { periodFilter } from "@/server/dashboard/period";
 
 /**
  * Top KPI tiles (docs/02 §2.2, docs/04 §4.2 GET /dashboard/summary).
@@ -43,15 +44,19 @@ export async function getDashboardKpis(
   deps: DashboardDeps,
   input: unknown,
 ): Promise<DashboardKpis> {
-  const period = parseInput(periodSchema, input);
-  const range = periodFilter(period);
+  const filter = parseInput(dashboardFilterSchema, input);
+  const range = periodFilter(filter);
+  // Source dimension (docs/02 §2.2): applied to the LEAD in both queries — for
+  // revenue too, since an invoice has no source of its own but inherits the
+  // channel of the lead that generated it.
+  const bySource = leadSourceFilter(filter);
 
   // Leads created in the period (createdAt anchor), grouped by current stage.
-  const leadWhere: Prisma.LeadWhereInput = range ? { createdAt: range } : {};
+  const leadWhere: Prisma.LeadWhereInput = { ...bySource, ...(range ? { createdAt: range } : {}) };
 
   // Invoices issued in the period (issuedAt anchor) whose lead is currently WON.
   const invoiceWhere: Prisma.InvoiceWhereInput = {
-    lead: { is: { stage: LeadStage.WON } },
+    lead: { is: { stage: LeadStage.WON, ...bySource } },
     ...(range ? { issuedAt: range } : {}),
   };
 

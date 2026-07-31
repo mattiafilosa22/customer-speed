@@ -57,11 +57,20 @@ export interface PipelineCard {
   readonly capitalAmount: number | null;
   readonly source: { id: string; label: string } | null;
   /**
-   * Earliest future, non-cancelled appointment for the lead, if any (docs/02
-   * §2.3). `startAt` is serialized to ISO (Date is not serializable across the
-   * RSC boundary). Null when there is no such appointment.
+   * The appointment the card surfaces (docs/02 §2.3): the earliest appointment
+   * that still needs attention — i.e. either still to come (non-cancelled) or
+   * already PAST but never closed (`PENDING`). `startAt` is serialized to ISO
+   * (Date is not serializable across the RSC boundary). Null when there is none.
+   *
+   * `isOverdue` marks the second case: the date/time has passed and the outcome
+   * was never recorded, so the lead needs its status updated. The card renders
+   * it in the danger color.
    */
-  readonly nextAppointment: { startAt: string; status: AppointmentStatus } | null;
+  readonly nextAppointment: {
+    startAt: string;
+    status: AppointmentStatus;
+    isOverdue: boolean;
+  } | null;
 }
 
 type PipelineCardRowCapital =
@@ -146,27 +155,44 @@ export async function getBoard(deps: PipelineDeps, input: unknown): Promise<Pipe
   }
   const visibleLeadIds = [...includedRows.values()].flatMap((list) => list.map((row) => row.id));
 
-  // Second, batched query: the earliest future, non-cancelled appointment per
-  // lead — ONE `findMany` for the whole board, never a query per card (docs/00
-  // §3). Kept only when there is at least one lead to look up.
-  const upcomingAppointments =
+  // Second, batched query: the appointments that still need attention per lead —
+  // ONE `findMany` for the whole board, never a query per card (docs/00 §3).
+  // Kept only when there is at least one lead to look up.
+  //
+  // Two disjoint buckets, deliberately fetched together so a single ascending
+  // scan can pick the right one per lead:
+  //  - FUTURE, non-cancelled → the classic "next appointment",
+  //  - PAST and still PENDING → OVERDUE: the meeting happened (or was missed)
+  //    and nobody recorded the outcome, so the lead needs updating.
+  // A past DONE/CANCELED appointment is settled and is deliberately excluded.
+  //
+  // Ordering ascending means the first row seen for a lead is its oldest overdue
+  // appointment when it has one (the most urgent signal), otherwise its next
+  // upcoming one — exactly the precedence the card should show.
+  const relevantAppointments =
     visibleLeadIds.length > 0
       ? await deps.prisma.appointment.findMany({
           where: {
             leadId: { in: visibleLeadIds },
-            startAt: { gte: now },
-            status: { not: AppointmentStatus.CANCELED },
+            OR: [
+              { startAt: { gte: now }, status: { not: AppointmentStatus.CANCELED } },
+              { startAt: { lt: now }, status: AppointmentStatus.PENDING },
+            ],
           },
           orderBy: { startAt: "asc" },
           select: nextAppointmentSelect,
         })
       : [];
-  const nextAppointmentByLead = new Map<string, { startAt: string; status: AppointmentStatus }>();
-  for (const appt of upcomingAppointments) {
+  const nextAppointmentByLead = new Map<
+    string,
+    { startAt: string; status: AppointmentStatus; isOverdue: boolean }
+  >();
+  for (const appt of relevantAppointments) {
     if (appt.leadId && !nextAppointmentByLead.has(appt.leadId)) {
       nextAppointmentByLead.set(appt.leadId, {
         startAt: appt.startAt.toISOString(),
         status: appt.status,
+        isOverdue: appt.startAt < now,
       });
     }
   }

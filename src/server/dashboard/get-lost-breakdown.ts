@@ -2,7 +2,8 @@ import { Prisma } from "@/generated/prisma/client";
 import { LeadStage } from "@/generated/prisma/enums";
 import { parseInput } from "@/server/validation";
 import type { DashboardDeps } from "@/server/dashboard/deps";
-import { periodFilter, periodSchema } from "@/server/dashboard/period";
+import { dashboardFilterSchema, leadSourceFilter } from "@/server/dashboard/filters";
+import { periodFilter } from "@/server/dashboard/period";
 
 /**
  * "Vendite perse" breakdown (docs/02 §2.2/§2.5): LOST leads of the period grouped
@@ -48,10 +49,11 @@ export async function getLostBreakdown(
   deps: DashboardDeps,
   input: unknown,
 ): Promise<LostBreakdownResult> {
-  const period = parseInput(periodSchema, input);
-  const range = periodFilter(period);
+  const filter = parseInput(dashboardFilterSchema, input);
+  const range = periodFilter(filter);
   const where: Prisma.LeadWhereInput = {
     stage: LeadStage.LOST,
+    ...leadSourceFilter(filter),
     ...(range ? { createdAt: range } : {}),
   };
 

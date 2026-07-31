@@ -201,6 +201,7 @@ describe("getBoard", () => {
       expect(card?.nextAppointment).toEqual({
         startAt: FUTURE_1.toISOString(),
         status: AppointmentStatus.PENDING,
+        isOverdue: false,
       });
     });
 
@@ -222,7 +223,7 @@ describe("getBoard", () => {
       expect(card?.nextAppointment).toBeNull();
     });
 
-    it("returns null when the lead only has a past appointment", async () => {
+    it("flags a past, still-PENDING appointment as overdue (the lead needs updating)", async () => {
       const store = new LeadStore();
       store.seedStageConfigs(ORG_A);
       const lead = store.addLead({ organizationId: ORG_A, stage: LeadStage.TO_HANDLE });
@@ -237,7 +238,62 @@ describe("getBoard", () => {
       const { columns } = await getBoard(deps, {});
 
       const card = columns.find((c) => c.stage === LeadStage.TO_HANDLE)?.cards[0];
-      expect(card?.nextAppointment).toBeNull();
+      expect(card?.nextAppointment).toEqual({
+        startAt: PAST.toISOString(),
+        status: AppointmentStatus.PENDING,
+        isOverdue: true,
+      });
+    });
+
+    it("an overdue appointment takes precedence over a later upcoming one", async () => {
+      const store = new LeadStore();
+      store.seedStageConfigs(ORG_A);
+      const lead = store.addLead({ organizationId: ORG_A, stage: LeadStage.TO_HANDLE });
+      store.addAppointment({
+        organizationId: ORG_A,
+        leadId: lead.id,
+        startAt: FUTURE_1,
+        status: AppointmentStatus.PENDING,
+      });
+      store.addAppointment({
+        organizationId: ORG_A,
+        leadId: lead.id,
+        startAt: PAST,
+        status: AppointmentStatus.PENDING,
+      });
+      const { deps } = buildFakePipelineDeps(store, ORG_A, USER_A);
+
+      const { columns } = await getBoard(deps, {});
+
+      const card = columns.find((c) => c.stage === LeadStage.TO_HANDLE)?.cards[0];
+      expect(card?.nextAppointment?.isOverdue).toBe(true);
+      expect(card?.nextAppointment?.startAt).toBe(PAST.toISOString());
+    });
+
+    it("ignores a past appointment that was already closed (DONE / CANCELED)", async () => {
+      const store = new LeadStore();
+      store.seedStageConfigs(ORG_A);
+      const done = store.addLead({ organizationId: ORG_A, stage: LeadStage.TO_HANDLE });
+      const canceled = store.addLead({ organizationId: ORG_A, stage: LeadStage.TO_HANDLE });
+      store.addAppointment({
+        organizationId: ORG_A,
+        leadId: done.id,
+        startAt: PAST,
+        status: AppointmentStatus.DONE,
+      });
+      store.addAppointment({
+        organizationId: ORG_A,
+        leadId: canceled.id,
+        startAt: PAST,
+        status: AppointmentStatus.CANCELED,
+      });
+      const { deps } = buildFakePipelineDeps(store, ORG_A, USER_A);
+
+      const { columns } = await getBoard(deps, {});
+
+      const cards = columns.find((c) => c.stage === LeadStage.TO_HANDLE)?.cards ?? [];
+      expect(cards.find((c) => c.id === done.id)?.nextAppointment).toBeNull();
+      expect(cards.find((c) => c.id === canceled.id)?.nextAppointment).toBeNull();
     });
 
     it("returns null when the lead has no appointment at all", async () => {

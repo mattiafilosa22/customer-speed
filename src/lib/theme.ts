@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+import { fontCssVars } from "@/lib/theme-fonts";
+
 /**
  * Theme — the typed, validated shape of `Organization.theme` (JSON).
  *
@@ -161,14 +163,17 @@ export const INDIGO_THEME: Theme = themeSchema.parse({
  * stays in tokens.css too: it is derived from `var(--accent)` (which we DO emit)
  * with a mode-specific mix target, so it recolors per tenant AND adapts to mode.
  *
- * Font families come from next/font (emitted as --f-* on :root by the layout),
- * not from here.
+ * Fonts ARE emitted: the tenant's chosen pair maps the role tokens
+ * (--f-display/--f-body/--f-mono) onto the per-family variables next/font puts
+ * on <html> (see fontCssVars). The font FILES are still self-hosted by
+ * next/font; only the role→family indirection is per tenant.
  */
 export function themeToCssVars(theme: Theme): Readonly<Record<string, string>> {
   const vars: Record<string, string> = {
     "--accent": theme.colors.accent,
     "--accent-ink": theme.colors.accentInk,
     "--radius": `${theme.radius}px`,
+    ...fontCssVars(theme.fonts),
   };
 
   // Soft shadows off → neutralize the shadow tokens (kept theme-driven; the
