@@ -31,6 +31,11 @@ describe("buildCsp", () => {
     expect(csp).toContain("object-src 'none'");
   });
 
+  it("allows the Vercel Toolbar iframe", () => {
+    const frameSrc = csp.split("; ").find((d) => d.startsWith("frame-src "));
+    expect(frameSrc).toContain("https://vercel.live");
+  });
+
   it("never allows 'unsafe-inline' on script-src (XSS-relevant directive)", () => {
     // Isolate the script-src directive and assert it carries no unsafe-inline.
     const scriptSrc = csp.split("; ").find((d) => d.startsWith("script-src "));
