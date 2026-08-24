@@ -63,8 +63,14 @@ export function buildCsp(nonce: string, isDev = false): string {
     // browser connect origin is needed for them.
     "connect-src": ["'self'", "https://www.google.com", "https://www.gstatic.com"],
     // reCAPTCHA renders an invisible challenge in a Google frame; Calendly may be
-    // embedded as a scheduling widget iframe (Fase 6, opt-in).
-    "frame-src": ["'self'", "https://www.google.com", "https://calendly.com"],
+    // embedded as a scheduling widget iframe (Fase 6, opt-in); Vercel uses an
+    // iframe for its deployment toolbar and preview comments.
+    "frame-src": [
+      "'self'",
+      "https://www.google.com",
+      "https://calendly.com",
+      "https://vercel.live",
+    ],
     // Clickjacking protection (modern equivalent of X-Frame-Options).
     "frame-ancestors": ["'none'"],
     "base-uri": ["'self'"],
