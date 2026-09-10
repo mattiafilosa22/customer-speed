@@ -16,6 +16,11 @@ import { organizationIdSchema } from "@/server/admin/schemas";
  * concurrently. Never loads rows to count them.
  */
 
+export interface OrganizationLeadSourceOption {
+  readonly id: string;
+  readonly label: string;
+}
+
 export interface OrganizationDetail {
   readonly id: string;
   readonly name: string;
@@ -26,6 +31,11 @@ export interface OrganizationDetail {
   readonly userCount: number;
   readonly leadCount: number;
   readonly createdAt: Date;
+  /** Insight & Stats tenant configuration (docs/superpowers §"Feature flag..."). */
+  readonly insightSourceId: string | null;
+  readonly insightActiveFrom: Date | null;
+  /** Tenant's lead sources, for the admin panel's insight-source picker. */
+  readonly leadSources: readonly OrganizationLeadSourceOption[];
 }
 
 export async function getOrganization(
@@ -34,7 +44,7 @@ export async function getOrganization(
 ): Promise<OrganizationDetail> {
   const { organizationId } = parseInput(organizationIdSchema, input);
 
-  const [org, userCount, leadCount] = await Promise.all([
+  const [org, userCount, leadCount, leadSources] = await Promise.all([
     deps.prisma.organization.findUnique({
       where: { id: organizationId },
       select: {
@@ -45,12 +55,19 @@ export async function getOrganization(
         customDomain: true,
         featureFlags: true,
         createdAt: true,
+        insightSourceId: true,
+        insightActiveFrom: true,
       },
     }),
     deps.prisma.user.count({
       where: { organizationId, role: { not: "superAdmin" } },
     }),
     deps.prisma.lead.count({ where: { organizationId, deletedAt: null } }),
+    deps.prisma.leadSource.findMany({
+      where: { organizationId },
+      select: { id: true, label: true },
+      orderBy: { sortOrder: "asc" },
+    }),
   ]);
 
   if (!org) {
@@ -67,5 +84,8 @@ export async function getOrganization(
     userCount,
     leadCount,
     createdAt: org.createdAt,
+    insightSourceId: org.insightSourceId,
+    insightActiveFrom: org.insightActiveFrom,
+    leadSources,
   };
 }

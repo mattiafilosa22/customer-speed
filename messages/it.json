@@ -1110,7 +1110,17 @@
         "dashboard": "Dashboard",
         "appointments": "Appuntamenti",
         "invoices": "Fatture",
-        "calendarIntegrations": "Integrazioni calendario"
+        "calendarIntegrations": "Integrazioni calendario",
+        "insightStats": "Insight & Stats"
+      },
+      "insightSource": {
+        "label": "Provenienza collegata",
+        "placeholder": "Nessuna provenienza selezionata",
+        "hint": "Ogni lead creato da Insight & Stats userà questa provenienza."
+      },
+      "insightActiveFrom": {
+        "label": "Attivo dal",
+        "hint": "Le giornate precedenti sono considerate archivio."
       },
       "save": "Salva funzionalità",
       "saving": "Salvataggio…",

@@ -50,6 +50,7 @@ export const TENANT_SCOPED_MODELS = [
   "CalendarConnection",
   "Consent",
   "AuditLog",
+  "ChatActivityDay",
 ] as const satisfies readonly Prisma.ModelName[];
 
 type TenantScopedModel = (typeof TENANT_SCOPED_MODELS)[number];

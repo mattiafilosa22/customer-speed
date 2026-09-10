@@ -1110,7 +1110,17 @@
         "dashboard": "Dashboard",
         "appointments": "Appointments",
         "invoices": "Invoices",
-        "calendarIntegrations": "Calendar integrations"
+        "calendarIntegrations": "Calendar integrations",
+        "insightStats": "Insight & Stats"
+      },
+      "insightSource": {
+        "label": "Linked source",
+        "placeholder": "No source selected",
+        "hint": "Every lead created from Insight & Stats will use this source."
+      },
+      "insightActiveFrom": {
+        "label": "Active from",
+        "hint": "Earlier days are treated as archive."
       },
       "save": "Save features",
       "saving": "Saving…",

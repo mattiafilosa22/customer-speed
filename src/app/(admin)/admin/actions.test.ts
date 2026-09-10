@@ -88,6 +88,7 @@ describe("admin actions — superAdmin happy paths", () => {
         appointments: true,
         invoices: true,
         calendarIntegrations: false,
+        insightStats: false,
       },
     });
     expect(updateOrganizationFeatureFlags).toHaveBeenCalledOnce();
