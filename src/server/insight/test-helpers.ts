@@ -45,6 +45,8 @@ export interface LeadRow {
   chatChannel: ChatChannel | null;
   createdFromInsight: boolean;
   createdAt: Date;
+  /** Soft delete. Il client tenant reale filtra `deletedAt: null` su ogni lettura di `Lead` — vedi `lead.findMany` sotto. */
+  deletedAt: Date | null;
 }
 
 export interface AppointmentRow {
@@ -118,6 +120,34 @@ function inRange(value: Date, range: { gte?: Date; lt?: Date } | undefined): boo
   return true;
 }
 
+/**
+ * Raggruppa righe per `leadId` e riduce le date di ciascun gruppo al minimo o
+ * al massimo — il nucleo condiviso di `appointment.groupBy` (primo
+ * appuntamento per lead) e `stageHistory.groupBy` (ultimo passaggio a
+ * `toStage` per lead), così le due implementazioni non divergono per un bug
+ * corretto in una sola (docs/00 — niente duplicazione).
+ */
+function groupDatesByLead<T>(
+  rows: readonly T[],
+  leadIdOf: (row: T) => string,
+  dateOf: (row: T) => Date,
+  reducer: "min" | "max",
+): Map<string, Date> {
+  const groups = new Map<string, Date>();
+  for (const row of rows) {
+    const leadId = leadIdOf(row);
+    const date = dateOf(row);
+    const current = groups.get(leadId);
+    if (
+      current === undefined ||
+      (reducer === "min" ? date < current : date > current)
+    ) {
+      groups.set(leadId, date);
+    }
+  }
+  return groups;
+}
+
 export class InsightStore {
   organizations: OrganizationRow[] = [];
   leadSources: LeadSourceRow[] = [];
@@ -176,6 +206,7 @@ export class InsightStore {
       chatChannel: partial.chatChannel ?? null,
       createdFromInsight: partial.createdFromInsight ?? false,
       createdAt: partial.createdAt ? toUtcDate(partial.createdAt) : DEFAULT_ANCHOR,
+      deletedAt: partial.deletedAt ?? null,
     };
     this.leads.push(row);
     return row;
@@ -399,8 +430,11 @@ export function tenantClientFor(
         select?: Record<string, boolean>;
       }) => {
         const idFilter = where.id as { in?: string[] } | undefined;
+        // Default soft-delete (mirror di `injectSoftDeleteFilter` in prisma-tenant.ts): un
+        // lead cancellato non è un lead, e il report Insight & Stats non deve contarlo.
         let rows = ownLeads().filter(
-          (lead) => idFilter?.in === undefined || idFilter.in.includes(lead.id),
+          (lead) =>
+            lead.deletedAt === null && (idFilter?.in === undefined || idFilter.in.includes(lead.id)),
         );
         if (orderBy) {
           const [field, dir] = Object.entries(orderBy)[0] ?? [];
@@ -449,18 +483,17 @@ export function tenantClientFor(
             relatedLeadMatches(appointment.leadId, leadFilter),
         );
         // Un lead compare al massimo una volta: si prende MIN(createdAt) per leadId.
-        const groups = new Map<string, Date[]>();
-        for (const appointment of rows) {
-          if (!appointment.leadId) continue;
-          const arr = groups.get(appointment.leadId) ?? [];
-          arr.push(appointment.createdAt);
-          groups.set(appointment.leadId, arr);
-        }
-        return [...groups.entries()].map(([leadId, dates]) => ({
+        const groups = groupDatesByLead(
+          rows.filter((appointment): appointment is AppointmentRow & { leadId: string } =>
+            appointment.leadId !== null,
+          ),
+          (appointment) => appointment.leadId,
+          (appointment) => appointment.createdAt,
+          "min",
+        );
+        return [...groups.entries()].map(([leadId, minCreatedAt]) => ({
           leadId,
-          ...(_min?.createdAt
-            ? { _min: { createdAt: dates.reduce((min, d) => (d < min ? d : min), dates[0]!) } }
-            : {}),
+          ...(_min?.createdAt ? { _min: { createdAt: minCreatedAt } } : {}),
         }));
       },
       create: async ({
@@ -502,17 +535,15 @@ export function tenantClientFor(
             relatedLeadMatches(history.leadId, leadFilter),
         );
         // Un lead riaperto e richiuso conta una volta: si prende MAX(changedAt) per leadId.
-        const groups = new Map<string, Date[]>();
-        for (const history of rows) {
-          const arr = groups.get(history.leadId) ?? [];
-          arr.push(history.changedAt);
-          groups.set(history.leadId, arr);
-        }
-        return [...groups.entries()].map(([leadId, dates]) => ({
+        const groups = groupDatesByLead(
+          rows,
+          (history) => history.leadId,
+          (history) => history.changedAt,
+          "max",
+        );
+        return [...groups.entries()].map(([leadId, maxChangedAt]) => ({
           leadId,
-          ...(_max?.changedAt
-            ? { _max: { changedAt: dates.reduce((max, d) => (d > max ? d : max), dates[0]!) } }
-            : {}),
+          ...(_max?.changedAt ? { _max: { changedAt: maxChangedAt } } : {}),
         }));
       },
     },
