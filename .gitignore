@@ -65,3 +65,6 @@ tmp/
 
 # Database backups (scripts/backup-db.sh) — may contain real customer data, never commit
 /backups/
+
+# Worktree isolati creati dalla sessione (EnterWorktree)
+/.claude/worktrees/
