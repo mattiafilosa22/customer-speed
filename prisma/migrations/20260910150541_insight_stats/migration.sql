@@ -35,9 +35,6 @@ CREATE TABLE "ChatActivityDay" (
 );
 
 -- CreateIndex
-CREATE INDEX "ChatActivityDay_organizationId_date_idx" ON "ChatActivityDay"("organizationId", "date");
-
--- CreateIndex
 CREATE UNIQUE INDEX "ChatActivityDay_organizationId_date_key" ON "ChatActivityDay"("organizationId", "date");
 
 -- CreateIndex

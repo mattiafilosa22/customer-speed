@@ -418,10 +418,11 @@ model ChatActivityDay {
   updatedAt DateTime @updatedAt
 
   // Un solo record per giorno per tenant: è anche la chiave dell'upsert usato
-  // dal salvataggio inline e dall'import (che diventa così idempotente).
+  // dal salvataggio inline e dall'import (che diventa così idempotente). Il
+  // btree che Postgres crea per questo vincolo serve anche la lettura del mese
+  // (range scan sul prefisso tenant): nessun @@index separato, sarebbe ridondante
+  // (docs/00 §3 — nessun indice ridondante).
   @@unique([organizationId, date])
-  // Lettura del mese: range scan sul prefisso tenant.
-  @@index([organizationId, date])
 }
 
 model ExternalCrmRef {
