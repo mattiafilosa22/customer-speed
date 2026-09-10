@@ -25,7 +25,7 @@ const envSchema = z.object({
   // session-mode = 15 clients) a default of 10 is exhausted by a couple of
   // instances → "max clients reached" 500s on query-heavy pages. Keep it small;
   // raise it only behind a transaction-mode pooler (PgBouncer/Supavisor 6543).
-  DATABASE_POOL_MAX: z.coerce.number().int().min(1).max(50).default(3),
+  DATABASE_POOL_MAX: z.coerce.number().int().min(1).max(50).default(1),
 
   // ── Auth.js / NextAuth v5 (REQUIRED from Fase 1) ─────────────────────
   // Auth.js v5 reads `AUTH_SECRET`; we keep the `NEXTAUTH_*` names from docs/06

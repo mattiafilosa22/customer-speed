@@ -1,5 +1,6 @@
 import { PrismaPg } from "@prisma/adapter-pg";
 
+import { resolveRuntimeDatabaseUrl } from "@/lib/database-url";
 import { env } from "@/lib/env";
 import { PrismaClient } from "@/generated/prisma/client";
 
@@ -21,10 +22,10 @@ import { PrismaClient } from "@/generated/prisma/client";
 function createPrismaClient(): PrismaClient {
   // Cap the pg pool size per instance: on serverless each warm instance keeps its
   // own pool, so the default (max 10) times a few instances quickly exhausts a
-  // low-cap database pooler (Supabase session-mode = 15 clients) → "max clients
-  // reached" 500s. `DATABASE_POOL_MAX` keeps the per-instance footprint small.
+  // low-cap database pooler → "max clients reached" 500s. The serverless-safe
+  // default is one connection per instance; raise it only from measurements.
   const adapter = new PrismaPg({
-    connectionString: env.DATABASE_URL,
+    connectionString: resolveRuntimeDatabaseUrl(env.DATABASE_URL),
     max: env.DATABASE_POOL_MAX,
   });
   return new PrismaClient({ adapter });

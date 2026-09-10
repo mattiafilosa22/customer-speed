@@ -15,6 +15,7 @@ describe("parseEnv", () => {
 
     expect(result.DATABASE_URL).toContain("postgresql://");
     expect(result.NODE_ENV).toBe("test");
+    expect(result.DATABASE_POOL_MAX).toBe(1);
     expect(result.RECAPTCHA_MIN_SCORE).toBe(0.5); // default
     expect(result.APP_URL).toBe("http://localhost:3000"); // default
   });

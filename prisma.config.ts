@@ -1,5 +1,7 @@
 import "dotenv/config";
-import { defineConfig, env } from "prisma/config";
+import { defineConfig } from "prisma/config";
+
+import { resolveMigrationDatabaseUrl } from "./src/lib/database-url";
 
 /**
  * Prisma 7 configuration.
@@ -15,6 +17,6 @@ export default defineConfig({
     seed: "tsx prisma/seed.ts",
   },
   datasource: {
-    url: env("DATABASE_URL"),
+    url: resolveMigrationDatabaseUrl(process.env),
   },
 });
