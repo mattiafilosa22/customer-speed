@@ -148,12 +148,23 @@ describe("InsightStore $transaction", () => {
             reason: "Chiamata",
           },
         });
+        // stageHistory non ha un metodo di scrittura sul client tenant (solo
+        // `groupBy`): la riga viene seminata direttamente sullo store condiviso,
+        // che è lo stesso array che `$transaction` fa snapshot/restore.
+        store.addStageHistory({ organizationId: "org-a", leadId: "lead-pre", toStage: LeadStage.WON });
+        await tx.chatActivityDay.upsert({
+          where: { organizationId_date: { organizationId: "org-a", date: new Date("2026-09-10") } },
+          create: { organizationId: "org-a", date: new Date("2026-09-10"), welcomeSent: 1 },
+          update: { welcomeSent: 1 },
+        });
         throw new Error("boom");
       }),
     ).rejects.toThrow("boom");
 
     expect(store.leads.map((l) => l.id)).toEqual(["lead-pre"]);
     expect(store.appointments).toHaveLength(0);
+    expect(store.stageHistories).toHaveLength(0);
+    expect(store.chatActivityDays).toHaveLength(0);
   });
 
   it("commits every row array when the callback succeeds", async () => {
@@ -172,10 +183,22 @@ describe("InsightStore $transaction", () => {
           reason: "Chiamata",
         },
       });
+      store.addStageHistory({
+        organizationId: "org-a",
+        leadId: (lead as { id: string }).id,
+        toStage: LeadStage.WON,
+      });
+      await tx.chatActivityDay.upsert({
+        where: { organizationId_date: { organizationId: "org-a", date: new Date("2026-09-10") } },
+        create: { organizationId: "org-a", date: new Date("2026-09-10"), welcomeSent: 1 },
+        update: { welcomeSent: 1 },
+      });
     });
 
     expect(store.leads).toHaveLength(1);
     expect(store.appointments).toHaveLength(1);
+    expect(store.stageHistories).toHaveLength(1);
+    expect(store.chatActivityDays).toHaveLength(1);
   });
 });
 
