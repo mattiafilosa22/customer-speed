@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+import { CapitalBracket, ChatChannel } from "@/generated/prisma/enums";
+
 /**
  * Mese visualizzato. Stessi limiti di `periodSchema` (dashboard) per non
  * introdurre una seconda convenzione: anno 2000–2100, mese 1–12.
@@ -40,3 +42,27 @@ export const saveActivityDaySchema = z
   );
 
 export type SaveActivityDayInput = z.infer<typeof saveActivityDaySchema>;
+
+export const createLeadFromCellSchema = z.object({
+  firstName: z.string().trim().min(1).max(120),
+  lastName: z.string().trim().min(1).max(120),
+  email: z
+    .string()
+    .trim()
+    .toLowerCase()
+    .max(254)
+    .email()
+    .optional()
+    .or(z.literal("").transform(() => undefined)),
+  phone: z
+    .string()
+    .trim()
+    .max(40)
+    .optional()
+    .or(z.literal("").transform(() => undefined)),
+  chatChannel: z.nativeEnum(ChatChannel),
+  appointmentAt: z.coerce.date(),
+  reason: z.string().trim().min(1).max(200),
+  capitalAmount: z.coerce.number().nonnegative().optional(),
+  capitalBracket: z.nativeEnum(CapitalBracket).optional(),
+});
