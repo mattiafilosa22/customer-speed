@@ -14,6 +14,7 @@ interface MobileDrawerProps {
   appName: string;
   /** Feature flags the tenant has enabled (drives nav + mini-calendar). */
   enabledFeatures: ReadonlyArray<FeatureFlagKey>;
+  insightSourceLabel: string | null;
 }
 
 /**
@@ -23,7 +24,11 @@ interface MobileDrawerProps {
  * sidebar takes over above it. The trigger and close are >= 44px touch targets
  * with a visible focus ring. All labels come from the i18n catalogue.
  */
-export function MobileDrawer({ appName, enabledFeatures }: MobileDrawerProps) {
+export function MobileDrawer({
+  appName,
+  enabledFeatures,
+  insightSourceLabel,
+}: MobileDrawerProps) {
   const [open, setOpen] = useState(false);
   const tDrawer = useTranslations("drawer");
   const tNav = useTranslations("nav");
@@ -59,6 +64,7 @@ export function MobileDrawer({ appName, enabledFeatures }: MobileDrawerProps) {
             <nav>
               <SidebarNav
                 enabledFeatures={enabledFeatures}
+                insightSourceLabel={insightSourceLabel}
                 onNavigate={() => setOpen(false)}
               />
             </nav>

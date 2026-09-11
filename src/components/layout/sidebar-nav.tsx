@@ -17,6 +17,8 @@ interface SidebarNavProps {
    * not gate (e.g. tests) keep the full nav.
    */
   enabledFeatures?: ReadonlyArray<FeatureFlagKey>;
+  /** Label of the lead source linked to Insight & Stats. */
+  insightSourceLabel?: string | null;
 }
 
 /**
@@ -30,7 +32,11 @@ interface SidebarNavProps {
  * locale-agnostic and the links get the active locale prefix automatically.
  * Labels come from the `nav.*` messages — no hard-coded copy.
  */
-export function SidebarNav({ onNavigate, enabledFeatures }: SidebarNavProps) {
+export function SidebarNav({
+  onNavigate,
+  enabledFeatures,
+  insightSourceLabel,
+}: SidebarNavProps) {
   const pathname = usePathname();
   const t = useTranslations("nav");
 
@@ -45,6 +51,12 @@ export function SidebarNav({ onNavigate, enabledFeatures }: SidebarNavProps) {
         const isActive =
           pathname === item.href || pathname.startsWith(`${item.href}/`);
         const Icon = item.icon;
+        const label =
+          item.messageKey === "insight"
+            ? insightSourceLabel
+              ? t("insight", { source: insightSourceLabel })
+              : t("insightFallback")
+            : t(item.messageKey);
 
         return (
           <li key={item.href}>
@@ -62,7 +74,7 @@ export function SidebarNav({ onNavigate, enabledFeatures }: SidebarNavProps) {
               )}
             >
               <Icon className={isActive ? "text-accent" : "text-muted"} />
-              <span>{t(item.messageKey)}</span>
+              <span className="truncate" title={label}>{label}</span>
             </Link>
           </li>
         );

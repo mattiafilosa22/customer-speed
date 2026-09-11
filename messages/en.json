@@ -6,6 +6,8 @@
   "nav": {
     "ariaLabel": "Main navigation",
     "dashboard": "Dashboard",
+    "insight": "{source} Stats",
+    "insightFallback": "Insight & Stats",
     "pipeline": "Pipeline",
     "leads": "Leads",
     "appointments": "Appointments",
@@ -1161,6 +1163,109 @@
         "activate": "Activate",
         "deactivate": "Deactivate",
         "resetPassword": "Reset password"
+      }
+    }
+  },
+  "insight": {
+    "title": "{source} Stats",
+    "titleFallback": "Insight & Stats",
+    "description": "Monthly chat activity, appointments and sales.",
+    "saved": "Activity saved.",
+    "saving": "Saving…",
+    "savedShort": "Saved",
+    "unconfigured": {
+      "title": "Configure Insight & Stats",
+      "description": "Link a source in tenant features to get started."
+    },
+    "columns": {
+      "date": "Day",
+      "welcomeSent": "Sent",
+      "replies": "Replies",
+      "comments": "Comments",
+      "stories": "Stories",
+      "messages": "Messages",
+      "received": "Received",
+      "appointments": "Appointments",
+      "sales": "Sales"
+    },
+    "groups": {
+      "welcome": "Welcome",
+      "outbound": "Outbound",
+      "inbound": "Inbound",
+      "total": "Total"
+    },
+    "summary": {
+      "total": "Month total",
+      "conversion": "Conversion",
+      "mixedPeriod": "This month contains archived and live data."
+    },
+    "archive": {
+      "badge": "Archive",
+      "messages": "Messages (archive)"
+    },
+    "kpis": {
+      "conversations": "Conversations started",
+      "replies": "Replies received",
+      "appointments": "Appointments",
+      "sales": "Sales",
+      "bestChannel": "Best channel",
+      "none": "—"
+    },
+    "unattributed": {
+      "message": "{count} leads from the linked source have no channel and are not attributed.",
+      "cta": "Assign a channel"
+    },
+    "tooltip": {
+      "composition": "{total} total: {fromInsight} created in Insight & Stats, {other} added from the lead list or pipeline"
+    },
+    "monthNav": {
+      "previous": "Previous month",
+      "next": "Next month",
+      "label": "Displayed month"
+    },
+    "newLead": {
+      "title": "Add lead and appointment",
+      "description": "The lead will use the source and channel of this cell.",
+      "source": "Source",
+      "channel": "Channel",
+      "firstName": "First name",
+      "lastName": "Last name",
+      "email": "Email",
+      "phone": "Phone",
+      "date": "Appointment date",
+      "time": "Appointment time",
+      "reason": "Reason",
+      "reasonDefault": "Introductory call",
+      "save": "Save",
+      "cancel": "Cancel",
+      "success": "Lead and appointment created."
+    },
+    "cellLeads": {
+      "title": "Attributed leads",
+      "loading": "Loading…",
+      "empty": "No attributed leads.",
+      "add": "Add a lead",
+      "close": "Close"
+    },
+    "errors": {
+      "repliesExceedWelcome": "Replies cannot exceed welcome messages sent.",
+      "repliesExceedOutbound": "Replies cannot exceed comments and stories.",
+      "futureDay": "You cannot edit a future day.",
+      "archivedDay": "Archived days are read-only.",
+      "channelRequired": "Channel is required.",
+      "unauthorized": "You do not have permission for this operation.",
+      "notFound": "This section is unavailable.",
+      "generic": "The operation could not be completed.",
+      "fields": {
+        "form": "Check the entered data.",
+        "date": "Invalid date.",
+        "firstName": "Enter a first name.",
+        "lastName": "Enter a last name.",
+        "email": "Invalid email.",
+        "phone": "Invalid phone.",
+        "appointmentAt": "Invalid date or time.",
+        "reason": "Enter a reason.",
+        "chatChannel": "Invalid channel."
       }
     }
   },

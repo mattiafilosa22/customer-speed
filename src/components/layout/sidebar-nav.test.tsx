@@ -46,13 +46,30 @@ describe("SidebarNav", () => {
     );
   });
 
-  it("renders all five navigation entries with localized labels", () => {
+  it("renders all navigation entries with localized labels", () => {
     renderWithIntl(<SidebarNav />);
     const links = screen.getAllByRole("link");
-    expect(links).toHaveLength(5);
+    expect(links).toHaveLength(6);
     // Labels resolve from the `nav` IT namespace, not hard-coded.
     expect(screen.getByRole("link", { name: /Appuntamenti/ })).toBeInTheDocument();
     expect(screen.getByRole("link", { name: /Impostazioni/ })).toBeInTheDocument();
+  });
+
+  it("hides Insight when its feature flag is disabled", () => {
+    renderWithIntl(
+      <SidebarNav enabledFeatures={["appointments", "leads", "pipeline", "dashboard"]} />,
+    );
+
+    expect(screen.queryByRole("link", { name: /Stats/ })).toBeNull();
+  });
+
+  it("uses the linked source label for the Insight entry", () => {
+    renderWithIntl(<SidebarNav enabledFeatures={["insightStats"]} insightSourceLabel="Instagram" />);
+
+    expect(screen.getByRole("link", { name: "Instagram Stats" })).toHaveAttribute(
+      "href",
+      "/insight",
+    );
   });
 
   it("has no axe violations", async () => {
