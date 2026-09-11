@@ -266,6 +266,12 @@
       "PENDING": "Pending",
       "DONE": "Done",
       "CANCELED": "Canceled"
+    },
+    "chatChannel": {
+      "WELCOME": "Welcome",
+      "OUTBOUND_COMMENT": "Comment",
+      "OUTBOUND_STORY": "Story",
+      "INBOUND": "Inbound"
     }
   },
   "common": {
@@ -358,6 +364,7 @@
         "lastName": "Enter a valid last name.",
         "email": "Enter a valid email.",
         "phone": "Enter a valid phone number.",
+        "chatChannel": "Select the conversation channel.",
         "lossReasonId": "Select a loss reason.",
         "lossReasonCustomText": "Enter a valid loss reason.",
         "form": "Check the entered data."
@@ -369,6 +376,7 @@
       "email": "Email",
       "phone": "Phone",
       "source": "Source",
+      "chatChannel": "Channel",
       "capital": "Capital"
     }
   },

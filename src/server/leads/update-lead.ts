@@ -5,6 +5,7 @@ import { parseInput } from "@/server/validation";
 import type { LeadDeps } from "@/server/leads/deps";
 import { updateLeadSchema } from "@/server/leads/schemas";
 import { assertLeadBelongsToTenant, assertSourceBelongsToTenant } from "@/server/leads/ownership";
+import { requireChannelForLinkedSource } from "@/server/leads/chat-channel";
 
 /**
  * Update a lead's contact / capital / source / admin-notes fields
@@ -26,10 +27,21 @@ export async function updateLead(
 
   // Explicit ownership read (scoped): cross-tenant / soft-deleted / missing → 404.
   await assertLeadBelongsToTenant(deps, leadId);
+  const current = await deps.prisma.lead.findUnique({
+    where: { id: leadId },
+    select: { sourceId: true, chatChannel: true },
+  });
+  if (!current) {
+    throw new NotFoundError("Lead not found");
+  }
 
   if (data.sourceId) {
     await assertSourceBelongsToTenant(deps, data.sourceId);
   }
+  const resultingSourceId = data.sourceId === undefined ? current.sourceId : data.sourceId;
+  const resultingChannel =
+    data.chatChannel === undefined ? current.chatChannel : data.chatChannel;
+  await requireChannelForLinkedSource(deps, resultingSourceId, resultingChannel);
 
   // Build a minimal `data` payload containing only the provided keys so we never
   // overwrite untouched columns.
@@ -52,6 +64,7 @@ export async function updateLead(
   if (data.sourceId !== undefined) {
     updateData.source = data.sourceId ? { connect: { id: data.sourceId } } : { disconnect: true };
   }
+  if (data.chatChannel !== undefined) updateData.chatChannel = data.chatChannel;
 
   try {
     const lead = await deps.prisma.lead.update({

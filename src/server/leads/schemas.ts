@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-import { CapitalBracket, LeadStage } from "@/generated/prisma/enums";
+import { CapitalBracket, ChatChannel, LeadStage } from "@/generated/prisma/enums";
 
 /**
  * Zod schemas for the lead domain — single source of truth for the input shapes
@@ -99,6 +99,7 @@ export const createLeadSchema = z.object({
   capitalAmount: optionalCapitalAmount,
   capitalBracket: capitalBracket.optional(),
   sourceId: optionalId,
+  chatChannel: z.nativeEnum(ChatChannel).nullable().optional(),
 });
 export type CreateLeadInput = z.infer<typeof createLeadSchema>;
 
@@ -117,6 +118,7 @@ export const updateLeadSchema = z
     capitalBracket: capitalBracket.nullable().optional(),
     capitalAmount: optionalCapitalAmount,
     sourceId: optionalId.nullable(),
+    chatChannel: z.nativeEnum(ChatChannel).nullable().optional(),
     adminNotes: z.string().trim().max(5000).nullable().optional(),
   })
   .refine((data) => Object.keys(data).length > 0, {

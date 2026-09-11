@@ -3,7 +3,10 @@
 import { useActionState, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 
-import { Button, Input, Modal } from "@/components/ui";
+import type { ReferenceItem } from "@/server/leads";
+import { Button, Input, Modal, Select } from "@/components/ui";
+import { ChatChannel } from "@/generated/prisma/enums";
+import { useChatChannelLabel } from "@/i18n/enum-labels";
 import { updateLeadAction } from "@/app/[locale]/(app)/leads/actions";
 import { type ActionState } from "@/server/actions/action-result";
 import { FormAlert } from "@/components/auth/form-alert";
@@ -11,6 +14,7 @@ import { SubmitButton } from "@/components/auth/submit-button";
 import { useMessage } from "@/components/auth/use-message";
 
 const initialState: ActionState = { status: "idle" };
+const CHAT_CHANNEL_VALUES = Object.values(ChatChannel);
 
 /**
  * "Modifica lead" dialog (docs/02 §2.5). Same skeleton as `NewLeadDialog`, but
@@ -27,17 +31,27 @@ export function EditLeadDialog({
   lastName,
   email,
   phone,
+  sourceId = null,
+  sources = [],
+  insightSourceId = null,
+  chatChannel = null,
 }: {
   leadId: string;
   firstName: string;
   lastName: string;
   email: string | null;
   phone: string | null;
+  sourceId?: string | null;
+  sources?: readonly ReferenceItem[];
+  insightSourceId?: string | null;
+  chatChannel?: ChatChannel | null;
 }) {
   const t = useTranslations();
   const tm = useMessage();
   const locale = useLocale();
+  const chatChannelLabel = useChatChannelLabel();
   const [open, setOpen] = useState(false);
+  const [selectedSourceId, setSelectedSourceId] = useState(sourceId ?? "");
   const [state, formAction] = useActionState(updateLeadAction, initialState);
 
   // Close the dialog on the success transition (same render-time "adjust state
@@ -97,6 +111,37 @@ export function EditLeadDialog({
           defaultValue={phone ?? ""}
           error={fieldError("phone")}
         />
+
+        <Select
+          label={t("leads.fields.source")}
+          name="sourceId"
+          value={selectedSourceId}
+          onChange={(event) => setSelectedSourceId(event.target.value)}
+        >
+          <option value="">—</option>
+          {sources.map((source) => (
+            <option key={source.id} value={source.id}>
+              {source.label}
+            </option>
+          ))}
+        </Select>
+
+        {insightSourceId !== null && selectedSourceId === insightSourceId ? (
+          <Select
+            label={t("leads.fields.chatChannel")}
+            name="chatChannel"
+            defaultValue={chatChannel ?? ""}
+            required
+            error={fieldError("chatChannel")}
+          >
+            <option value="">—</option>
+            {CHAT_CHANNEL_VALUES.map((value) => (
+              <option key={value} value={value}>
+                {chatChannelLabel(value)}
+              </option>
+            ))}
+          </Select>
+        ) : null}
 
         <div className="flex flex-wrap gap-2">
           <SubmitButton pendingLabel={t("leads.saving")} className="w-auto">

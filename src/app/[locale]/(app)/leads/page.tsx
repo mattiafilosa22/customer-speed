@@ -10,6 +10,8 @@ import { LeadTabs } from "@/components/leads/lead-tabs";
 import { LeadList } from "@/components/leads/lead-list";
 import { LeadPagination } from "@/components/leads/lead-pagination";
 import { NewLeadDialog } from "@/components/leads/new-lead-dialog";
+import { buildInsightDeps } from "@/server/insight/context-deps";
+import { getInsightConfig } from "@/server/insight/config";
 
 /**
  * "I miei lead" — the lead list (docs/02 §2.4).
@@ -54,7 +56,11 @@ export default async function LeadsPage({
     page: flat("page"),
   };
 
-  const [result, sources] = await Promise.all([listLeads(deps, query), listLeadSources(deps)]);
+  const [result, sources, insightConfig] = await Promise.all([
+    listLeads(deps, query),
+    listLeadSources(deps),
+    getInsightConfig(buildInsightDeps(ctx)),
+  ]);
 
   return (
     <div className="mx-auto flex max-w-[1180px] flex-col gap-4">
@@ -63,7 +69,9 @@ export default async function LeadsPage({
           <h1>{t("title")}</h1>
           <p className="text-muted">{t("count", { count: result.total })}</p>
         </div>
-        {canCreate ? <NewLeadDialog sources={sources} /> : null}
+        {canCreate ? (
+          <NewLeadDialog sources={sources} insightSourceId={insightConfig?.sourceId ?? null} />
+        ) : null}
       </header>
 
       <Card>
