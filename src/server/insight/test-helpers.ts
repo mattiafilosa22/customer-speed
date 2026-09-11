@@ -426,7 +426,7 @@ export function tenantClientFor(
         select,
       }: {
         where?: Where;
-        orderBy?: Record<string, "asc" | "desc">;
+        orderBy?: Record<string, "asc" | "desc"> | Record<string, "asc" | "desc">[];
         select?: Record<string, boolean>;
       }) => {
         const idFilter = where.id as { in?: string[] } | undefined;
@@ -436,20 +436,22 @@ export function tenantClientFor(
           (lead) =>
             lead.deletedAt === null && (idFilter?.in === undefined || idFilter.in.includes(lead.id)),
         );
-        if (orderBy) {
-          const [field, dir] = Object.entries(orderBy)[0] ?? [];
-          if (field) {
-            rows = [...rows].sort((a, b) => {
+        const ordering = orderBy ? (Array.isArray(orderBy) ? orderBy : [orderBy]) : [];
+        if (ordering.length > 0) {
+          rows = [...rows].sort((a, b) => {
+            for (const clause of ordering) {
+              const [field, dir] = Object.entries(clause)[0] ?? [];
+              if (!field) continue;
               const av = (a as unknown as Record<string, unknown>)[field];
               const bv = (b as unknown as Record<string, unknown>)[field];
-              if (av instanceof Date && bv instanceof Date) {
-                return dir === "asc" ? av.getTime() - bv.getTime() : bv.getTime() - av.getTime();
-              }
-              return dir === "asc"
-                ? String(av).localeCompare(String(bv))
-                : String(bv).localeCompare(String(av));
-            });
-          }
+              const comparison =
+                av instanceof Date && bv instanceof Date
+                  ? av.getTime() - bv.getTime()
+                  : String(av).localeCompare(String(bv));
+              if (comparison !== 0) return dir === "asc" ? comparison : -comparison;
+            }
+            return 0;
+          });
         }
         return rows.map((row) => pick(row, select));
       },
