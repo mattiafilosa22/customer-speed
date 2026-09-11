@@ -1,4 +1,5 @@
 import { periodRange } from "@/server/dashboard/period";
+import { LeadStage } from "@/generated/prisma/enums";
 import { channelGroupOf, type ChannelGroup } from "@/server/insight/channels";
 import { utcDayKey } from "@/server/insight/counts";
 import type { InsightConfig } from "@/server/insight/config";
@@ -90,4 +91,62 @@ export async function attributeAppointments(
   }
 
   return { attributed, unattributedLeadCount };
+}
+
+/**
+ * Lead attribuiti al mese per le VENDITE.
+ *
+ * Una vendita esiste una sola volta, nel giorno dell'ultimo passaggio a WON, e
+ * soltanto finché lo stage corrente del lead è ancora WON. Se il lead viene
+ * riaperto il report torna così coerente con la pipeline.
+ */
+export async function attributeSales(
+  deps: InsightDeps,
+  config: InsightConfig,
+  month: MonthInput,
+): Promise<AttributedLead[]> {
+  const monthBounds = periodRange(month.year, month.month);
+
+  const lastWonPerLead = await deps.prisma.stageHistory.groupBy({
+    by: ["leadId"],
+    where: {
+      toStage: LeadStage.WON,
+      changedAt: { lt: monthBounds.lt },
+      lead: { is: { sourceId: config.sourceId, stage: LeadStage.WON } },
+    },
+    _max: { changedAt: true },
+  });
+
+  const salesThisMonth = lastWonPerLead.flatMap((row) => {
+    const lastWonAt = row._max.changedAt;
+    if (lastWonAt === null || lastWonAt < monthBounds.gte) {
+      return [];
+    }
+    return [{ leadId: row.leadId, wonAt: lastWonAt }];
+  });
+
+  if (salesThisMonth.length === 0) {
+    return [];
+  }
+
+  const leads = await deps.prisma.lead.findMany({
+    where: { id: { in: salesThisMonth.map((sale) => sale.leadId) } },
+    select: { id: true, chatChannel: true, createdFromInsight: true },
+  });
+  const leadById = new Map(leads.map((lead) => [lead.id, lead]));
+
+  return salesThisMonth.flatMap(({ leadId, wonAt }) => {
+    const lead = leadById.get(leadId);
+    if (!lead?.chatChannel) {
+      return [];
+    }
+    return [
+      {
+        leadId,
+        dayKey: utcDayKey(wonAt),
+        group: channelGroupOf(lead.chatChannel),
+        createdFromInsight: lead.createdFromInsight,
+      },
+    ];
+  });
 }
