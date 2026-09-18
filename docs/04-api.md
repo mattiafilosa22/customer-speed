@@ -91,6 +91,31 @@ PATCH  /api/org/lead-sources/:id          # rinomina / attiva-disattiva / riordi
 DELETE /api/org/lead-sources/:id          # elimina (se non in uso, altrimenti disattiva)
 ```
 
+## 4.8.1 Insight & Stats
+
+A differenza delle sezioni sopra, **non ci sono Route Handler REST**: la pagina `/insight` (Server Component) legge il mese direttamente lato server e le mutazioni passano da **Server Actions** in `src/app/[locale]/(app)/insight/actions.ts`. Ogni action ricontrola, in ordine, **sessione → feature flag `insightStats` (assente ⇒ `NotFoundError`, non 403) → capability → validazione Zod**.
+
+```
+saveActivityDayAction(prevState, formData)
+  # upsert dei 6 contatori manuali del giorno indicato da `date` (YYYY-MM-DD).
+  # Richiede insight.edit. Rifiuta giorni futuri e righe di archivio.
+  # Zod: interi ≥ 0, welcomeReplies ≤ welcomeSent, outboundReplies ≤ outboundComments + outboundStories.
+
+createLeadFromCellAction(prevState, formData)
+  # Crea lead + appuntamento in una transazione, attribuiti alla provenienza
+  # collegata e al canale della cella cliccata (`chatChannel` in hidden input).
+  # Richiede insight.view + lead.create (baseUser può creare lead ma non
+  # modificare i contatori manuali).
+
+listCellLeadsAction({ date, group, metric })
+  # Drill-down: i lead dietro una cella "Appuntamenti"/"Vendite" (stessa
+  # regola di attribuzione della cella, riusata da `attribution.ts` — mai
+  # riprodotta separatamente per non rischiare numeri divergenti).
+  # Richiede insight.view.
+```
+
+Il mese visualizzato viaggia come query string (`/insight?year=2026&month=9`); parametri invalidi tornano al mese corrente (`resolveInsightMonth`), mai un errore visibile.
+
 ## 4.9 Integrazioni calendario
 ```
 GET  /api/integrations/google/connect      # avvia OAuth Google

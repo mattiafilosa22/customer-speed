@@ -13,6 +13,7 @@ Comandi attesi una volta scaffoldato (App Router + Prisma + Vitest/Playwright):
 - `pnpm lint` / `pnpm typecheck` — ESLint + `tsc --noEmit`
 - `pnpm test` (Vitest unit) · `pnpm test -- <file>` per un singolo test · `pnpm test:e2e` (Playwright)
 - `pnpm prisma migrate dev` · `pnpm prisma db seed` (crea superAdmin + tenant Fabio)
+- `pnpm db:import-insight` — import one-off dello storico Excel di Insight & Stats (`scripts/import-insight-history.ts`); dry-run di default, richiede `CONFIRM=yes` per scrivere
 
 ## Cosa stai costruendo
 

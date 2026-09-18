@@ -99,23 +99,32 @@ test.describe("pipeline — kanban stage move (keyboard alternative)", () => {
   test("the source filter narrows the board", async ({ page }) => {
     await page.goto("/pipeline");
 
+    const cards = page.locator("article[aria-label]");
+    await expect(cards.first()).toBeVisible();
+    const totalCount = await cards.count();
+
     const sourceSelect = page.getByLabel(/provenienza|source/i);
     await expect(sourceSelect).toBeVisible();
 
-    // Select the "Instagram" source (seeded on exactly one Fabio lead, in the
-    // WAITING_DECISION column). After filtering, only that lead's card remains.
+    // Select the "Instagram" source (seeded on the Fabio lead in the
+    // WAITING_DECISION column; other specs — e.g. Insight & Stats — may create
+    // more Instagram leads via /insight, so this asserts every remaining card
+    // carries the source and the filter narrows the board, not an exact count).
     await sourceSelect.selectOption({ label: "Instagram" });
     await expect(page).toHaveURL(/sourceId=/);
 
-    // Exactly one card across the whole board carries the Instagram source.
-    const cards = page.locator("article[aria-label]");
-    await expect(cards).toHaveCount(1);
-    await expect(cards.first()).toContainText("Instagram");
+    await expect(cards.first()).toBeVisible();
+    const filteredCount = await cards.count();
+    expect(filteredCount).toBeGreaterThan(0);
+    expect(filteredCount).toBeLessThan(totalCount);
+    for (const card of await cards.all()) {
+      await expect(card).toContainText("Instagram");
+    }
 
-    // Resetting to "all sources" brings back more than one card.
+    // Resetting to "all sources" brings back the full board.
     await sourceSelect.selectOption({ value: "" });
     await expect(page).not.toHaveURL(/sourceId=/);
-    await expect(page.locator("article[aria-label]").first()).toBeVisible();
+    await expect(cards).toHaveCount(totalCount);
   });
 
   test("opens the loss-reason dialog when moving to LOST", async ({ page }) => {

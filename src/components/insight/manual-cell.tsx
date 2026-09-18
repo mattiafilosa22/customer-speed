@@ -46,7 +46,7 @@ export function ManualCell({
   const [pending, startTransition] = useTransition();
 
   if (!editable && !row.isFuture) {
-    return <span className="font-mono text-sm text-ink">{initial}</span>;
+    return <span className="text-ink font-mono text-sm">{initial}</span>;
   }
 
   function save() {
@@ -76,6 +76,12 @@ export function ManualCell({
     inputs[index + (event.key === "ArrowDown" ? 1 : -1)]?.focus();
   }
 
+  // Error is a status message that appears asynchronously after blur (WCAG
+  // 2.1 §4.1.3): `role="alert"` makes it an assertive live region on its own
+  // (no extra `aria-live` needed) and `aria-describedby` ties it to the field
+  // so a screen reader reads it together with the input, not just `aria-invalid`.
+  const errorId = `${field}-${row.date}-error`;
+
   return (
     <div className="flex min-w-16 flex-col items-center gap-1">
       <input
@@ -87,13 +93,18 @@ export function ManualCell({
         data-insight-field={field}
         aria-label={`${label}, ${row.date}`}
         aria-invalid={Boolean(error) || undefined}
+        aria-describedby={error ? errorId : undefined}
         onChange={(event) => setValue(Math.max(0, Number(event.target.value)))}
         onBlur={save}
         onKeyDown={move}
-        className="h-9 w-16 rounded-input border border-line bg-panel px-2 text-center font-mono text-sm text-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring disabled:bg-subtle disabled:text-muted"
+        className="rounded-input border-line bg-panel text-ink focus-visible:outline-ring disabled:bg-subtle disabled:text-muted h-9 w-16 border px-2 text-center font-mono text-sm focus-visible:outline-2 focus-visible:outline-offset-2"
       />
       {pending ? <span className="sr-only">{t("saving")}</span> : null}
-      {error ? <span className="max-w-28 text-center text-xs text-exec-ink">{translateMessage(error)}</span> : null}
+      {error ? (
+        <span id={errorId} role="alert" className="text-exec-ink max-w-28 text-center text-xs">
+          {translateMessage(error)}
+        </span>
+      ) : null}
     </div>
   );
 }

@@ -30,8 +30,12 @@ Tre ruoli:
 | Settings tenant (tema, nome, feature flag) | ✅ | ✅ (limitato) | ❌ |
 | Gestione utenti del tenant | ✅ | ✅ | ❌ |
 | Gestione tenant / area admin | ✅ | ❌ | ❌ |
+| Insight & Stats — vedere la sezione (`insight.view`) | ✅ | ✅ | ✅ |
+| Insight & Stats — modificare i contatori manuali (`insight.edit`) | ❌ | ✅ | ❌ |
 
 > La matrice è il **default configurabile**: i permessi sono definiti come capability associabili ai ruoli, così un rivenditore può modulare cosa vede `baseUser`. L'enforcement è **server-side** su ogni richiesta (vedi `06`).
+>
+> Insight & Stats: `superAdmin` vede senza modificare (non è un utente operativo — coerente con la riga sopra). `baseUser` non ha `insight.edit` (non tocca i volumi di attività) ma può comunque creare un lead da una cella, perché quell'azione usa la capability `lead.create` che già possiede.
 
 ---
 
@@ -187,6 +191,32 @@ Due provider, attivabili indipendentemente:
 - Importazione degli appuntamenti **prenotati** dai lead (webhook `invitee.created`/`canceled`), creando/aggiornando appuntamenti nel CRM e, se possibile, collegandoli al lead corrispondente (match per email).
 
 > Astrarre dietro un'interfaccia `CalendarProvider` per non accoppiare la logica del CRM a un singolo servizio. Le credenziali per-utente/per-tenant vanno cifrate a riposo (vedi `06`).
+
+---
+
+## 2.6.1 Insight & Stats (modulo opzionale per tenant)
+
+> Feature flag `insightStats`, **default `false`**. Per il tenant **Fabio** è **attivo**: la sezione sostituisce il foglio Excel "Sponsorizzate Instagram" (docs/superpowers/specs/2026-09-10-insight-stats-design.md) che teneva a mano i volumi di prospecting su Instagram.
+
+A flag spento la voce di menu non compare e la rotta risponde `404` (stesso pattern non-rivelante di `settings/integrations` per `calendarIntegrations`). A flag acceso ma senza una `LeadSource` collegata (`Organization.insightSourceId`), la pagina spiega cosa manca invece di mostrare una tabella vuota.
+
+**Cosa mostra**: una tabella, un mese alla volta, con tre blocchi di canale (Welcome / Outbound / Inbound) e, per ciascuno, i passi del funnel:
+- **Welcome** (il consulente scrive per primo): Inviati → Risposte → Appuntamenti → Vendite.
+- **Outbound** (il consulente scrive a chi ha reagito a un'esca): Commenti + Storie → Risposte → Appuntamenti → Vendite.
+- **Inbound** (il contatto scrive per primo): Ricevuti → Appuntamenti → Vendite.
+
+**Colonne manuali** (digitate a mano, salvate all'uscita dal campo): Welcome inviati, Risposte welcome, Commenti, Storie, Risposte outbound, Inbound ricevuti.
+
+**Colonne calcolate** (non digitabili, cliccabili): Appuntamenti e Vendite si aggregano dalle entità reali del CRM, filtrando i lead sulla `LeadSource` collegata alla sezione per il tenant:
+- **Appuntamenti**: un lead conta una sola volta, il giorno del suo **primo** appuntamento fissato (non il giorno in cui si tiene).
+- **Vendite**: il giorno dell'**ultimo** passaggio a stage `WON` (da `StageHistory`), solo per i lead il cui stage corrente è `WON` — se un lead viene riaperto, il numero scende.
+- Un clic su una cella apre l'elenco dei lead che la compongono, con un'azione per crearne uno nuovo (nome, cognome, email/telefono opzionali, appuntamento) già attribuito alla provenienza e al canale della cella.
+
+**Canale obbligatorio**: creando o modificando un lead con la provenienza collegata alla sezione (da qualunque punto del CRM, non solo da qui), va indicato uno dei quattro canali (`Welcome`, `Commento outbound`, `Storia outbound`, `Inbound`). Un lead di quella provenienza senza canale genera un avviso "non attribuiti" in pagina, ma resta valido (dato storico, o inserito altrove prima di completare la configurazione).
+
+**Archivio**: lo storico dell'Excel è importabile una tantum (`pnpm db:import-insight`) come righe di sola lettura, marcate visivamente (badge "Archivio", mai dal solo colore) e non cliccabili — non hanno lead dietro. Il confine fra archivio e periodo vivo è `Organization.insightActiveFrom`.
+
+**Fuori perimetro v1**: esportazione, grafici di andamento, confronto mesi affiancati, vista annuale.
 
 ---
 
