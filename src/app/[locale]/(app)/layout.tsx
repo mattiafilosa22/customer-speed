@@ -88,13 +88,18 @@ export default async function AppLayout({
   return (
     <ThemeProvider theme={branding.theme} mode={mode}>
       <div className="flex min-h-screen bg-bg">
-        <Sidebar appName={appName} enabledFeatures={enabledFeatures} />
+        <Sidebar
+          appName={appName}
+          enabledFeatures={enabledFeatures}
+          insightSourceLabel={branding.insightSourceLabel}
+        />
         <div className="flex min-w-0 flex-1 flex-col">
           <Header
             appName={appName}
             userName={user.name}
             locale={locale}
             enabledFeatures={enabledFeatures}
+            insightSourceLabel={branding.insightSourceLabel}
             mode={mode}
           />
           <main className="min-w-0 flex-1 p-4 lg:p-6">{children}</main>

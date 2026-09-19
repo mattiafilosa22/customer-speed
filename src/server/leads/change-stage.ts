@@ -44,7 +44,7 @@ export async function changeStage(
 
   const now = clockNow(deps);
 
-  return deps.prisma.$transaction(async (tx) => {
+  const result = await deps.prisma.$transaction(async (tx) => {
     // Read current stage inside the tx (scoped → tenant + not soft-deleted).
     const current = await tx.lead.findUnique({
       where: { id: leadId },
@@ -56,7 +56,7 @@ export async function changeStage(
 
     // Idempotent same-stage save: do not reset the day counter, no history row.
     if (current.stage === data.stage) {
-      return { id: current.id, changed: false };
+      return { id: current.id, changed: false as const, fromStage: current.stage };
     }
 
     const movingToLost = data.stage === LeadStage.LOST;
@@ -85,15 +85,25 @@ export async function changeStage(
       },
     });
 
+    return { id: leadId, changed: true as const, fromStage: current.stage };
+  });
+
+  // Audit writes go through the BASE client (see LeadDeps/context-deps), a
+  // DIFFERENT connection than `tx` above. Calling it from inside the
+  // transaction callback would hold the tx connection idle while a second
+  // one is acquired from the same pool — under PgBouncer transaction pooling
+  // (small effective pool) this can stall until the tx's own timeout fires.
+  // So the audit write happens after the transaction has committed.
+  if (result.changed) {
     await deps.audit.record({
       action: "lead.stage.change",
       organizationId: deps.actor.organizationId,
       actorId: deps.actor.userId,
       entity: "Lead",
       entityId: leadId,
-      meta: { from: current.stage, to: data.stage },
+      meta: { from: result.fromStage, to: data.stage },
     });
+  }
 
-    return { id: leadId, changed: true };
-  });
+  return { id: result.id, changed: result.changed };
 }

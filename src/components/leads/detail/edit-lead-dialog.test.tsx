@@ -5,6 +5,7 @@ import { axe } from "vitest-axe";
 
 import itMessages from "../../../../messages/it.json";
 import { type ActionState } from "@/server/actions/action-result";
+import { ChatChannel } from "@/generated/prisma/enums";
 
 const updateLeadAction = vi.fn(
   async (_prev: unknown, _form: FormData): Promise<ActionState> => ({
@@ -28,6 +29,10 @@ function renderDialog() {
         lastName="Rossi"
         email="mario.rossi@example.com"
         phone="+39 333 1234567"
+        sourceId="instagram"
+        sources={[{ id: "instagram", label: "Instagram" }]}
+        insightSourceId="instagram"
+        chatChannel={ChatChannel.WELCOME}
       />
     </NextIntlClientProvider>,
   );
@@ -48,6 +53,7 @@ describe("EditLeadDialog", () => {
     expect(screen.getByLabelText("Cognome")).toHaveValue("Rossi");
     expect(screen.getByLabelText("Email")).toHaveValue("mario.rossi@example.com");
     expect(screen.getByLabelText("Telefono")).toHaveValue("+39 333 1234567");
+    expect(screen.getByRole("combobox", { name: "Canale" })).toHaveValue(ChatChannel.WELCOME);
   });
 
   it("submits updateLeadAction with the edited values, including the leadId", async () => {

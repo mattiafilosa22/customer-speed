@@ -73,7 +73,52 @@ describe("admin/updateOrganization", () => {
       updateOrganization(buildFakeAdminDeps(db), { organizationId: a.id, slug: "X!" }),
     ).rejects.toBeInstanceOf(ValidationError);
   });
+
+  it("saves the insight source and activation date for the tenant", async () => {
+    const db = new AdminFakeDb();
+    const { org, source } = seedOrganizationWithSource(db);
+
+    await updateOrganization(buildFakeAdminDeps(db), {
+      organizationId: org.id,
+      insightSourceId: source.id,
+      insightActiveFrom: "2026-09-01",
+    });
+
+    const saved = db.org();
+    expect(saved.insightSourceId).toBe(source.id);
+    expect(saved.insightActiveFrom).toEqual(new Date(Date.UTC(2026, 8, 1)));
+  });
+
+  it("rejects an insight source belonging to another tenant", async () => {
+    const db = new AdminFakeDb();
+    const { org, otherTenantSource } = seedOrganizationWithSource(db);
+
+    await expect(
+      updateOrganization(buildFakeAdminDeps(db), {
+        organizationId: org.id,
+        insightSourceId: otherTenantSource.id,
+      }),
+    ).rejects.toBeInstanceOf(NotFoundError);
+  });
 });
+
+/**
+ * Seeds a tenant with its OWN `LeadSource` plus a second tenant with its own
+ * `LeadSource`, for the cross-tenant-rejection test of the Insight & Stats
+ * source picker.
+ */
+function seedOrganizationWithSource(db: AdminFakeDb) {
+  const org = db.addOrg({ slug: "acme" });
+  const source = db.addLeadSource({ organizationId: org.id, label: "Instagram" });
+
+  const otherTenant = db.addOrg({ slug: "bravo" });
+  const otherTenantSource = db.addLeadSource({
+    organizationId: otherTenant.id,
+    label: "Instagram",
+  });
+
+  return { org, source, otherTenant, otherTenantSource };
+}
 
 describe("admin/updateOrganizationFeatureFlags", () => {
   it("persists normalized flags and audits", async () => {
@@ -88,11 +133,13 @@ describe("admin/updateOrganizationFeatureFlags", () => {
         appointments: false,
         invoices: false,
         calendarIntegrations: true,
+        insightStats: true,
       },
     });
     const flags = db.org().featureFlags as Record<string, boolean>;
     expect(flags.calendarIntegrations).toBe(true);
     expect(flags.invoices).toBe(false);
+    expect(flags.insightStats).toBe(true);
     expect(db.audits.some((a) => a.action === "admin.organization.featureFlags.update")).toBe(true);
   });
 

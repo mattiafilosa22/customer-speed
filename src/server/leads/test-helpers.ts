@@ -1,5 +1,10 @@
 import { Prisma } from "@/generated/prisma/client";
-import { AppointmentStatus, type CapitalBracket, type LeadStage } from "@/generated/prisma/enums";
+import {
+  AppointmentStatus,
+  type CapitalBracket,
+  type ChatChannel,
+  type LeadStage,
+} from "@/generated/prisma/enums";
 import type { TenantPrismaClient } from "@/lib/prisma-tenant";
 import type { AuditEvent, AuditLogger } from "@/server/audit/audit-log";
 import type { LeadDeps } from "@/server/leads/deps";
@@ -35,6 +40,7 @@ export interface LeadRow {
   capitalBracket: CapitalBracket | null;
   capitalAmount: number | null;
   sourceId: string | null;
+  chatChannel: ChatChannel | null;
   lossReasonId: string | null;
   lossReasonCustomText: string | null;
   adminNotes: string | null;
@@ -117,6 +123,7 @@ export class LeadStore {
   lossReasons: LossReasonRow[] = [];
   stageConfigs: PipelineStageConfigRow[] = [];
   appointments: AppointmentRow[] = [];
+  insightSourceByOrganization = new Map<string, string | null>();
   private seq = 0;
 
   nextId(prefix: string): string {
@@ -139,6 +146,7 @@ export class LeadStore {
       capitalBracket: partial.capitalBracket ?? null,
       capitalAmount: partial.capitalAmount ?? null,
       sourceId: partial.sourceId ?? null,
+      chatChannel: partial.chatChannel ?? null,
       lossReasonId: partial.lossReasonId ?? null,
       lossReasonCustomText: partial.lossReasonCustomText ?? null,
       adminNotes: partial.adminNotes ?? null,
@@ -162,6 +170,10 @@ export class LeadStore {
     };
     this.leadSources.push(row);
     return row;
+  }
+
+  setInsightSource(organizationId: string, sourceId: string | null): void {
+    this.insightSourceByOrganization.set(organizationId, sourceId);
   }
 
   addLossReason(
@@ -331,6 +343,12 @@ export function tenantClientFor(store: LeadStore, organizationId: string): Tenan
   };
 
   const client = {
+    organization: {
+      findUnique: async ({ where }: { where: Where }) => {
+        const id = String(where.id);
+        return { insightSourceId: store.insightSourceByOrganization.get(id) ?? null };
+      },
+    },
     lead: {
       findUnique: async ({ where }: { where: Where }) => {
         // Return a COPY (like real Prisma) so callers that read fields before a
@@ -400,6 +418,7 @@ export function tenantClientFor(store: LeadStore, organizationId: string): Tenan
           capitalBracket: (data.capitalBracket as CapitalBracket | null) ?? null,
           capitalAmount: toAmountNumber(data.capitalAmount),
           sourceId: (data.sourceId as string | null) ?? null,
+          chatChannel: (data.chatChannel as ChatChannel | null) ?? null,
         });
         return select ? { id: row.id } : row;
       },
@@ -759,6 +778,8 @@ function applyLeadUpdate(row: LeadRow, data: Where): void {
     row.capitalBracket = (data.capitalBracket as CapitalBracket) ?? null;
   if ("capitalAmount" in data) row.capitalAmount = toAmountNumber(data.capitalAmount);
   if ("adminNotes" in data) row.adminNotes = (data.adminNotes as string | null) ?? null;
+  if ("chatChannel" in data)
+    row.chatChannel = (data.chatChannel as ChatChannel | null) ?? null;
   if ("deletedAt" in data) row.deletedAt = (data.deletedAt as Date | null) ?? null;
   if ("stage" in data) row.stage = data.stage as LeadStage;
   if ("stageChangedAt" in data) row.stageChangedAt = data.stageChangedAt as Date;

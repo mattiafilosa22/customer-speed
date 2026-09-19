@@ -41,6 +41,9 @@ export const CAPABILITIES = [
   // Appointments & calendar
   "appointment.manage",
   "calendar.integrations",
+  // Insight & Stats (feature flag `insightStats`)
+  "insight.view",
+  "insight.edit", // modifica dei contatori manuali di attività
   // Tenant settings & users
   "settings.tenant", // theme, app name, feature flags (proUser limited)
   "users.manage", // manage users within the tenant
@@ -77,6 +80,7 @@ const ROLE_CAPABILITIES: Readonly<Record<Role, ReadonlySet<Capability>>> = {
     "invoice.create",
     "appointment.manage",
     "calendar.integrations",
+    "insight.view",
     "settings.tenant",
     "users.manage",
   ]),
@@ -96,6 +100,8 @@ const ROLE_CAPABILITIES: Readonly<Record<Role, ReadonlySet<Capability>>> = {
     "invoice.create",
     "appointment.manage",
     "calendar.integrations",
+    "insight.view",
+    "insight.edit",
     "settings.tenant",
     "users.manage",
   ]),
@@ -108,9 +114,11 @@ const ROLE_CAPABILITIES: Readonly<Record<Role, ReadonlySet<Capability>>> = {
     "lead.update",
     "lead.setCapital",
     "lead.note",
+    "insight.view",
     // NOT granted: lead.delete, lead.exportData, lead.eraseData,
     // pipeline.configureStages, invoice.create, appointment.manage,
-    // calendar.integrations, settings.tenant, users.manage, admin.tenants.
+    // calendar.integrations, insight.edit, settings.tenant, users.manage,
+    // admin.tenants.
     // DSR (export/erasure) are privacy-sensitive operations reserved to the
     // tenant operator (proUser) / superAdmin (docs/02 §2.1, docs/06 §6.5).
   ]),

@@ -75,6 +75,15 @@ export const updateOrganizationSchema = z.object({
   appName: z.string().trim().min(1, "App name is required").max(60).optional(),
   slug: slugSchema.optional(),
   customDomain: customDomainSchema,
+  // Provenienza collegata a Insight & Stats. `null` esplicito = scollega.
+  insightSourceId: z.string().cuid().nullable().optional(),
+  // Confine archivio/dato vivo, giorno di calendario UTC.
+  insightActiveFrom: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/, "insightActiveFrom must be YYYY-MM-DD")
+    .transform((day) => new Date(`${day}T00:00:00.000Z`))
+    .nullable()
+    .optional(),
 });
 export type UpdateOrganizationInput = z.input<typeof updateOrganizationSchema>;
 
@@ -88,6 +97,7 @@ export const updateFeatureFlagsSchema = z.object({
     appointments: z.boolean(),
     invoices: z.boolean(),
     calendarIntegrations: z.boolean(),
+    insightStats: z.boolean(),
   }),
 });
 export type UpdateFeatureFlagsInput = z.input<typeof updateFeatureFlagsSchema>;

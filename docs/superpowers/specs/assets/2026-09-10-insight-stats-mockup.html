@@ -1,0 +1,401 @@
+<!doctype html>
+<html lang="it" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Insight &amp; Stats — mockup</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Montserrat:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --f-display:"Bebas Neue",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+  --f-body:"Montserrat",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,monospace;
+  --accent:#5b5bd6; --accent-ink:#4a48c4; --accent-soft:color-mix(in srgb,var(--accent) 9%,#fff);
+  --bg:#f7f7f9; --panel:#fff; --ink:#1c1c22; --muted:#6e6e79; --line:#ececef; --line2:#f3f3f5;
+  --ok:#16a34a; --warn:#d97706; --doc:#0d9488; --exec:#db2777; --danger:#c2342d;
+  --ok-soft:color-mix(in srgb,var(--ok) 10%,#fff); --warn-soft:color-mix(in srgb,var(--warn) 10%,#fff);
+  --doc-soft:color-mix(in srgb,var(--doc) 10%,#fff); --exec-soft:color-mix(in srgb,var(--exec) 10%,#fff);
+  --pill-ink-darken:45%;
+  --ok-ink:color-mix(in srgb,var(--ok),black var(--pill-ink-darken));
+  --warn-ink:color-mix(in srgb,var(--warn),black var(--pill-ink-darken));
+  --doc-ink:color-mix(in srgb,var(--doc),black var(--pill-ink-darken));
+  --exec-ink:color-mix(in srgb,var(--exec),black var(--pill-ink-darken));
+  --ring:var(--accent);
+  --radius:12px; --radius-input:8px; --radius-control:8px; --radius-pill:20px;
+  --sh-sm:0 1px 2px rgba(28,28,34,.06); --sh:0 6px 20px rgba(28,28,34,.08);
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:14px;line-height:1.5}
+.wrap{max-width:1360px;margin:0 auto;padding:28px 20px 80px}
+h1{font-family:var(--f-display);font-size:34px;letter-spacing:.02em;margin:0;font-weight:400}
+h2{font-family:var(--f-display);font-size:22px;letter-spacing:.02em;margin:0 0 12px;font-weight:400}
+.label-mono{font-family:var(--f-mono);font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--sh-sm)}
+.topbar{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:6px}
+.sub{color:var(--muted);font-size:13px;margin:6px 0 0}
+.chip{display:inline-flex;align-items:center;gap:6px;background:var(--accent-soft);color:var(--accent-ink);border:1px solid color-mix(in srgb,var(--accent) 22%,#fff);border-radius:var(--radius-pill);padding:4px 11px;font-family:var(--f-mono);font-size:10.5px;letter-spacing:.06em;text-transform:uppercase}
+.navmonth{display:flex;align-items:center;gap:8px}
+.btn{font-family:var(--f-body);font-weight:600;font-size:13px;border-radius:var(--radius-control);border:1px solid var(--line);background:var(--panel);color:var(--ink);padding:8px 12px;cursor:pointer}
+.btn:hover{border-color:color-mix(in srgb,var(--accent) 40%,var(--line))}
+.btn:focus-visible{outline:2px solid var(--ring);outline-offset:2px}
+.btn-icon{width:34px;padding:8px 0;text-align:center}
+.monthname{font-family:var(--f-display);font-size:24px;letter-spacing:.03em;min-width:190px;text-align:center}
+.kpis{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin:20px 0 18px}
+.kpi{padding:14px 16px}
+.kpi .v{font-family:var(--f-display);font-size:30px;line-height:1.05;letter-spacing:.02em;margin-top:8px}
+.kpi .d{font-size:11.5px;color:var(--muted);margin-top:4px}
+.up{color:var(--ok-ink);font-weight:600}.down{color:var(--danger);font-weight:600}
+.notice{display:flex;gap:10px;align-items:flex-start;padding:11px 14px;border-radius:var(--radius);background:var(--warn-soft);border:1px solid color-mix(in srgb,var(--warn) 30%,#fff);color:var(--warn-ink);font-size:12.5px;margin-bottom:16px}
+.notice a{color:inherit;font-weight:700}
+.tablecard{overflow:auto;border-radius:var(--radius)}
+table{border-collapse:separate;border-spacing:0;width:100%;font-variant-numeric:tabular-nums}
+thead th{position:sticky;top:0;z-index:3;background:var(--panel)}
+th.g{font-family:var(--f-mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;padding:9px 6px;border-bottom:1px solid var(--line);color:#fff}
+th.g.w{background:var(--accent)}
+th.g.o{background:var(--doc)}
+th.g.i{background:var(--exec)}
+th.g.t{background:#3f3f4a}
+th.g.d{background:var(--panel);color:var(--muted)}
+th.c{font-family:var(--f-mono);font-size:9.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:500;padding:8px 4px;border-bottom:1px solid var(--line);background:var(--panel);white-space:nowrap;top:31px}
+td{padding:0;border-bottom:1px solid var(--line2);text-align:center;font-size:13px}
+td.day,th.day{position:sticky;left:0;background:var(--panel);z-index:2;text-align:left;padding:0 12px;white-space:nowrap;border-right:1px solid var(--line)}
+th.day{z-index:4}
+tr:hover td{background:color-mix(in srgb,var(--accent) 3%,#fff)}
+tr:hover td.day{background:color-mix(in srgb,var(--accent) 3%,#fff)}
+.dnum{font-family:var(--f-mono);font-size:12px;font-weight:600}
+.dwd{font-family:var(--f-mono);font-size:10px;color:var(--muted);margin-left:6px;text-transform:uppercase}
+.sep{border-left:1px solid var(--line)}
+input.cell{width:100%;height:34px;border:1px solid transparent;background:transparent;text-align:center;font-family:var(--f-mono);font-size:12.5px;color:var(--ink);border-radius:var(--radius-input);-moz-appearance:textfield}
+input.cell::-webkit-outer-spin-button,input.cell::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+input.cell:hover{border-color:var(--line)}
+input.cell:focus{outline:2px solid var(--ring);outline-offset:-1px;background:var(--panel);border-color:transparent}
+input.cell.zero{color:#cfcfd7}
+.derived{width:100%;height:34px;border:0;background:transparent;cursor:pointer;font-family:var(--f-mono);font-size:12.5px;font-weight:600;border-radius:var(--radius-input);position:relative}
+.derived:hover{background:var(--accent-soft);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--accent) 25%,#fff)}
+.derived:focus-visible{outline:2px solid var(--ring);outline-offset:-2px}
+.derived.empty{color:#d2d2da;font-weight:400}
+.derived.empty:hover::after{content:"+";color:var(--accent-ink)}
+.derived.empty:hover{color:transparent}
+.derived.sale{color:var(--ok-ink)}
+.derived.empty,.derived.empty.sale,.derived.empty.tot{color:#d5d5dc;font-weight:400}
+.derived.tot{color:var(--ink);background:#fafafb}
+td.totcol{background:#fafafb}
+.today td{background:color-mix(in srgb,var(--accent) 6%,#fff)!important;box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--accent) 22%,#fff)}
+.future td{background:#fcfcfd}
+.future input.cell{color:#d8d8de}
+.future .derived{color:#e2e2e8;cursor:not-allowed}
+tr.arch td{background:#f4f4f6;color:var(--muted)}
+tr.arch td.day{background:#f4f4f6}
+.archval{font-family:var(--f-mono);font-size:12.5px;color:var(--muted);display:block;height:34px;line-height:34px}
+.archdash{color:#c9c9d1}
+tfoot td{border-top:1px solid var(--line);border-bottom:0;padding:9px 4px;background:#fafafb}
+tfoot .tot{font-family:var(--f-mono);font-size:12.5px;font-weight:700}
+tfoot .rate{font-family:var(--f-mono);font-size:11px;color:var(--doc-ink)}
+tfoot td.day{background:#fafafb;font-family:var(--f-mono);font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);padding:9px 12px}
+.badge{display:inline-flex;align-items:center;gap:4px;font-family:var(--f-mono);font-size:9px;letter-spacing:.06em;text-transform:uppercase;background:#e6e6ea;color:#5a5a66;border-radius:var(--radius-pill);padding:2px 7px;margin-left:8px}
+.legend{display:flex;gap:22px;flex-wrap:wrap;margin-top:14px;font-size:12px;color:var(--muted)}
+.legend b{color:var(--ink);font-weight:600}
+.sw{display:inline-block;width:11px;height:11px;border-radius:3px;vertical-align:-1px;margin-right:6px}
+.float{position:absolute;z-index:20;background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--sh);padding:14px 16px;width:290px}
+.pop-hd{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:10px}
+.pop-hd strong{font-family:var(--f-display);font-size:19px;font-weight:400;letter-spacing:.02em}
+.leadrow{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:7px 0;border-top:1px solid var(--line2);font-size:12.5px}
+.pill{font-family:var(--f-mono);font-size:9px;letter-spacing:.05em;text-transform:uppercase;border-radius:var(--radius-pill);padding:2px 8px;white-space:nowrap}
+.pill.call{background:color-mix(in srgb,#6366f1 12%,#fff);color:color-mix(in srgb,#6366f1,black 45%)}
+.pill.won{background:var(--ok-soft);color:var(--ok-ink)}
+.pill.pres{background:var(--doc-soft);color:var(--doc-ink)}
+.origin{font-size:11px;color:var(--muted);border-top:1px solid var(--line2);margin-top:8px;padding-top:9px;display:flex;gap:6px;align-items:flex-start}
+.addbtn{width:100%;margin-top:10px;border:1px dashed color-mix(in srgb,var(--accent) 40%,var(--line));background:var(--accent-soft);color:var(--accent-ink);border-radius:var(--radius-control);padding:8px;font-weight:600;font-size:12.5px;cursor:pointer;font-family:var(--f-body)}
+.tip{position:absolute;z-index:20;background:#26262e;color:#fff;border-radius:10px;padding:9px 12px;font-size:11.5px;width:250px;line-height:1.45;box-shadow:var(--sh)}
+.tip b{font-family:var(--f-mono);font-size:11px}
+.tip:after{content:"";position:absolute;left:26px;top:-6px;width:12px;height:12px;background:#26262e;transform:rotate(45deg)}
+.mock-note{font-size:11px;color:var(--muted);font-style:italic;margin-top:8px}
+.two{display:grid;grid-template-columns:1fr 340px;gap:20px;align-items:start;margin-top:34px}
+.phone{border:1px solid var(--line);border-radius:24px;background:var(--panel);padding:14px;box-shadow:var(--sh)}
+.pcard{border:1px solid var(--line);border-radius:var(--radius);padding:12px;margin-bottom:10px}
+.pcard h4{margin:0 0 10px;font-family:var(--f-mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);display:flex;justify-content:space-between}
+.pgrp{border-left:3px solid var(--accent);padding-left:9px;margin-bottom:9px}
+.pgrp.o{border-color:var(--doc)}.pgrp.i{border-color:var(--exec)}
+.pgrp .t{font-family:var(--f-mono);font-size:9.5px;letter-spacing:.07em;text-transform:uppercase;color:var(--muted)}
+.prow{display:flex;justify-content:space-between;font-size:12.5px;padding:3px 0}
+.prow .n{font-family:var(--f-mono);font-weight:600}
+.dialog{margin-top:12px}
+.field{margin-bottom:11px}
+.field label{display:block;font-family:var(--f-mono);font-size:9.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin-bottom:4px}
+.field .inp{border:1px solid var(--line);border-radius:var(--radius-input);padding:8px 10px;font-size:13px;background:var(--panel)}
+.field .inp.ro{background:var(--accent-soft);border-color:color-mix(in srgb,var(--accent) 25%,#fff);color:var(--accent-ink);font-weight:600;display:flex;justify-content:space-between;align-items:center}
+.field .inp.ph{color:#b9b9c2}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.err{background:color-mix(in srgb,var(--danger) 8%,#fff);border:1px solid color-mix(in srgb,var(--danger) 30%,#fff);color:var(--danger);border-radius:var(--radius-input);padding:8px 10px;font-size:11.5px;margin-top:6px}
+section{margin-top:40px}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="topbar">
+    <div>
+      <h1>Insight &amp; Stats</h1>
+      <p class="sub">Attività di chat Instagram, giorno per giorno. <span class="chip">Provenienza: Instagram</span></p>
+    </div>
+    <div class="navmonth">
+      <button class="btn btn-icon" aria-label="Mese precedente">&#8249;</button>
+      <div class="monthname">Settembre 2026</div>
+      <button class="btn btn-icon" aria-label="Mese successivo">&#8250;</button>
+      <button class="btn">Oggi</button>
+      <button class="btn">Esporta</button>
+    </div>
+  </div>
+
+  <div class="kpis">
+    <div class="panel kpi"><div class="label-mono">Conversazioni avviate</div><div class="v">278</div><div class="d"><span class="down">&#8595; 21%</span> vs agosto</div></div>
+    <div class="panel kpi"><div class="label-mono">Risposte ottenute</div><div class="v">32</div><div class="d">11,5% di risposta</div></div>
+    <div class="panel kpi"><div class="label-mono">Appuntamenti</div><div class="v">4</div><div class="d">12,5% delle risposte</div></div>
+    <div class="panel kpi"><div class="label-mono">Vendite</div><div class="v">1</div><div class="d">25,0% degli appuntamenti</div></div>
+    <div class="panel kpi"><div class="label-mono">Canale migliore</div><div class="v" style="font-size:24px">Inbound</div><div class="d">1 vendita su 3 contatti</div></div>
+  </div>
+
+  <div class="notice">
+    <span>&#9888;</span>
+    <div><b>2 appuntamenti di questo mese hanno provenienza Instagram ma nessun canale assegnato</b> — non sono conteggiati in nessuna colonna. <a href="#">Assegna il canale &#8250;</a></div>
+  </div>
+
+  <div class="panel tablecard">
+    <table id="tbl-live">
+      <thead>
+        <tr>
+          <th class="day g d" rowspan="2">Giorno</th>
+          <th class="g w" colspan="4">Welcome</th>
+          <th class="g o sep" colspan="5">Outbound</th>
+          <th class="g i sep" colspan="3">Inbound</th>
+          <th class="g t sep" colspan="2">Totale</th>
+        </tr>
+        <tr>
+          <th class="c">Inviati</th><th class="c">Risposte</th><th class="c">Appunt.</th><th class="c">Vendite</th>
+          <th class="c sep">Commenti</th><th class="c">Storie</th><th class="c">Risposte</th><th class="c">Appunt.</th><th class="c">Vendite</th>
+          <th class="c sep">Ricevuti</th><th class="c">Appunt.</th><th class="c">Vendite</th>
+          <th class="c sep">Appunt.</th><th class="c">Vendite</th>
+        </tr>
+      </thead>
+      <tbody id="body-live"></tbody>
+      <tfoot id="foot-live"></tfoot>
+    </table>
+  </div>
+
+  <div class="legend">
+    <span><span class="sw" style="background:var(--panel);border:1px solid var(--line)"></span><b>Celle chiare</b> — le compili tu</span>
+    <span><span class="sw" style="background:var(--accent-soft);border:1px solid color-mix(in srgb,var(--accent) 25%,#fff)"></span><b>Celle con numero in grassetto</b> — calcolate dai lead, cliccabili</span>
+    <span><span class="sw" style="background:#fafafb;border:1px solid var(--line)"></span><b>Totale</b> — somma dei tre canali</span>
+    <span><span class="sw" style="background:#f4f4f6;border:1px solid var(--line)"></span><b>Archivio</b> — importato dall'Excel, sola lettura</span>
+  </div>
+
+  <section>
+    <h2>Cosa succede quando clicchi</h2>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;align-items:start">
+
+      <div>
+        <div class="label-mono" style="margin-bottom:10px">Cella con un numero &#8594; chi c'è dietro</div>
+        <div class="float" style="position:relative;width:auto;max-width:330px">
+          <div class="pop-hd"><strong>3 appuntamenti</strong><span class="label-mono">Welcome &middot; 7 set</span></div>
+          <div class="leadrow"><span>Marco Bianchi</span><span class="pill call">Call schedulata</span></div>
+          <div class="leadrow"><span>Elena Rossi</span><span class="pill pres">Call presentazione</span></div>
+          <div class="leadrow"><span>Davide Neri</span><span class="pill won">Vinta</span></div>
+          <div class="origin"><span>&#9432;</span><span>2 creati da questa tabella, 1 inserito dalla lista lead</span></div>
+          <button class="addbtn">+ Aggiungi un lead a questo giorno</button>
+        </div>
+        <p class="mock-note">Stessa cosa per le Vendite, ma senza il bottone di aggiunta: una vendita nasce chiudendo il lead in pipeline.</p>
+      </div>
+
+      <div>
+        <div class="label-mono" style="margin-bottom:10px">Cella vuota &#8594; nuovo lead da chat</div>
+        <div class="float" style="position:relative;width:auto;max-width:360px">
+          <div class="pop-hd"><strong>Nuovo lead</strong><span class="label-mono">Outbound &middot; 10 set</span></div>
+          <div class="dialog">
+            <div class="row2">
+              <div class="field"><label>Nome</label><div class="inp ph">Nome</div></div>
+              <div class="field"><label>Cognome</label><div class="inp ph">Cognome</div></div>
+            </div>
+            <div class="field"><label>Provenienza</label><div class="inp ro">Instagram <span class="label-mono" style="color:inherit">bloccato</span></div></div>
+            <div class="field"><label>Canale</label><div class="inp ro">Commento <span class="label-mono" style="color:inherit">dalla cella</span></div></div>
+            <div class="row2">
+              <div class="field"><label>Data appuntamento</label><div class="inp">10/09/2026</div></div>
+              <div class="field"><label>Ora</label><div class="inp ph">--:--</div></div>
+            </div>
+            <div class="field" style="margin-bottom:0"><label>Fascia di capitale</label><div class="inp ph">Seleziona</div></div>
+          </div>
+        </div>
+        <p class="mock-note">Lead e appuntamento nascono insieme, in una sola transazione. Provenienza e canale arrivano dalla cella e non sono modificabili qui.</p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Tooltip e validazione</h2>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;align-items:start">
+      <div>
+        <div class="tip" style="position:relative">
+          <b>10 appuntamenti</b><br>8 creati da Insight &amp; Stats<br>2 inseriti da lista lead o pipeline
+        </div>
+        <p class="mock-note">Visibile anche da tastiera e a lettore di schermo, non solo al passaggio del mouse.</p>
+      </div>
+      <div>
+        <div style="max-width:300px">
+          <div class="label-mono" style="margin-bottom:6px">Risposte outbound &middot; 3 set</div>
+          <div style="border:1px solid var(--danger);border-radius:var(--radius-input);padding:8px;text-align:center;font-family:var(--f-mono)">5</div>
+          <div class="err">Le risposte (5) non possono superare i messaggi inviati (3). Correggi il valore o aggiorna commenti e storie.</div>
+        </div>
+        <p class="mock-note">Nel foglio Excel questo errore compare in 29 giorni, senza che nessuno se ne accorga.</p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Un mese di archivio — Giugno 2025</h2>
+    <p class="sub" style="margin-bottom:14px">Importato dal foglio. Righe in sola lettura: commenti e storie non sono separabili, appuntamenti e vendite sono conteggi congelati senza lead dietro.</p>
+    <div class="panel tablecard">
+      <table id="tbl-arch">
+        <thead>
+          <tr>
+            <th class="day g d" rowspan="2">Giorno</th>
+            <th class="g w" colspan="4">Welcome</th>
+            <th class="g o sep" colspan="5">Outbound</th>
+            <th class="g i sep" colspan="3">Inbound</th>
+            <th class="g t sep" colspan="2">Totale</th>
+          </tr>
+          <tr>
+            <th class="c">Inviati</th><th class="c">Risposte</th><th class="c">Appunt.</th><th class="c">Vendite</th>
+            <th class="c sep" colspan="2">Messaggi (archivio)</th><th class="c">Risposte</th><th class="c">Appunt.</th><th class="c">Vendite</th>
+            <th class="c sep">Ricevuti</th><th class="c">Appunt.</th><th class="c">Vendite</th>
+            <th class="c sep">Appunt.</th><th class="c">Vendite</th>
+          </tr>
+        </thead>
+        <tbody id="body-arch"></tbody>
+        <tfoot id="foot-arch"></tfoot>
+      </table>
+    </div>
+  </section>
+
+  <section class="two">
+    <div>
+      <h2>Note sul comportamento</h2>
+      <ul style="font-size:13px;line-height:1.75;color:var(--muted);padding-left:18px">
+        <li>Il salvataggio delle celle bianche avviene uscendo dal campo. Tab si sposta di colonna, le frecce su/giù di giorno: la giornata si compila senza mouse.</li>
+        <li>I giorni futuri esistono ma sono spenti. Oggi è evidenziato.</li>
+        <li>La riga TOT somma i giorni; la riga sotto mostra la conversione da uno step al successivo. Entrambe sono sempre calcolate, mai digitate.</li>
+        <li>Se il mese mescola archivio e dato vivo, le due righe di riepilogo lo dichiarano.</li>
+        <li>Un lead conta una volta sola, il giorno del suo primo appuntamento.</li>
+      </ul>
+    </div>
+    <div>
+      <h2>Su telefono</h2>
+      <div class="phone">
+        <div class="pcard">
+          <h4><span>Mar 7 settembre</span><span style="color:var(--accent-ink)">3 appunt.</span></h4>
+          <div class="pgrp"><div class="t">Welcome</div>
+            <div class="prow"><span>Inviati</span><span class="n">67</span></div>
+            <div class="prow"><span>Risposte</span><span class="n">5</span></div>
+            <div class="prow"><span>Appuntamenti</span><span class="n" style="color:var(--accent-ink)">3</span></div>
+            <div class="prow"><span>Vendite</span><span class="n" style="color:var(--ok-ink)">1</span></div>
+          </div>
+          <div class="pgrp o"><div class="t">Outbound</div>
+            <div class="prow"><span>Commenti / Storie</span><span class="n">0 / 0</span></div>
+            <div class="prow"><span>Risposte</span><span class="n">0</span></div>
+          </div>
+          <div class="pgrp i"><div class="t">Inbound</div>
+            <div class="prow"><span>Ricevuti</span><span class="n">0</span></div>
+          </div>
+        </div>
+        <div class="pcard" style="opacity:.55">
+          <h4><span>Lun 8 settembre</span><span>—</span></h4>
+          <div class="prow" style="color:var(--muted);font-size:12px">14 welcome &middot; 1 risposta &middot; 4 commenti</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</div>
+
+<script>
+const SET2026=[[1,30,1,2,0,3,2,0,0,0,0],[2,24,3,0,0,4,3,0,0,1,0],[3,20,1,0,0,3,2,0,0,1,0],[4,33,5,0,0,2,1,0,0,0,0],[5,17,2,0,0,2,1,0,0,0,0],[6,0,1,0,0,0,0,0,0,1,0],[7,67,5,0,1,0,0,0,0,0,0],[8,14,1,0,0,4,1,0,0,0,0],[9,33,2,0,0,2,1,0,0,0,0]];
+const GIU2025=[[12,23,0,0,0,1,0,0,0,0,0],[13,32,2,0,0,4,3,1,0,0,0],[14,18,1,1,0,1,0,0,0,0,0],[15,24,0,0,0,0,0,0,0,0,0],[16,24,0,0,0,1,1,0,0,0,0],[17,14,3,0,0,2,1,0,0,1,0],[18,26,1,0,0,2,0,0,0,1,0],[19,25,2,0,0,1,1,0,0,0,0],[20,37,1,0,0,11,4,1,0,1,1],[21,31,3,0,0,2,1,0,0,1,0],[22,42,0,0,0,5,3,0,0,1,0],[23,29,3,0,1,0,1,1,0,0,0],[24,43,1,1,0,2,1,0,0,3,1],[25,51,1,0,0,1,0,0,0,0,0],[26,46,0,0,0,2,0,0,0,0,1],[27,47,1,1,0,2,1,0,0,1,0],[28,46,0,1,0,0,0,0,0,0,0],[29,42,3,1,0,1,0,0,0,1,0],[30,39,1,0,0,0,0,0,0,0,0]];
+const WD=["dom","lun","mar","mer","gio","ven","sab"];
+const TODAY=10;
+
+function inp(v,extra){return '<td'+(extra||'')+'><input class="cell'+(v?'':' zero')+'" type="number" value="'+v+'" aria-label="valore"></td>';}
+function der(v,cls,extra){
+  const c='derived'+(v?'':' empty')+(cls?' '+cls:'');
+  return '<td'+(extra||'')+'><button class="'+c+'">'+(v?v:'&#8211;')+'</button></td>';
+}
+function split(m){const c=Math.round(m*0.6);return [c,m-c];}
+
+function renderLive(){
+  let h='';
+  for(let d=1;d<=30;d++){
+    const r=SET2026.find(x=>x[0]===d);
+    const dt=new Date(2026,8,d);
+    const cls=d===TODAY?' class="today"':(d>TODAY?' class="future"':'');
+    const v=r||[d,0,0,0,0,0,0,0,0,0,0];
+    const [com,sto]=split(v[5]);
+    const tA=v[3]+v[7]+v[10], tV=v[4]+v[8]+v[11-0]||0;
+    const totA=v[3]+v[7]+v[10], totV=v[4]+v[8]+0;
+    h+='<tr'+cls+'>';
+    h+='<td class="day"><span class="dnum">'+String(d).padStart(2,'0')+'</span><span class="dwd">'+WD[dt.getDay()]+'</span>'+(d===TODAY?'<span class="badge">oggi</span>':'')+'</td>';
+    h+=inp(v[1])+inp(v[2])+der(v[3])+der(v[4],'sale');
+    h+=inp(com,' class="sep"')+inp(sto)+inp(v[6])+der(v[7])+der(v[8],'sale');
+    h+=inp(v[9],' class="sep"')+der(v[10])+der(0,'sale');
+    h+='<td class="totcol sep"><span class="derived tot'+(totA?'':' empty')+'">'+totA+'</span></td>';
+    h+='<td class="totcol"><span class="derived tot'+(totV?'':' empty')+'">'+totV+'</span></td>';
+    h+='</tr>';
+  }
+  document.getElementById('body-live').innerHTML=h;
+  const s=[0,0,0,0,0,0,0,0,0,0,0];
+  SET2026.forEach(r=>{for(let i=1;i<=10;i++)s[i]+=r[i];});
+  const [c,st]=split(s[5]);
+  const pct=(a,b)=>b?((a/b)*100).toFixed(1).replace('.',',')+'%':'—';
+  let f='<tr><td class="day">Totale mese</td>';
+  [s[1],s[2],s[3],s[4]].forEach(x=>f+='<td class="tot">'+x+'</td>');
+  f+='<td class="tot sep">'+c+'</td><td class="tot">'+st+'</td><td class="tot">'+s[6]+'</td><td class="tot">'+s[7]+'</td><td class="tot">'+s[8]+'</td>';
+  f+='<td class="tot sep">'+s[9]+'</td><td class="tot">'+s[10]+'</td><td class="tot">0</td>';
+  f+='<td class="tot sep">'+(s[3]+s[7]+s[10])+'</td><td class="tot">'+(s[4]+s[8])+'</td></tr>';
+  f+='<tr><td class="day">Conversione</td>';
+  f+='<td></td><td class="rate">'+pct(s[2],s[1])+'</td><td class="rate">'+pct(s[3],s[2])+'</td><td class="rate">'+pct(s[4],s[3])+'</td>';
+  f+='<td class="sep"></td><td></td><td class="rate">'+pct(s[6],s[5])+'</td><td class="rate">'+pct(s[7],s[6])+'</td><td class="rate">'+pct(s[8],s[7])+'</td>';
+  f+='<td class="sep"></td><td class="rate">'+pct(s[10],s[9])+'</td><td class="rate">—</td>';
+  f+='<td class="sep"></td><td class="rate">'+pct(s[4]+s[8],s[3]+s[7]+s[10])+'</td></tr>';
+  document.getElementById('foot-live').innerHTML=f;
+}
+
+function renderArch(){
+  let h='';
+  GIU2025.forEach(v=>{
+    const dt=new Date(2025,5,v[0]);
+    h+='<tr class="arch">';
+    h+='<td class="day"><span class="dnum">'+String(v[0]).padStart(2,'0')+'</span><span class="dwd">'+WD[dt.getDay()]+'</span></td>';
+    const a=x=>'<td><span class="archval'+(x?'':' archdash')+'">'+(x||'–')+'</span></td>';
+    const asep=x=>'<td class="sep"><span class="archval'+(x?'':' archdash')+'">'+(x||'–')+'</span></td>';
+    h+=a(v[1])+a(v[2])+a(v[3])+a(v[4]);
+    h+='<td class="sep" colspan="2"><span class="archval'+(v[5]?'':' archdash')+'">'+(v[5]||'–')+'</span></td>'+a(v[6])+a(v[7])+a(v[8]);
+    h+=asep(v[9])+a(v[10])+a(0);
+    h+='<td class="sep"><span class="archval">'+(v[3]+v[7]+v[10]||'–')+'</span></td><td><span class="archval">'+(v[4]+v[8]||'–')+'</span></td>';
+    h+='</tr>';
+  });
+  document.getElementById('body-arch').innerHTML=h;
+  const s=[0,0,0,0,0,0,0,0,0,0,0];
+  GIU2025.forEach(r=>{for(let i=1;i<=10;i++)s[i]+=r[i];});
+  const pct=(a,b)=>b?((a/b)*100).toFixed(1).replace('.',',')+'%':'—';
+  let f='<tr><td class="day">Totale mese <span class="badge">archivio</span></td>';
+  f+='<td class="tot">'+s[1]+'</td><td class="tot">'+s[2]+'</td><td class="tot">'+s[3]+'</td><td class="tot">'+s[4]+'</td>';
+  f+='<td class="tot sep" colspan="2">'+s[5]+'</td><td class="tot">'+s[6]+'</td><td class="tot">'+s[7]+'</td><td class="tot">'+s[8]+'</td>';
+  f+='<td class="tot sep">'+s[9]+'</td><td class="tot">'+s[10]+'</td><td class="tot">0</td>';
+  f+='<td class="tot sep">'+(s[3]+s[7]+s[10])+'</td><td class="tot">'+(s[4]+s[8])+'</td></tr>';
+  f+='<tr><td class="day">Conversione</td><td></td><td class="rate">'+pct(s[2],s[1])+'</td><td class="rate">'+pct(s[3],s[2])+'</td><td class="rate">'+pct(s[4],s[3])+'</td>';
+  f+='<td class="sep" colspan="2"></td><td class="rate">'+pct(s[6],s[5])+'</td><td class="rate">'+pct(s[7],s[6])+'</td><td class="rate">'+pct(s[8],s[7])+'</td>';
+  f+='<td class="sep"></td><td class="rate">'+pct(s[10],s[9])+'</td><td class="rate">—</td><td class="sep"></td><td class="rate">'+pct(s[4]+s[8],s[3]+s[7]+s[10])+'</td></tr>';
+  document.getElementById('foot-arch').innerHTML=f;
+}
+renderLive();renderArch();
+</script>
+</body>
+</html>

@@ -42,12 +42,30 @@ export async function updateOrganization(
     }
   }
 
-  const updateData: Prisma.OrganizationUpdateInput = {};
+  // The linked LeadSource MUST belong to the tenant being configured — a 404,
+  // not a 403, so we never confirm the existence of a cross-tenant id.
+  if (data.insightSourceId) {
+    const source = await deps.prisma.leadSource.findFirst({
+      where: { id: data.insightSourceId, organizationId: data.organizationId },
+      select: { id: true },
+    });
+    if (!source) {
+      throw new NotFoundError("LeadSource not found");
+    }
+  }
+
+  // Unchecked variant: `insightSourceId` is a plain FK scalar here (the
+  // ownership check above already guarantees it belongs to this tenant), not
+  // a nested relation write.
+  const updateData: Prisma.OrganizationUncheckedUpdateInput = {};
   if (data.name !== undefined) updateData.name = data.name;
   if (data.appName !== undefined) updateData.appName = data.appName;
   if (data.slug !== undefined) updateData.slug = data.slug;
   // `customDomain` is nullable: undefined leaves it untouched, null clears it.
   if (data.customDomain !== undefined) updateData.customDomain = data.customDomain;
+  // Same nullable convention for the Insight & Stats tenant configuration.
+  if (data.insightSourceId !== undefined) updateData.insightSourceId = data.insightSourceId;
+  if (data.insightActiveFrom !== undefined) updateData.insightActiveFrom = data.insightActiveFrom;
 
   await updateOrThrowNotFound(deps, data.organizationId, updateData, () => {
     if (data.slug !== undefined || data.customDomain !== undefined) {
@@ -148,7 +166,7 @@ export async function setOrganizationActive(
 async function updateOrThrowNotFound(
   deps: AdminDeps,
   organizationId: string,
-  data: Prisma.OrganizationUpdateInput,
+  data: Prisma.OrganizationUncheckedUpdateInput,
   onUniqueViolation?: () => never | void,
 ): Promise<void> {
   try {

@@ -11,8 +11,9 @@ import { z } from "zod";
  * The JSON is untrusted at the type level (it is a `Json` column), so we parse it
  * with Zod and apply safe defaults. Unknown keys are ignored; missing keys
  * default to the value below. Defaults are permissive for the core modules and
- * RESTRICTIVE for the optional/integration module (`calendarIntegrations`), so a
- * misconfigured/empty tenant never accidentally exposes an unbuilt integration.
+ * RESTRICTIVE for the optional/integration modules (`calendarIntegrations`,
+ * `insightStats`), so a misconfigured/empty tenant never accidentally exposes an
+ * unbuilt integration or module.
  */
 export const featureFlagsSchema = z
   .object({
@@ -22,6 +23,7 @@ export const featureFlagsSchema = z
     appointments: z.boolean().default(true),
     invoices: z.boolean().default(true),
     calendarIntegrations: z.boolean().default(false),
+    insightStats: z.boolean().default(false),
   })
   .partial()
   .transform((flags) => ({
@@ -31,6 +33,7 @@ export const featureFlagsSchema = z
     appointments: flags.appointments ?? true,
     invoices: flags.invoices ?? true,
     calendarIntegrations: flags.calendarIntegrations ?? false,
+    insightStats: flags.insightStats ?? false,
   }));
 
 export type FeatureFlags = z.infer<typeof featureFlagsSchema>;

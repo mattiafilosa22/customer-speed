@@ -61,6 +61,19 @@ enum CapitalBracket {
   B_OVER_1M // > 1 mln
 }
 
+/// Canale della conversazione Instagram da cui nasce il lead (docs/superpowers/specs/2026-09-10-insight-stats-design.md).
+/// WELCOME  = il consulente scrive per primo.
+/// OUTBOUND = il consulente scrive a chi ha reagito a un'esca (commento o storia).
+/// INBOUND  = è il potenziale cliente a scrivere per primo.
+/// Commento e storia restano distinti: nella tabella condividono le colonne
+/// Appuntamenti/Vendite, ma il dato più fine non si recupera se si butta.
+enum ChatChannel {
+  WELCOME
+  OUTBOUND_COMMENT
+  OUTBOUND_STORY
+  INBOUND
+}
+
 enum AppointmentStatus {
   PENDING // In attesa
   DONE // Fatto
@@ -92,6 +105,17 @@ model Organization {
   // cui il lead è candidato a backup+anonimizzazione (contenimento spazio DB).
   leadRetentionMonths Int?
 
+  // ── Insight & Stats (feature flag `insightStats`) ──
+  // Provenienza collegata alla sezione: solo i lead con questa `LeadSource`
+  // entrano nel report. Non si cabla la stringa "Instagram": le provenienze sono
+  // configurabili per tenant e rinominarle non deve svuotare il report.
+  insightSourceId String?
+  insightSource   LeadSource? @relation("InsightSource", fields: [insightSourceId], references: [id], onDelete: SetNull)
+
+  // Confine tra archivio (importato dall'Excel, sola lettura) e dato vivo.
+  // I giorni < insightActiveFrom sono archivio; da lì in poi la sezione calcola.
+  insightActiveFrom DateTime? @db.Date
+
   // Brand assets (pannello "Aspetto & brand", docs/05 §5.4). Fase 7.
   // Storage: per ora data URL (PNG/SVG) salvati direttamente in colonna @db.Text —
   // niente blob storage in questa fase. TODO infra: spostare su object storage
@@ -117,6 +141,7 @@ model Organization {
   calendarConnections CalendarConnection[]
   consents            Consent[]
   auditLogs           AuditLog[]
+  chatActivityDays    ChatActivityDay[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -193,6 +218,19 @@ model Lead {
   sourceId String?
   source   LeadSource? @relation(fields: [sourceId], references: [id], onDelete: SetNull)
 
+  // Canale di chat da cui nasce il lead (sezione Insight & Stats). Nullable in
+  // schema perché i lead di altre provenienze non lo hanno; OBBLIGATORIO in Zod
+  // quando `sourceId` è la provenienza collegata alla sezione per il tenant
+  // (Organization.insightSourceId) — così ogni lead del report finisce in una
+  // colonna e non nasce un secchio di "non attribuiti".
+  chatChannel ChatChannel?
+
+  // True quando il lead è stato creato cliccando una cella di Insight & Stats.
+  // Alimenta il tooltip "8 creati da qui, 2 inseriti da lista lead o pipeline".
+  // Colonna e non lettura di AuditLog: si aggrega nella stessa groupBy dei
+  // conteggi (zero query in più) e non dipende dalla retention degli audit.
+  createdFromInsight Boolean @default(false)
+
   adminNotes String? @db.Text // "Note admin" — testo lungo
 
   // Dati per lead persi.
@@ -238,6 +276,9 @@ model Lead {
   @@index([organizationId, sourceId])
   // Esclusione soft-deleted in modo efficiente nelle liste attive.
   @@index([organizationId, deletedAt])
+  // Insight & Stats: lead del canale X creati nel periodo Y (docs/00 §3 —
+  // organizationId sempre in testa).
+  @@index([organizationId, chatChannel, createdAt])
 }
 
 model StageHistory {
@@ -257,6 +298,9 @@ model StageHistory {
   @@index([leadId, changedAt])
   // KPI/funnel cross-lead per periodo (es. conversioni nel mese).
   @@index([organizationId, changedAt])
+  // Vendite del periodo per Insight & Stats: passaggi a WON in un intervallo.
+  // L'indice esistente [organizationId, changedAt] non ha lo stage nel prefisso.
+  @@index([organizationId, toStage, changedAt])
 }
 
 model Note {
@@ -335,6 +379,52 @@ model Invoice {
   @@index([leadId])
 }
 
+/// Una riga per giorno di calendario per tenant: i contatori di attività di chat
+/// che il CRM non può dedurre (volumi di messaggi inviati/ricevuti e risposte).
+/// Appuntamenti e vendite NON stanno qui per il periodo vivo — si calcolano da
+/// Lead/Appointment/StageHistory — ma sì per l'archivio importato dall'Excel,
+/// che non ha entità dietro e non cambierà mai.
+model ChatActivityDay {
+  id             String       @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  date DateTime @db.Date
+
+  // Contatori manuali (periodo vivo e archivio).
+  welcomeSent      Int @default(0)
+  welcomeReplies   Int @default(0)
+  outboundComments Int @default(0)
+  outboundStories  Int @default(0)
+  outboundReplies  Int @default(0)
+  inboundReceived  Int @default(0)
+
+  // ── Archivio: valorizzato SOLO per date < Organization.insightActiveFrom ──
+  isArchived Boolean @default(false)
+
+  // Il foglio ha UNA colonna "Messaggi" outbound, non separabile in commenti e
+  // storie: per l'archivio si conserva il valore aggregato così com'era.
+  archivedOutboundMessages Int?
+
+  // Conteggi congelati: nessun lead dietro, celle non cliccabili nella UI.
+  archivedWelcomeAppointments  Int?
+  archivedWelcomeSales         Int?
+  archivedOutboundAppointments Int?
+  archivedOutboundSales        Int?
+  archivedInboundAppointments  Int?
+  archivedInboundSales         Int?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Un solo record per giorno per tenant: è anche la chiave dell'upsert usato
+  // dal salvataggio inline e dall'import (che diventa così idempotente). Il
+  // btree che Postgres crea per questo vincolo serve anche la lettura del mese
+  // (range scan sul prefisso tenant): nessun @@index separato, sarebbe ridondante
+  // (docs/00 §3 — nessun indice ridondante).
+  @@unique([organizationId, date])
+}
+
 model ExternalCrmRef {
   id             String       @id @default(cuid())
   organizationId String
@@ -380,6 +470,8 @@ model LeadSource {
   isActive  Boolean @default(true)
   sortOrder Int     @default(0)
   leads     Lead[]
+
+  insightForOrganizations Organization[] @relation("InsightSource")
 
   @@unique([organizationId, label]) // sorgente unica per tenant
   // Elenco sorgenti del tenant ordinato (Settings + select del form lead).

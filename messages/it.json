@@ -6,6 +6,8 @@
   "nav": {
     "ariaLabel": "Navigazione principale",
     "dashboard": "Dashboard",
+    "insight": "{source} Stats",
+    "insightFallback": "Insight & Stats",
     "pipeline": "Pipeline",
     "leads": "Lead",
     "appointments": "Appuntamenti",
@@ -266,6 +268,12 @@
       "PENDING": "In attesa",
       "DONE": "Fatto",
       "CANCELED": "Annullato"
+    },
+    "chatChannel": {
+      "WELCOME": "Welcome",
+      "OUTBOUND_COMMENT": "Commento",
+      "OUTBOUND_STORY": "Storia",
+      "INBOUND": "Inbound"
     }
   },
   "common": {
@@ -358,6 +366,7 @@
         "lastName": "Inserisci un cognome valido.",
         "email": "Inserisci un'email valida.",
         "phone": "Inserisci un telefono valido.",
+        "chatChannel": "Seleziona il canale della conversazione.",
         "lossReasonId": "Seleziona il motivo della perdita.",
         "lossReasonCustomText": "Inserisci un motivo della perdita valido.",
         "form": "Controlla i dati inseriti."
@@ -369,6 +378,7 @@
       "email": "Email",
       "phone": "Telefono",
       "source": "Provenienza",
+      "chatChannel": "Canale",
       "capital": "Capitale"
     }
   },
@@ -1110,7 +1120,17 @@
         "dashboard": "Dashboard",
         "appointments": "Appuntamenti",
         "invoices": "Fatture",
-        "calendarIntegrations": "Integrazioni calendario"
+        "calendarIntegrations": "Integrazioni calendario",
+        "insightStats": "Insight & Stats"
+      },
+      "insightSource": {
+        "label": "Provenienza collegata",
+        "placeholder": "Nessuna provenienza selezionata",
+        "hint": "Ogni lead creato da Insight & Stats userà questa provenienza."
+      },
+      "insightActiveFrom": {
+        "label": "Attivo dal",
+        "hint": "Le giornate precedenti sono considerate archivio."
       },
       "save": "Salva funzionalità",
       "saving": "Salvataggio…",
@@ -1143,6 +1163,109 @@
         "activate": "Attiva",
         "deactivate": "Disattiva",
         "resetPassword": "Reset password"
+      }
+    }
+  },
+  "insight": {
+    "title": "{source} Stats",
+    "titleFallback": "Insight & Stats",
+    "description": "Attività chat, appuntamenti e vendite del mese.",
+    "saved": "Attività salvata.",
+    "saving": "Salvataggio…",
+    "savedShort": "Salvato",
+    "unconfigured": {
+      "title": "Configura Insight & Stats",
+      "description": "Collega una provenienza nelle funzionalità del tenant per iniziare."
+    },
+    "columns": {
+      "date": "Giorno",
+      "welcomeSent": "Inviati",
+      "replies": "Risposte",
+      "comments": "Commenti",
+      "stories": "Storie",
+      "messages": "Messaggi",
+      "received": "Ricevuti",
+      "appointments": "Appuntamenti",
+      "sales": "Vendite"
+    },
+    "groups": {
+      "welcome": "Welcome",
+      "outbound": "Outbound",
+      "inbound": "Inbound",
+      "total": "Totale"
+    },
+    "summary": {
+      "total": "Totale mese",
+      "conversion": "Conversione",
+      "mixedPeriod": "Questo mese contiene archivio e dato vivo."
+    },
+    "archive": {
+      "badge": "Archivio",
+      "messages": "Messaggi (archivio)"
+    },
+    "kpis": {
+      "conversations": "Conversazioni avviate",
+      "replies": "Risposte ottenute",
+      "appointments": "Appuntamenti",
+      "sales": "Vendite",
+      "bestChannel": "Canale migliore",
+      "none": "—"
+    },
+    "unattributed": {
+      "message": "{count} lead della provenienza collegata non hanno un canale e non sono attribuiti.",
+      "cta": "Assegna il canale"
+    },
+    "tooltip": {
+      "composition": "{total} totali: {fromInsight} creati da Insight & Stats, {other} inseriti da lista lead o pipeline"
+    },
+    "monthNav": {
+      "previous": "Mese precedente",
+      "next": "Mese successivo",
+      "label": "Mese visualizzato"
+    },
+    "newLead": {
+      "title": "Aggiungi lead e appuntamento",
+      "description": "Il lead sarà attribuito alla provenienza e al canale della cella.",
+      "source": "Provenienza",
+      "channel": "Canale",
+      "firstName": "Nome",
+      "lastName": "Cognome",
+      "email": "Email",
+      "phone": "Telefono",
+      "date": "Data appuntamento",
+      "time": "Ora appuntamento",
+      "reason": "Motivo",
+      "reasonDefault": "Call conoscitiva",
+      "save": "Salva",
+      "cancel": "Annulla",
+      "success": "Lead e appuntamento creati."
+    },
+    "cellLeads": {
+      "title": "Lead attribuiti",
+      "loading": "Caricamento…",
+      "empty": "Nessun lead attribuito.",
+      "add": "Aggiungi un lead",
+      "close": "Chiudi"
+    },
+    "errors": {
+      "repliesExceedWelcome": "Le risposte non possono superare i welcome inviati.",
+      "repliesExceedOutbound": "Le risposte non possono superare commenti e storie.",
+      "futureDay": "Non puoi modificare un giorno futuro.",
+      "archivedDay": "I giorni di archivio sono in sola lettura.",
+      "channelRequired": "Il canale è obbligatorio.",
+      "unauthorized": "Non hai i permessi per questa operazione.",
+      "notFound": "La sezione non è disponibile.",
+      "generic": "Non è stato possibile completare l’operazione.",
+      "fields": {
+        "form": "Controlla i dati inseriti.",
+        "date": "Data non valida.",
+        "firstName": "Inserisci il nome.",
+        "lastName": "Inserisci il cognome.",
+        "email": "Email non valida.",
+        "phone": "Telefono non valido.",
+        "appointmentAt": "Data o ora non valida.",
+        "reason": "Inserisci il motivo.",
+        "chatChannel": "Canale non valido."
       }
     }
   },

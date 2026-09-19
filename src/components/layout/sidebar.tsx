@@ -9,6 +9,7 @@ interface SidebarProps {
   appName: string;
   /** Feature flags the tenant has enabled (drives nav + mini-calendar). */
   enabledFeatures: ReadonlyArray<FeatureFlagKey>;
+  insightSourceLabel: string | null;
 }
 
 /**
@@ -19,7 +20,7 @@ interface SidebarProps {
  * When the tenant has the `appointments` feature, the sidebar also hosts the
  * mini-calendar (docs/02 §2.7) under the nav.
  */
-export async function Sidebar({ appName, enabledFeatures }: SidebarProps) {
+export async function Sidebar({ appName, enabledFeatures, insightSourceLabel }: SidebarProps) {
   const t = await getTranslations("nav");
   const showCalendar = enabledFeatures.includes("appointments");
 
@@ -30,7 +31,10 @@ export async function Sidebar({ appName, enabledFeatures }: SidebarProps) {
           <Brand appName={appName} />
         </div>
         <nav aria-label={t("ariaLabel")}>
-          <SidebarNav enabledFeatures={enabledFeatures} />
+          <SidebarNav
+            enabledFeatures={enabledFeatures}
+            insightSourceLabel={insightSourceLabel}
+          />
         </nav>
         {showCalendar ? <MiniCalendar /> : null}
       </div>

@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { NotFoundError, ValidationError } from "@/lib/errors";
-import { CapitalBracket } from "@/generated/prisma/enums";
+import { CapitalBracket, ChatChannel } from "@/generated/prisma/enums";
 import { updateLead } from "@/server/leads/update-lead";
 import { buildFakeLeadDeps, LeadStore } from "@/server/leads/test-helpers";
 
@@ -166,6 +166,27 @@ describe("updateLead", () => {
     await expect(updateLead(deps, lead.id, { sourceId: otherSource.id })).rejects.toBeInstanceOf(
       NotFoundError,
     );
+  });
+
+  it("requires and stores the channel when moving to the linked source", async () => {
+    const store = new LeadStore();
+    const lead = store.addLead({ organizationId: ORG_A });
+    const source = store.addSource({ organizationId: ORG_A, label: "Instagram" });
+    store.setInsightSource(ORG_A, source.id);
+    const deps = buildFakeLeadDeps(store, ORG_A, USER_A);
+
+    await expect(updateLead(deps, lead.id, { sourceId: source.id })).rejects.toMatchObject({
+      issues: { chatChannel: ["leads.errors.chatChannelRequired"] },
+    });
+
+    await updateLead(deps, lead.id, {
+      sourceId: source.id,
+      chatChannel: ChatChannel.INBOUND,
+    });
+    expect(store.lead()).toMatchObject({
+      sourceId: source.id,
+      chatChannel: ChatChannel.INBOUND,
+    });
   });
 
   it("cannot update a lead in another tenant (404, no write)", async () => {

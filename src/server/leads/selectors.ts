@@ -39,6 +39,7 @@ export const leadDetailSelect = {
   capitalAmount: true,
   adminNotes: true,
   sourceId: true,
+  chatChannel: true,
   lossReasonId: true,
   createdAt: true,
   updatedAt: true,

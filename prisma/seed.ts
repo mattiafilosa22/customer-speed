@@ -1,16 +1,12 @@
 import { hash } from "@node-rs/argon2";
 
-import {
-  AppointmentStatus,
-  CapitalBracket,
-  LeadStage,
-  Role,
-} from "../src/generated/prisma/enums";
+import { AppointmentStatus, CapitalBracket, LeadStage, Role } from "../src/generated/prisma/enums";
 import { Prisma, PrismaClient } from "../src/generated/prisma/client";
 import {
   ARGON2ID,
   FEATURE_FLAGS,
   createClient,
+  linkInsightSource,
   seedPassword,
   upsertTenant,
   upsertUser,
@@ -259,13 +255,18 @@ async function main(): Promise<void> {
       passwordHash: superAdminPassword,
     });
 
-    // 2) Fabio tenant (proUser) with calendar integrations OFF.
+    // 2) Fabio tenant (proUser) with calendar integrations OFF and Insight &
+    //    Stats ON — it's literally Fabio's Instagram prospecting sheet this
+    //    section replaces (spec §Contesto), so the e2e tenant IS the real one.
     const fabioOrg = await upsertTenant(prisma, {
       name: "Fabio Consulting",
       slug: FABIO_SLUG,
       appName: "CustomerSpeed",
-      featureFlags: { ...FEATURE_FLAGS, calendarIntegrations: false },
+      featureFlags: { ...FEATURE_FLAGS, calendarIntegrations: false, insightStats: true },
     });
+    // insightActiveFrom stays null: no archive in the live seed, only in the
+    // one-off import (scripts/import-insight-history.ts) or via the admin panel.
+    await linkInsightSource(prisma, fabioOrg.id, "Instagram");
 
     const fabio = await upsertUser(prisma, {
       organizationId: fabioOrg.id,

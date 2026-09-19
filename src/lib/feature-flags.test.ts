@@ -11,6 +11,7 @@ describe("parseFeatureFlags", () => {
       appointments: true,
       invoices: true,
       calendarIntegrations: false,
+      insightStats: false,
     });
   });
 
@@ -38,5 +39,13 @@ describe("parseFeatureFlags", () => {
     expect(parseFeatureFlags(null).appointments).toBe(true);
     expect(parseFeatureFlags("nope").calendarIntegrations).toBe(false);
     expect(parseFeatureFlags(42).leads).toBe(true);
+  });
+
+  it("defaults insightStats to false — optional module, restrictive default", () => {
+    expect(parseFeatureFlags({}).insightStats).toBe(false);
+  });
+
+  it("honours an explicit insightStats:true", () => {
+    expect(parseFeatureFlags({ insightStats: true }).insightStats).toBe(true);
   });
 });

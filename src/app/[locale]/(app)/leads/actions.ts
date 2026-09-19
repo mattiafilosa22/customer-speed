@@ -97,6 +97,7 @@ export async function createLeadAction(
       capitalAmount: str(form, "capitalAmount") || undefined,
       capitalBracket: str(form, "capitalBracket") || undefined,
       sourceId: str(form, "sourceId") || undefined,
+      chatChannel: str(form, "chatChannel") || undefined,
     });
 
     leadPaths();
@@ -121,7 +122,15 @@ export async function updateLeadAction(
 
     // Only forward keys actually present in the form (partial PATCH semantics).
     const patch: Record<string, string | undefined> = {};
-    for (const key of ["firstName", "lastName", "email", "phone", "adminNotes", "sourceId"]) {
+    for (const key of [
+      "firstName",
+      "lastName",
+      "email",
+      "phone",
+      "adminNotes",
+      "sourceId",
+      "chatChannel",
+    ]) {
       const value = optionalStr(form, key);
       if (value !== undefined) patch[key] = value;
     }
