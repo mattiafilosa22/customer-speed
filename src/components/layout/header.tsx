@@ -15,6 +15,7 @@ interface HeaderProps {
   locale: string;
   /** Feature flags the tenant has enabled (drives the mobile drawer nav). */
   enabledFeatures: ReadonlyArray<FeatureFlagKey>;
+  insightSourceLabel: string | null;
   /** Effective light/dark mode (drives the toggle's initial icon/state). */
   mode: ResolvedMode;
 }
@@ -30,12 +31,17 @@ export async function Header({
   userName,
   locale,
   enabledFeatures,
+  insightSourceLabel,
   mode,
 }: HeaderProps) {
   const t = await getTranslations("account");
   return (
     <header className="sticky top-0 z-30 flex min-h-14 items-center gap-2 border-b border-line bg-panel px-4 sm:gap-3 sm:px-6">
-      <MobileDrawer appName={appName} enabledFeatures={enabledFeatures} />
+      <MobileDrawer
+        appName={appName}
+        enabledFeatures={enabledFeatures}
+        insightSourceLabel={insightSourceLabel}
+      />
       {/* Reserved for breadcrumb / page title (later phases). */}
       <div className="flex-1" />
       <ThemeModeToggle initialMode={mode} />

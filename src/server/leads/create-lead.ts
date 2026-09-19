@@ -3,6 +3,7 @@ import { parseInput } from "@/server/validation";
 import { clockNow, type LeadDeps } from "@/server/leads/deps";
 import { createLeadSchema } from "@/server/leads/schemas";
 import { assertSourceBelongsToTenant } from "@/server/leads/ownership";
+import { requireChannelForLinkedSource } from "@/server/leads/chat-channel";
 
 /**
  * Create a lead inside the current tenant (docs/02 §2.4, docs/04 §4.3 POST).
@@ -23,6 +24,7 @@ export async function createLead(deps: LeadDeps, input: unknown): Promise<{ id: 
   if (data.sourceId) {
     await assertSourceBelongsToTenant(deps, data.sourceId);
   }
+  await requireChannelForLinkedSource(deps, data.sourceId, data.chatChannel);
 
   // Capital on create: exact amount OR bracket; the amount wins and the bracket
   // is derived from it (docs/02 §2.4) — single shared resolver, server-side.
@@ -45,6 +47,7 @@ export async function createLead(deps: LeadDeps, input: unknown): Promise<{ id: 
       capitalBracket: capital?.capitalBracket ?? null,
       capitalAmount: capital?.capitalAmount ?? null,
       sourceId: data.sourceId ?? null,
+      chatChannel: data.chatChannel ?? null,
       stageChangedAt: now,
     },
     select: { id: true },

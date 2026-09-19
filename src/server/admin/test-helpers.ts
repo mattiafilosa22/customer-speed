@@ -33,6 +33,15 @@ export interface FakeOrg {
   markFallback: string | null;
   poweredBy: boolean;
   createdAt: Date;
+  insightSourceId: string | null;
+  insightActiveFrom: Date | null;
+}
+
+export interface FakeLeadSource {
+  id: string;
+  organizationId: string;
+  label: string;
+  sortOrder: number;
 }
 
 export interface FakeUser {
@@ -76,7 +85,7 @@ export class AdminFakeDb {
   leads: FakeLead[] = [];
   invoices: FakeInvoice[] = [];
   resetTokens: FakeResetToken[] = [];
-  leadSources: Array<Record<string, unknown>> = [];
+  leadSources: FakeLeadSource[] = [];
   lossReasons: Array<Record<string, unknown>> = [];
   stageConfigs: Array<Record<string, unknown>> = [];
   audits: AuditEvent[] = [];
@@ -87,6 +96,12 @@ export class AdminFakeDb {
   nextId(prefix: string): string {
     this.seq += 1;
     return `${prefix}_${this.seq}`;
+  }
+
+  /** cuid-shaped id (`insightSourceId` is validated with `z.string().cuid()`). */
+  private nextCuid(): string {
+    this.seq += 1;
+    return `c${this.seq.toString().padStart(24, "0")}`;
   }
 
   addOrg(p: Partial<FakeOrg> & { slug: string }): FakeOrg {
@@ -103,8 +118,21 @@ export class AdminFakeDb {
       markFallback: p.markFallback ?? null,
       poweredBy: p.poweredBy ?? true,
       createdAt: p.createdAt ?? new Date("2026-01-01T00:00:00.000Z"),
+      insightSourceId: p.insightSourceId ?? null,
+      insightActiveFrom: p.insightActiveFrom ?? null,
     };
     this.orgs.push(row);
+    return row;
+  }
+
+  addLeadSource(p: Partial<FakeLeadSource> & Pick<FakeLeadSource, "organizationId">): FakeLeadSource {
+    const row: FakeLeadSource = {
+      id: p.id ?? this.nextCuid(),
+      organizationId: p.organizationId,
+      label: p.label ?? "Fonte",
+      sortOrder: p.sortOrder ?? 0,
+    };
+    this.leadSources.push(row);
     return row;
   }
 
@@ -410,8 +438,45 @@ function createFakePrisma(db: AdminFakeDb): PrismaClient {
     },
     leadSource: {
       createMany: async ({ data }: { data: Array<Record<string, unknown>> }) => {
-        db.leadSources.push(...data);
+        for (const row of data) {
+          db.addLeadSource({
+            organizationId: row.organizationId as string,
+            label: row.label as string,
+            sortOrder: row.sortOrder as number | undefined,
+          });
+        }
         return { count: data.length };
+      },
+      findFirst: async ({
+        where = {},
+        select,
+      }: {
+        where?: Record<string, unknown>;
+        select?: Record<string, boolean>;
+      }) => {
+        const row = db.leadSources.find((s) => {
+          if (where.id !== undefined && s.id !== where.id) return false;
+          if (where.organizationId !== undefined && s.organizationId !== where.organizationId)
+            return false;
+          return true;
+        });
+        return row ? pick(row as unknown as Record<string, unknown>, select) : null;
+      },
+      findMany: async ({
+        where = {},
+        select,
+        orderBy,
+      }: {
+        where?: Record<string, unknown>;
+        select?: Record<string, boolean>;
+        orderBy?: { sortOrder?: "asc" | "desc" };
+      }) => {
+        let rows = db.leadSources.filter(
+          (s) => where.organizationId === undefined || s.organizationId === where.organizationId,
+        );
+        if (orderBy?.sortOrder === "desc") rows = [...rows].sort((a, b) => b.sortOrder - a.sortOrder);
+        else if (orderBy?.sortOrder === "asc") rows = [...rows].sort((a, b) => a.sortOrder - b.sortOrder);
+        return rows.map((r) => pick(r as unknown as Record<string, unknown>, select));
       },
     },
     lossReason: {

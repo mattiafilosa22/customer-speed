@@ -15,6 +15,7 @@ const requireTenantContext = vi.fn();
 const requirePermission = vi.fn();
 const buildLeadDeps = vi.fn((..._a: unknown[]) => ({ deps: true }));
 const createLead = vi.fn();
+const updateLead = vi.fn();
 const softDeleteLead = vi.fn();
 const changeStage = vi.fn();
 const exportLeadDataXlsx = vi.fn();
@@ -35,7 +36,7 @@ vi.mock("@/server/leads", () => ({
   softDeleteLead: (...a: unknown[]) => softDeleteLead(...a),
   changeStage: (...a: unknown[]) => changeStage(...a),
   // Unused-by-these-tests members still imported by the module:
-  updateLead: vi.fn(),
+  updateLead: (...a: unknown[]) => updateLead(...a),
   createNote: vi.fn(),
   updateNote: vi.fn(),
   deleteNote: vi.fn(),
@@ -60,6 +61,7 @@ import {
   createLeadAction,
   deleteLeadAction,
   exportLeadDataXlsxAction,
+  updateLeadAction,
 } from "@/app/[locale]/(app)/leads/actions";
 
 const TENANT = { kind: "tenant", role: "proUser", organizationId: "org_a", userId: "u" };
@@ -78,9 +80,16 @@ describe("createLeadAction", () => {
     requirePermission.mockReturnValue(undefined);
     createLead.mockResolvedValue({ id: "lead_1" });
 
-    const res = await createLeadAction({ status: "idle" }, fd({ firstName: "Mario", lastName: "Rossi" }));
+    const res = await createLeadAction(
+      { status: "idle" },
+      fd({ firstName: "Mario", lastName: "Rossi", chatChannel: "INBOUND" }),
+    );
 
     expect(requirePermission).toHaveBeenCalledWith("proUser", "lead.create");
+    expect(createLead).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({ chatChannel: "INBOUND" }),
+    );
     expect(res).toEqual({ status: "success", messageKey: "leads.create.success" });
   });
 
@@ -100,6 +109,26 @@ describe("createLeadAction", () => {
       status: "error",
       fieldErrors: { firstName: "leads.errors.fields.firstName" },
     });
+  });
+});
+
+describe("updateLeadAction", () => {
+  it("forwards source and chat channel using PATCH semantics", async () => {
+    requireTenantContext.mockResolvedValue(TENANT);
+    requirePermission.mockReturnValue(undefined);
+    updateLead.mockResolvedValue({ id: "lead_1" });
+
+    const res = await updateLeadAction(
+      { status: "idle" },
+      fd({ leadId: "lead_1", sourceId: "instagram", chatChannel: "OUTBOUND_STORY" }),
+    );
+
+    expect(updateLead).toHaveBeenCalledWith(
+      expect.anything(),
+      "lead_1",
+      expect.objectContaining({ sourceId: "instagram", chatChannel: "OUTBOUND_STORY" }),
+    );
+    expect(res.status).toBe("success");
   });
 });
 

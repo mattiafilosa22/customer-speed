@@ -5,6 +5,7 @@ import itMessages from "../../messages/it.json";
 import {
   AppointmentStatus,
   CapitalBracket,
+  ChatChannel,
   LeadStage,
 } from "@/generated/prisma/enums";
 
@@ -45,6 +46,13 @@ describe("message catalogues", () => {
     for (const value of Object.values(AppointmentStatus)) {
       expect(itMessages.enum.appointmentStatus[value]).toBeTruthy();
       expect(en.enum.appointmentStatus[value]).toBeTruthy();
+    }
+  });
+
+  it("covers every ChatChannel value in both locales", () => {
+    for (const value of Object.values(ChatChannel)) {
+      expect(itMessages.enum.chatChannel[value]).toBeTruthy();
+      expect(en.enum.chatChannel[value]).toBeTruthy();
     }
   });
 });

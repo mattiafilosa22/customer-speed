@@ -57,6 +57,18 @@ describe("rbac", () => {
     expect(() => requirePermission("proUser", "lead.delete")).not.toThrow();
   });
 
+  it("grants insight.view to every role but insight.edit only to proUser", () => {
+    expect(can("superAdmin", "insight.view")).toBe(true);
+    expect(can("proUser", "insight.view")).toBe(true);
+    expect(can("baseUser", "insight.view")).toBe(true);
+
+    expect(can("proUser", "insight.edit")).toBe(true);
+    // superAdmin non è un utente operativo: vede, non scrive.
+    expect(can("superAdmin", "insight.edit")).toBe(false);
+    // baseUser può creare un lead da una cella (lead.create), non toccare i volumi.
+    expect(can("baseUser", "insight.edit")).toBe(false);
+  });
+
   it("every capability is granted to at least one role (no dead capability)", () => {
     const roles = ["superAdmin", "proUser", "baseUser"] as const;
     for (const cap of CAPABILITIES) {

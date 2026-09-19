@@ -30,6 +30,8 @@ import { EditLeadDialog } from "@/components/leads/detail/edit-lead-dialog";
 import { LeadOverflowActions } from "@/components/leads/detail/lead-overflow-actions";
 import { InvoicesPanel } from "@/components/leads/detail/invoices-panel";
 import { AppointmentsPanel } from "@/components/leads/detail/appointments-panel";
+import { buildInsightDeps } from "@/server/insight/context-deps";
+import { getInsightConfig } from "@/server/insight/config";
 
 /**
  * Lead detail (docs/02 §2.5). Layout "Note colonna centrale Attività":
@@ -80,9 +82,10 @@ export default async function LeadDetailPage({
     throw error;
   }
 
-  const [sources, lossReasons] = await Promise.all([
+  const [sources, lossReasons, insightConfig] = await Promise.all([
     listLeadSources(deps),
     listLossReasons(deps),
+    getInsightConfig(buildInsightDeps(ctx)),
   ]);
 
   const fullName = `${lead.firstName} ${lead.lastName}`;
@@ -160,6 +163,10 @@ export default async function LeadDetailPage({
               lastName={lead.lastName}
               email={lead.email}
               phone={lead.phone}
+              sourceId={lead.sourceId}
+              sources={sources}
+              insightSourceId={insightConfig?.sourceId ?? null}
+              chatChannel={lead.chatChannel}
             />
           ) : null}
           {perms.canMove ? (

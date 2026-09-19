@@ -17,6 +17,7 @@ export interface ShellBranding {
   readonly appName: string;
   readonly markFallback: string | null;
   readonly poweredBy: boolean;
+  readonly insightSourceLabel: string | null;
 }
 
 export async function getShellBranding(
@@ -25,7 +26,13 @@ export async function getShellBranding(
 ): Promise<ShellBranding> {
   const org = await prisma.organization.findUnique({
     where: { id: organizationId },
-    select: { appName: true, theme: true, markFallback: true, poweredBy: true },
+    select: {
+      appName: true,
+      theme: true,
+      markFallback: true,
+      poweredBy: true,
+      insightSource: { select: { label: true } },
+    },
   });
 
   return {
@@ -33,5 +40,6 @@ export async function getShellBranding(
     appName: org?.appName ?? fallbackAppName,
     markFallback: org?.markFallback ?? null,
     poweredBy: org?.poweredBy ?? true,
+    insightSourceLabel: org?.insightSource?.label ?? null,
   };
 }

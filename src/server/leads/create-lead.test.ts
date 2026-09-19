@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { NotFoundError, ValidationError } from "@/lib/errors";
-import { CapitalBracket, LeadStage } from "@/generated/prisma/enums";
+import { CapitalBracket, ChatChannel, LeadStage } from "@/generated/prisma/enums";
 import { createLead } from "@/server/leads/create-lead";
 import { buildFakeLeadDeps, LeadStore } from "@/server/leads/test-helpers";
 
@@ -48,6 +48,46 @@ describe("createLead", () => {
       sourceId: source.id,
     });
     expect(id).toBeTruthy();
+  });
+
+  it("stores the chat channel when provided", async () => {
+    const store = new LeadStore();
+    const source = store.addSource({ organizationId: ORG_A, label: "Instagram" });
+    const deps = buildFakeLeadDeps(store, ORG_A, USER_A);
+
+    await createLead(deps, {
+      firstName: "Marco",
+      lastName: "Bianchi",
+      sourceId: source.id,
+      chatChannel: ChatChannel.OUTBOUND_STORY,
+    });
+
+    expect(store.lead().chatChannel).toBe(ChatChannel.OUTBOUND_STORY);
+  });
+
+  it("requires a chat channel for the source linked to Insight & Stats", async () => {
+    const store = new LeadStore();
+    const source = store.addSource({ organizationId: ORG_A, label: "Instagram" });
+    store.setInsightSource(ORG_A, source.id);
+    const deps = buildFakeLeadDeps(store, ORG_A, USER_A);
+
+    await expect(
+      createLead(deps, { firstName: "Marco", lastName: "Bianchi", sourceId: source.id }),
+    ).rejects.toMatchObject({
+      issues: { chatChannel: ["leads.errors.chatChannelRequired"] },
+    });
+  });
+
+  it("does not require a chat channel for another source", async () => {
+    const store = new LeadStore();
+    const linked = store.addSource({ organizationId: ORG_A, label: "Instagram" });
+    const other = store.addSource({ organizationId: ORG_A, label: "Referenza" });
+    store.setInsightSource(ORG_A, linked.id);
+    const deps = buildFakeLeadDeps(store, ORG_A, USER_A);
+
+    await expect(
+      createLead(deps, { firstName: "Marco", lastName: "Bianchi", sourceId: other.id }),
+    ).resolves.toBeDefined();
   });
 
   it("rejects a sourceId belonging to ANOTHER tenant (cross-tenant isolation → 404)", async () => {

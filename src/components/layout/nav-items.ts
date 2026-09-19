@@ -4,6 +4,7 @@ import type { FeatureFlagKey } from "@/lib/feature-flags";
 import {
   AppointmentsIcon,
   DashboardIcon,
+  InsightIcon,
   LeadIcon,
   PipelineIcon,
   SettingsIcon,
@@ -12,6 +13,7 @@ import {
 /** Keys of the `nav` message namespace that act as item labels. */
 type NavMessageKey =
   | "dashboard"
+  | "insight"
   | "pipeline"
   | "leads"
   | "appointments"
@@ -39,6 +41,12 @@ export interface NavItem {
 
 export const NAV_ITEMS: ReadonlyArray<NavItem> = [
   { messageKey: "dashboard", href: "/dashboard", icon: DashboardIcon },
+  {
+    messageKey: "insight",
+    href: "/insight",
+    icon: InsightIcon,
+    feature: "insightStats",
+  },
   { messageKey: "pipeline", href: "/pipeline", icon: PipelineIcon },
   { messageKey: "leads", href: "/leads", icon: LeadIcon },
   {

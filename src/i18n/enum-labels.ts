@@ -4,6 +4,7 @@ import { getTranslations } from "next-intl/server";
 import {
   AppointmentStatus,
   CapitalBracket,
+  ChatChannel,
   LeadStage,
 } from "@/generated/prisma/enums";
 
@@ -28,6 +29,7 @@ type LeadStageValue = (typeof LeadStage)[keyof typeof LeadStage];
 type CapitalBracketValue = (typeof CapitalBracket)[keyof typeof CapitalBracket];
 type AppointmentStatusValue =
   (typeof AppointmentStatus)[keyof typeof AppointmentStatus];
+type ChatChannelValue = (typeof ChatChannel)[keyof typeof ChatChannel];
 
 // --- Lead stage -----------------------------------------------------------
 
@@ -72,5 +74,17 @@ export async function getAppointmentStatusLabel(
   value: AppointmentStatusValue,
 ): Promise<string> {
   const t = await getTranslations("enum.appointmentStatus");
+  return t(value);
+}
+
+// --- Chat channel ---------------------------------------------------------
+
+export function useChatChannelLabel(): (value: ChatChannelValue) => string {
+  const t = useTranslations("enum.chatChannel");
+  return (value) => t(value);
+}
+
+export async function getChatChannelLabel(value: ChatChannelValue): Promise<string> {
+  const t = await getTranslations("enum.chatChannel");
   return t(value);
 }

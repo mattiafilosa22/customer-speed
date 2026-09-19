@@ -40,6 +40,15 @@ export function DashboardIcon(props: IconProps) {
   );
 }
 
+export function InsightIcon(props: IconProps) {
+  return (
+    <Base {...props}>
+      <path d="M4 19V9M10 19V5M16 19v-7M22 19H2" />
+      <path d="m3 7 6-4 6 6 6-5" />
+    </Base>
+  );
+}
+
 export function PipelineIcon(props: IconProps) {
   return (
     <Base {...props}>

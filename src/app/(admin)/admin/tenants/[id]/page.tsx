@@ -98,7 +98,13 @@ export default async function TenantDetailPage({
         <h2 id="flags-heading" className="sr-only">
           {t("sections.flags")}
         </h2>
-        <FeatureFlagsForm organizationId={detail.id} initial={detail.featureFlags} />
+        <FeatureFlagsForm
+          organizationId={detail.id}
+          initial={detail.featureFlags}
+          leadSources={detail.leadSources}
+          insightSourceId={detail.insightSourceId}
+          insightActiveFrom={detail.insightActiveFrom?.toISOString().slice(0, 10) ?? null}
+        />
       </section>
 
       <section aria-labelledby="users-heading">

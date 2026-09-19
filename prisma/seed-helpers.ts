@@ -218,3 +218,36 @@ export async function upsertUser(
     select: { id: true },
   });
 }
+
+/**
+ * Collega la sezione Insight & Stats alla `LeadSource` indicata per un tenant
+ * già provisionato da `upsertTenant` (che crea `DEFAULT_LEAD_SOURCES` ma non
+ * conosce quale, se ce n'è una, va collegata: solo alcuni tenant usano la
+ * sezione). `insightActiveFrom` resta `null` di proposito nei seed vivi — il
+ * confine archivio/dato vivo si popola solo da `scripts/import-insight-history.ts`
+ * o a mano dal pannello admin, mai da un seed.
+ *
+ * Non attiva il flag `insightStats`: quello resta una scelta esplicita di
+ * `featureFlags` passata a `upsertTenant`, per lo stesso motivo per cui non è
+ * un parametro di quella funzione — non tutti i tenant collegati hanno la
+ * sezione attiva.
+ */
+export async function linkInsightSource(
+  prisma: PrismaClient,
+  organizationId: string,
+  sourceLabel: string,
+): Promise<void> {
+  const source = await prisma.leadSource.findFirst({
+    where: { organizationId, label: sourceLabel },
+    select: { id: true },
+  });
+  if (!source) {
+    throw new Error(
+      `No LeadSource "${sourceLabel}" for organization ${organizationId} — run upsertTenant first.`,
+    );
+  }
+  await prisma.organization.update({
+    where: { id: organizationId },
+    data: { insightSourceId: source.id },
+  });
+}

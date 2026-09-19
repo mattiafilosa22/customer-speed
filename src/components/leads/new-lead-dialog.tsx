@@ -6,7 +6,8 @@ import { useLocale, useTranslations } from "next-intl";
 import type { ReferenceItem } from "@/server/leads";
 import { Button, Input, Modal, Select } from "@/components/ui";
 import { CapitalBracket } from "@/generated/prisma/enums";
-import { useCapitalBracketLabel } from "@/i18n/enum-labels";
+import { ChatChannel } from "@/generated/prisma/enums";
+import { useCapitalBracketLabel, useChatChannelLabel } from "@/i18n/enum-labels";
 import { createLeadAction } from "@/app/[locale]/(app)/leads/actions";
 import { type ActionState } from "@/server/actions/action-result";
 import { FormAlert } from "@/components/auth/form-alert";
@@ -15,6 +16,7 @@ import { useMessage } from "@/components/auth/use-message";
 
 const initialState: ActionState = { status: "idle" };
 const CAPITAL_VALUES = Object.values(CapitalBracket);
+const CHAT_CHANNEL_VALUES = Object.values(ChatChannel);
 
 /**
  * "Nuovo lead" dialog (docs/02 §2.4). Client component: gathers the minimal
@@ -22,12 +24,20 @@ const CAPITAL_VALUES = Object.values(CapitalBracket);
  * `useActionState`. Closes on success; field/global errors arrive as i18n keys.
  * Validation is server-side (Zod); the UI mirrors it as `aria-describedby`.
  */
-export function NewLeadDialog({ sources }: { sources: readonly ReferenceItem[] }) {
+export function NewLeadDialog({
+  sources,
+  insightSourceId = null,
+}: {
+  sources: readonly ReferenceItem[];
+  insightSourceId?: string | null;
+}) {
   const t = useTranslations("leads");
   const tm = useMessage();
   const locale = useLocale();
   const capitalLabel = useCapitalBracketLabel();
+  const chatChannelLabel = useChatChannelLabel();
   const [open, setOpen] = useState(false);
+  const [sourceId, setSourceId] = useState("");
   const [state, formAction] = useActionState(createLeadAction, initialState);
 
   // Close the dialog on the success transition (React's sanctioned render-time
@@ -74,7 +84,12 @@ export function NewLeadDialog({ sources }: { sources: readonly ReferenceItem[] }
         <Input label={t("fields.email")} name="email" type="email" error={fieldError("email")} />
         <Input label={t("fields.phone")} name="phone" type="tel" error={fieldError("phone")} />
 
-        <Select label={t("fields.source")} name="sourceId" defaultValue="">
+        <Select
+          label={t("fields.source")}
+          name="sourceId"
+          value={sourceId}
+          onChange={(event) => setSourceId(event.target.value)}
+        >
           <option value="">{t("filters.allSources")}</option>
           {sources.map((source) => (
             <option key={source.id} value={source.id}>
@@ -82,6 +97,23 @@ export function NewLeadDialog({ sources }: { sources: readonly ReferenceItem[] }
             </option>
           ))}
         </Select>
+
+        {insightSourceId !== null && sourceId === insightSourceId ? (
+          <Select
+            label={t("fields.chatChannel")}
+            name="chatChannel"
+            defaultValue=""
+            required
+            error={fieldError("chatChannel")}
+          >
+            <option value="">—</option>
+            {CHAT_CHANNEL_VALUES.map((value) => (
+              <option key={value} value={value}>
+                {chatChannelLabel(value)}
+              </option>
+            ))}
+          </Select>
+        ) : null}
 
         <Select label={t("fields.capital")} name="capitalBracket" defaultValue="">
           <option value="">—</option>
