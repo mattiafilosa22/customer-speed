@@ -312,7 +312,14 @@ const { fakeBase, calls } = vi.hoisted(() => {
         {
           get(_target, operation: string) {
             return (args: unknown) =>
-              allOperations({
+              // Real Prisma invokes `$allOperations` bound to the current
+              // (possibly transactional) extended client via `this` —
+              // `Prisma.getExtensionContext(this)` in the real implementation
+              // is just `(e) => e` (identity). Mirror that binding here so a
+              // manually-redispatched operation (findUnique* → findFirst*)
+              // stays on `extended`, not on `base` — proving it would stay
+              // bound to a `tx` too, not escape it.
+              allOperations.call(extended, {
                 model: modelName,
                 operation,
                 args,

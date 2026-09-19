@@ -302,7 +302,7 @@ export function getTenantPrisma(ctx: TenantContext, options: TenantPrismaOptions
       name: `tenant(${organizationId})${includeSoftDeleted ? "+deleted" : ""}`,
       query: {
         $allModels: {
-          $allOperations({ model, operation, args, query }) {
+          $allOperations(this: unknown, { model, operation, args, query }) {
             const nextArgs = applyTenantScope(
               model,
               operation,
@@ -313,18 +313,29 @@ export function getTenantPrisma(ctx: TenantContext, options: TenantPrismaOptions
 
             // `findUnique*` with an injected non-unique `organizationId` is
             // invalid for Prisma; run the equivalent `findFirst*` instead.
-            // `args` is already fully tenant-scoped, and we dispatch on the
-            // BASE client so the extension does not re-run (no double scope).
+            // `args` is already fully tenant-scoped. Dispatch through
+            // `Prisma.getExtensionContext(this)` — NOT the module-level base
+            // `prisma` — so the redispatched call stays bound to the current
+            // client, including an in-flight `$transaction`. Escaping to the
+            // base client here would run the query on a SEPARATE connection:
+            // harmless with a large pool, but a guaranteed deadlock behind a
+            // single-connection pool (an interactive transaction holds the
+            // only connection while this "second" query waits for one that
+            // will never free up, until Prisma's tx timeout kills it).
+            // `getExtensionContext` re-running `$allOperations` for the new
+            // operation name is safe: `rewriteOperationForTenant` only maps
+            // `findUnique*`, so the second pass for `findFirst*` falls
+            // straight through to `query(nextArgs)` below.
             const rewritten = rewriteOperationForTenant(model, operation);
             if (rewritten !== operation && model) {
-              const delegate = (prisma as unknown as Record<string, Record<string, unknown>>)[
-                lowerFirst(model)
-              ];
-              const fn = delegate?.[rewritten] as
-                | ((a: unknown) => Promise<unknown>)
-                | undefined;
+              const context = Prisma.getExtensionContext(this) as unknown as Record<
+                string,
+                Record<string, (a: unknown) => Promise<unknown>>
+              >;
+              const delegate = context[lowerFirst(model)];
+              const fn = delegate?.[rewritten];
               if (typeof fn === "function") {
-                return fn.call(delegate, nextArgs) as Promise<unknown>;
+                return fn.call(delegate, nextArgs);
               }
             }
 
