@@ -319,6 +319,7 @@ export function tenantClientFor(store: LeadStore, organizationId: string): Tenan
       }
     }
     if (where.sourceId !== undefined && lead.sourceId !== where.sourceId) return false;
+    if (where.chatChannel === null && lead.chatChannel !== null) return false;
     if (where.createdAt && typeof where.createdAt === "object") {
       const range = where.createdAt as { gte?: Date; lt?: Date };
       if (range.gte && lead.createdAt < range.gte) return false;
