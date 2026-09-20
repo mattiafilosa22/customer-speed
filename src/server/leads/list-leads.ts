@@ -81,6 +81,9 @@ function buildWhere(
   if (input.sourceId) {
     where.sourceId = input.sourceId;
   }
+  if (input.missingChatChannel) {
+    where.chatChannel = null;
+  }
   if (input.year) {
     where.createdAt = periodRange(input.year, input.month);
   }

@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { ValidationError } from "@/lib/errors";
-import { LeadStage } from "@/generated/prisma/enums";
+import { ChatChannel, LeadStage } from "@/generated/prisma/enums";
 import { listLeads } from "@/server/leads/list-leads";
 import { buildFakeLeadDeps, LeadStore } from "@/server/leads/test-helpers";
 
@@ -106,6 +106,34 @@ describe("listLeads", () => {
     expect(page1.data).toHaveLength(2);
     expect(page2.data).toHaveLength(1);
     expect(page1.total).toBe(3);
+  });
+
+  it("filters by missingChatChannel", async () => {
+    const store = new LeadStore();
+    seedTenantA(store);
+    store.addLead({
+      organizationId: ORG_A,
+      firstName: "Instagram-lead",
+      lastName: "SenzaCanale",
+      sourceId: "src_instagram",
+      chatChannel: null,
+      createdAt: new Date("2026-06-05T00:00:00.000Z"),
+    });
+    store.addLead({
+      organizationId: ORG_A,
+      firstName: "Instagram-lead",
+      lastName: "ConCanale",
+      sourceId: "src_instagram",
+      chatChannel: ChatChannel.INBOUND,
+      createdAt: new Date("2026-06-05T00:00:00.000Z"),
+    });
+    const deps = buildFakeLeadDeps(store, ORG_A, USER_A);
+
+    // Real usage always pairs this with the linked source's id (page.tsx
+    // derives it server-side from Organization.insightSourceId) so leads of
+    // other sources — nullable `chatChannel` by default — aren't swept in.
+    const res = await listLeads(deps, { missingChatChannel: true, sourceId: "src_instagram" });
+    expect(res.data.map((l) => l.lastName)).toEqual(["SenzaCanale"]);
   });
 
   it("rejects an invalid sort with ValidationError", async () => {

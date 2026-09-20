@@ -45,22 +45,30 @@ export default async function LeadsPage({
     return Array.isArray(value) ? value.at(-1) : value;
   };
 
+  // The "Assegna il canale" CTA (unattributed-notice.tsx) links here with
+  // `missingChatChannel=1`: the source is forced to the tenant's linked
+  // insight source (never the raw query string) so the filter can't be
+  // pointed at an arbitrary source.
+  const missingChatChannel = flat("missingChatChannel") === "1";
+
+  const [sources, insightConfig] = await Promise.all([
+    listLeadSources(deps),
+    getInsightConfig(buildInsightDeps(ctx)),
+  ]);
+
   const query = {
     query: flat("query"),
     stage: flat("stage"),
-    sourceId: flat("sourceId"),
+    sourceId: missingChatChannel ? (insightConfig?.sourceId ?? flat("sourceId")) : flat("sourceId"),
     year: flat("year"),
     month: flat("month"),
     minDays: flat("minDays"),
     sort: flat("sort"),
     page: flat("page"),
+    missingChatChannel,
   };
 
-  const [result, sources, insightConfig] = await Promise.all([
-    listLeads(deps, query),
-    listLeadSources(deps),
-    getInsightConfig(buildInsightDeps(ctx)),
-  ]);
+  const result = await listLeads(deps, query);
 
   return (
     <div className="mx-auto flex max-w-[1180px] flex-col gap-4">
