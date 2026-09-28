@@ -60,3 +60,21 @@ describe("ActivityTable", () => {
     expect(await axe(container)).toHaveNoViolations();
   });
 });
+
+describe("ActivityTable — sundays", () => {
+  it("tints sunday rows and labels every row with its weekday", () => {
+    renderIntl(<ActivityTable view={view([day("2026-09-05"), day("2026-09-06")])} canEdit />);
+    const saturday = screen.getByRole("row", { name: /05/ });
+    const sunday = screen.getByRole("row", { name: /06/ });
+    expect(saturday).toHaveTextContent(/sab/i);
+    expect(saturday).not.toHaveClass("bg-insight-welcome-soft");
+    expect(sunday).toHaveTextContent(/dom/i);
+    expect(sunday).toHaveClass("bg-insight-welcome-soft");
+  });
+
+  it("tints sundays of archived months too", () => {
+    renderIntl(<ActivityTable view={view([day("2025-03-01", { isArchived: true }), day("2025-03-02", { isArchived: true })])} canEdit />);
+    expect(screen.getByRole("row", { name: /01/ })).toHaveClass("bg-subtle");
+    expect(screen.getByRole("row", { name: /02/ })).toHaveClass("bg-insight-welcome-soft");
+  });
+});
