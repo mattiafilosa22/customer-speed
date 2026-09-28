@@ -38,6 +38,7 @@
   --muted: #6e6e79; /* secondary text — AA on panel (5.04:1) and bg (4.71:1) */
   --line: #ececef; /* borders */
   --line2: #f3f3f5; /* faint borders / table separators */
+  --subtle: #f3f3f6; /* faint surface — table headers/footers, archived rows */
 
   /* Semantic domain accents (reused by stages) */
   --ok: #16a34a; /* success */
@@ -103,6 +104,19 @@
   --stage-waiting-payment: #0d9488; /* teal (doc) */
   --stage-won: #16a34a; /* green (ok) */
   --stage-lost: #e5533b; /* red */
+
+  /* ── Insight & Stats table (spreadsheet-style channel groups) ─────────
+   * Group header (strong) + column header (soft) per channel group, mirroring
+   * the source spreadsheet the consultants already know. Text on them is
+   * --ink (≥4.5:1 on every fill in both modes). --line-strong separates the
+   * groups so the wide grid stays scannable. */
+  --insight-welcome: #e06666;
+  --insight-welcome-soft: #f4cccc;
+  --insight-outbound: #f6b26b;
+  --insight-outbound-soft: #f9cb9c;
+  --insight-inbound: #93c47d;
+  --insight-inbound-soft: #d9ead3;
+  --line-strong: #8c8c97;
 }
 
 /*
@@ -143,6 +157,7 @@
   --muted: #9a9aa6;
   --line: #2a2a32;
   --line2: #21212a;
+  --subtle: #1e1e26;
 
   --ok: #34d399;
   --warn: #fbbf24;
@@ -179,4 +194,12 @@
   --stage-waiting-payment: #2dd4bf;
   --stage-won: #34d399;
   --stage-lost: #fb7185;
+
+  --insight-welcome: #8f3434;
+  --insight-welcome-soft: color-mix(in srgb, var(--insight-welcome) 45%, #17171d);
+  --insight-outbound: #8a5412;
+  --insight-outbound-soft: color-mix(in srgb, var(--insight-outbound) 45%, #17171d);
+  --insight-inbound: #3d6b2c;
+  --insight-inbound-soft: color-mix(in srgb, var(--insight-inbound) 45%, #17171d);
+  --line-strong: #5a5a66;
 }

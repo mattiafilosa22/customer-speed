@@ -20,6 +20,8 @@
   --color-muted: var(--muted);
   --color-line: var(--line);
   --color-line2: var(--line2);
+  --color-line-strong: var(--line-strong);
+  --color-subtle: var(--subtle);
   --color-ok: var(--ok);
   --color-ok-soft: var(--ok-soft);
   --color-ok-ink: var(--ok-ink);
@@ -47,6 +49,12 @@
   --color-stage-waiting-payment: var(--stage-waiting-payment);
   --color-stage-won: var(--stage-won);
   --color-stage-lost: var(--stage-lost);
+  --color-insight-welcome: var(--insight-welcome);
+  --color-insight-welcome-soft: var(--insight-welcome-soft);
+  --color-insight-outbound: var(--insight-outbound);
+  --color-insight-outbound-soft: var(--insight-outbound-soft);
+  --color-insight-inbound: var(--insight-inbound);
+  --color-insight-inbound-soft: var(--insight-inbound-soft);
 
   /* Radius → rounded / rounded-input / rounded-control / rounded-pill */
   --radius-DEFAULT: var(--radius);

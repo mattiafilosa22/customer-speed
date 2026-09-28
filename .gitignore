@@ -68,3 +68,6 @@ tmp/
 
 # Worktree isolati creati dalla sessione (EnterWorktree)
 /.claude/worktrees/
+.env*
+
+base/
