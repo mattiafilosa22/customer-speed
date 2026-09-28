@@ -13,7 +13,7 @@ export function ActivityDayCards({ view, canEdit, sourceLabel }: { view: Insight
   return (
     <div className="flex flex-col gap-3">
       {view.days.map((row) => (
-        <Card key={row.date} role="group" aria-label={row.date} className={row.isArchived ? "bg-subtle" : new Date(`${row.date}T00:00:00.000Z`).getUTCDay() === 0 ? "bg-insight-welcome-soft" : undefined}>
+        <Card key={row.date} role="group" aria-label={row.date} className={new Date(`${row.date}T00:00:00.000Z`).getUTCDay() === 0 ? "bg-insight-welcome-soft" : row.isArchived ? "bg-subtle" : undefined}>
           <CardBody className="flex flex-col gap-4">
             <div className="flex items-center justify-between">
               <h2 className="font-display text-xl text-ink">{row.date}</h2>

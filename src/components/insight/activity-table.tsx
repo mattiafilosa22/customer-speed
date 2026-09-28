@@ -66,10 +66,11 @@ const isSunday = (dayKey: string) => utcDate(dayKey).getUTCDay() === 0;
 function ActivityRow({ row, canEdit, sourceLabel }: { row: MonthDayRow; canEdit: boolean; sourceLabel?: string }) {
   const t = useTranslations("insight");
   const locale = useLocale();
-  // Sundays are tinted like the spreadsheet (welcome-soft, mode-aware). The
-  // weekday label is shown on every row so the tint is never the only cue.
+  // Sundays are tinted like the spreadsheet (welcome-soft, mode-aware), archived
+  // months included — the archive badge already marks those rows. The weekday
+  // label is shown on every row so the tint is never the only cue.
   const weekday = new Intl.DateTimeFormat(locale, { weekday: "short", timeZone: "UTC" }).format(utcDate(row.date));
-  const rowTone = row.isArchived ? "bg-subtle" : isSunday(row.date) ? "bg-insight-welcome-soft" : "bg-panel";
+  const rowTone = isSunday(row.date) ? "bg-insight-welcome-soft" : row.isArchived ? "bg-subtle" : "bg-panel";
   const manual = (field: ManualField, label: string) => (
     <ManualCell row={row} field={field} label={label} editable={canEdit && !row.isArchived} />
   );
@@ -143,8 +144,11 @@ export function ActivityTable({ view, canEdit, sourceLabel }: { view: InsightMon
   // scrolling ancestor, so a page-scrolling wrapper with `overflow-x: auto`
   // would silently disable the sticky header. Header rows stick to the top,
   // the date column to the left, totals to the bottom — like a frozen sheet.
+  // `relative` makes it the containing block of the cells' `sr-only` spans
+  // (absolutely positioned): otherwise they escape the overflow clip and
+  // stretch the page to the full, unscrolled table height.
   return (
-    <div className="max-h-[calc(100dvh-8rem)] overflow-auto rounded border border-line bg-panel shadow-sm">
+    <div className="relative max-h-[calc(100dvh-8rem)] overflow-auto rounded border border-line bg-panel shadow-sm">
       <table className="w-full min-w-[1320px] border-separate border-spacing-0 font-body">
         <caption className="sr-only">{t("description")}</caption>
         <thead className="sticky top-0 z-20 text-xs uppercase tracking-wide text-ink">
