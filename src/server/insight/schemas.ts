@@ -1,6 +1,7 @@
 import { z } from "zod";
 
 import { CapitalBracket, ChatChannel } from "@/generated/prisma/enums";
+import { appointmentStartAtSchema } from "@/server/appointments/schemas";
 
 /**
  * Mese visualizzato. Stessi limiti di `periodSchema` (dashboard) per non
@@ -61,7 +62,10 @@ export const createLeadFromCellSchema = z.object({
     .optional()
     .or(z.literal("").transform(() => undefined)),
   chatChannel: z.nativeEnum(ChatChannel),
-  appointmentAt: z.coerce.date(),
+  // Bare `YYYY-MM-DDTHH:mm` from the dialog: same Europe/Rome wall-clock
+  // parsing as the appointments form (a bare `new Date()` would shift it on
+  // a UTC server).
+  appointmentAt: appointmentStartAtSchema,
   reason: z.string().trim().min(1).max(200),
   capitalAmount: z.coerce.number().nonnegative().optional(),
   capitalBracket: z.nativeEnum(CapitalBracket).optional(),

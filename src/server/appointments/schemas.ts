@@ -30,7 +30,7 @@ const reason = z.string().trim().min(1, "Required").max(280);
  * Europe/Rome — and would silently shift every manually-entered time. A value
  * that already carries an offset/`Z` is unambiguous and passed straight through.
  */
-const startAt = z
+export const appointmentStartAtSchema = z
   .preprocess(
     (value) => (typeof value === "string" ? fromDatetimeLocalValue(value) : value),
     z.date(),
@@ -39,6 +39,8 @@ const startAt = z
   .refine((date) => date.getUTCFullYear() >= 2000 && date.getUTCFullYear() <= 2100, {
     message: "Date out of range",
   });
+
+const startAt = appointmentStartAtSchema;
 
 const status = z.nativeEnum(AppointmentStatus);
 
