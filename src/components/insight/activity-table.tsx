@@ -57,10 +57,19 @@ const columnHeaderClass: Record<Group, string> = {
 const cellClass = "border-b border-r border-line px-2 py-2 text-center align-middle";
 const groupEndClass = "border-r-2 border-r-line-strong";
 const cellAt = (index: number) => cn(cellClass, COLUMNS[index]?.last && groupEndClass);
-const dateHeaderClass = "sticky left-0 z-10 border-b border-line bg-panel px-3 py-2 text-left font-mono text-sm text-ink " + groupEndClass;
+const dateHeaderClass = "sticky left-0 z-10 border-b border-line px-3 py-2 text-left font-mono text-sm text-ink " + groupEndClass;
+
+/** Day keys are UTC calendar days ("YYYY-MM-DD"), so the weekday is read in UTC too. */
+const utcDate = (dayKey: string) => new Date(`${dayKey}T00:00:00.000Z`);
+const isSunday = (dayKey: string) => utcDate(dayKey).getUTCDay() === 0;
 
 function ActivityRow({ row, canEdit, sourceLabel }: { row: MonthDayRow; canEdit: boolean; sourceLabel?: string }) {
   const t = useTranslations("insight");
+  const locale = useLocale();
+  // Sundays are tinted like the spreadsheet (welcome-soft, mode-aware). The
+  // weekday label is shown on every row so the tint is never the only cue.
+  const weekday = new Intl.DateTimeFormat(locale, { weekday: "short", timeZone: "UTC" }).format(utcDate(row.date));
+  const rowTone = row.isArchived ? "bg-subtle" : isSunday(row.date) ? "bg-insight-welcome-soft" : "bg-panel";
   const manual = (field: ManualField, label: string) => (
     <ManualCell row={row} field={field} label={label} editable={canEdit && !row.isArchived} />
   );
@@ -80,9 +89,10 @@ function ActivityRow({ row, canEdit, sourceLabel }: { row: MonthDayRow; canEdit:
   };
 
   return (
-    <tr className={row.isArchived ? "bg-subtle" : undefined}>
-      <th scope="row" className={dateHeaderClass}>
+    <tr className={rowTone}>
+      <th scope="row" className={cn(dateHeaderClass, rowTone)}>
         <span>{row.date.slice(-2)}</span>
+        <span className="ml-1.5 font-body text-xs text-muted">{weekday}</span>
         {row.isArchived ? <span className="ml-2 whitespace-nowrap text-xs text-muted">◷ {t("archive.badge")}</span> : null}
       </th>
       <td className={cellAt(0)}>{manual("welcomeSent", `${t("groups.welcome")} ${t("columns.welcomeSent")}`)}</td>
