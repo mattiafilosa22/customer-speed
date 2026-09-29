@@ -1211,10 +1211,6 @@
       "bestChannel": "Canale migliore",
       "none": "—"
     },
-    "unattributed": {
-      "message": "{count} lead della provenienza collegata non hanno un canale e non sono attribuiti.",
-      "cta": "Assegna il canale"
-    },
     "tooltip": {
       "composition": "{total} totali: {fromInsight} creati da Insight & Stats, {other} inseriti da lista lead o pipeline"
     },

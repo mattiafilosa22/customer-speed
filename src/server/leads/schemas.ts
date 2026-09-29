@@ -230,7 +230,7 @@ export const listLeadsSchema = z.object({
   month: z.coerce.number().int().min(1).max(12).optional(),
   minDays: z.coerce.number().int().min(0).max(3650).optional(),
   /**
-   * "Assegna il canale" CTA (Insight & Stats unattributed notice): restricts
+   * `?missingChatChannel=1` filter: restricts
    * the list to leads of the tenant's linked insight source missing
    * `chatChannel`. The source id is derived server-side from
    * `Organization.insightSourceId` (page.tsx), never trusted from the query
