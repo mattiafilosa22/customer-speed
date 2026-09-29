@@ -30,7 +30,7 @@ export type DayDraft = ReturnType<typeof useDayDraft>;
 
 /**
  * One draft per DAY, shared by all its manual cells. The server validates the
- * day as a whole (replies ≤ welcome sent, replies ≤ comments + stories), so
+ * day as a whole (replies ≤ welcome sent), so
  * every save must carry what the user currently sees in the sibling cells —
  * not the server-rendered row, which is stale until revalidation lands. A
  * successful save clears the whole row's errors: fixing "sent" also resolves

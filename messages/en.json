@@ -1245,7 +1245,6 @@
     },
     "errors": {
       "repliesExceedWelcome": "Replies cannot exceed welcome messages sent.",
-      "repliesExceedOutbound": "Replies cannot exceed comments and stories.",
       "futureDay": "You cannot edit a future day.",
       "archivedDay": "Archived days are read-only.",
       "channelRequired": "Channel is required.",
