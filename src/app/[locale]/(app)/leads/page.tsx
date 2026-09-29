@@ -45,8 +45,8 @@ export default async function LeadsPage({
     return Array.isArray(value) ? value.at(-1) : value;
   };
 
-  // The "Assegna il canale" CTA (unattributed-notice.tsx) links here with
-  // `missingChatChannel=1`: the source is forced to the tenant's linked
+  // `?missingChatChannel=1` (manual link / bookmark) restricts the list:
+  // the source is forced to the tenant's linked
   // insight source (never the raw query string) so the filter can't be
   // pointed at an arbitrary source.
   const missingChatChannel = flat("missingChatChannel") === "1";

@@ -1211,10 +1211,6 @@
       "bestChannel": "Best channel",
       "none": "—"
     },
-    "unattributed": {
-      "message": "{count} leads from the linked source have no channel and are not attributed.",
-      "cta": "Assign a channel"
-    },
     "tooltip": {
       "composition": "{total} total: {fromInsight} created in Insight & Stats, {other} added from the lead list or pipeline"
     },
