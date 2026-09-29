@@ -26,45 +26,66 @@ function counters(row: MonthDayRow): Record<ManualField, number> {
   };
 }
 
+export type DayDraft = ReturnType<typeof useDayDraft>;
+
+/**
+ * One draft per DAY, shared by all its manual cells. The server validates the
+ * day as a whole (replies ≤ welcome sent, replies ≤ comments + stories), so
+ * every save must carry what the user currently sees in the sibling cells —
+ * not the server-rendered row, which is stale until revalidation lands. A
+ * successful save clears the whole row's errors: fixing "sent" also resolves
+ * (and persists) a "replies" value that was rejected a moment ago.
+ */
+export function useDayDraft(row: MonthDayRow) {
+  const [values, setValues] = useState(() => counters(row));
+  const [lastSaved, setLastSaved] = useState(values);
+  const [errors, setErrors] = useState<Partial<Record<ManualField, string>>>({});
+  const [pending, startTransition] = useTransition();
+
+  function set(field: ManualField, value: number) {
+    setValues((current) => ({ ...current, [field]: value }));
+  }
+
+  function save(field: ManualField) {
+    const snapshot = values;
+    if (row.isFuture || (Object.keys(snapshot) as ManualField[]).every((key) => snapshot[key] === lastSaved[key])) return;
+    const form = new FormData();
+    form.set("date", row.date);
+    for (const [name, count] of Object.entries(snapshot)) form.set(name, String(count));
+    startTransition(async () => {
+      const state = await saveActivityDayAction({ status: "idle" }, form);
+      if (state.status === "success") {
+        setLastSaved(snapshot);
+        setErrors({});
+      } else if (state.status === "error") {
+        const fieldErrors = (state.fieldErrors ?? {}) as Partial<Record<ManualField, string>>;
+        setErrors(Object.keys(fieldErrors).length > 0 ? fieldErrors : { [field]: state.formError ?? "insight.errors.generic" });
+      }
+    });
+  }
+
+  return { row, values, errors, pending, set, save };
+}
+
 export function ManualCell({
-  row,
+  draft,
   field,
   label,
   editable,
 }: {
-  row: MonthDayRow;
+  draft: DayDraft;
   field: ManualField;
   label: string;
   editable: boolean;
 }) {
   const t = useTranslations("insight");
   const translateMessage = useMessage();
-  const initial = counters(row)[field];
-  const [value, setValue] = useState(initial);
-  const [lastSaved, setLastSaved] = useState(initial);
-  const [error, setError] = useState<string | null>(null);
-  const [pending, startTransition] = useTransition();
+  const { row, pending } = draft;
+  const value = draft.values[field];
+  const error = draft.errors[field] ?? null;
 
   if (!editable && !row.isFuture) {
-    return <span className="text-ink font-mono text-sm">{initial}</span>;
-  }
-
-  function save() {
-    if (row.isFuture || value === lastSaved) return;
-    const form = new FormData();
-    form.set("date", row.date);
-    for (const [name, count] of Object.entries({ ...counters(row), [field]: value })) {
-      form.set(name, String(count));
-    }
-    startTransition(async () => {
-      const state = await saveActivityDayAction({ status: "idle" }, form);
-      if (state.status === "success") {
-        setLastSaved(value);
-        setError(null);
-      } else if (state.status === "error") {
-        setError(state.fieldErrors?.[field] ?? state.formError ?? "insight.errors.generic");
-      }
-    });
+    return <span className="text-ink font-mono text-sm">{value}</span>;
   }
 
   function move(event: KeyboardEvent<HTMLInputElement>) {
@@ -94,8 +115,14 @@ export function ManualCell({
         aria-label={`${label}, ${row.date}`}
         aria-invalid={Boolean(error) || undefined}
         aria-describedby={error ? errorId : undefined}
-        onChange={(event) => setValue(Math.max(0, Number(event.target.value)))}
-        onBlur={save}
+        onChange={(event) => draft.set(field, Math.max(0, Number(event.target.value)))}
+        // Select on focus so typing replaces the value ("0" + "1" would read
+        // "01": React leaves the DOM alone when the parsed number is equal).
+        onFocus={(event) => event.currentTarget.select()}
+        onBlur={(event) => {
+          event.currentTarget.value = String(value);
+          draft.save(field);
+        }}
         onKeyDown={move}
         className="rounded-input border-line bg-panel text-ink focus-visible:outline-ring disabled:bg-subtle disabled:text-muted h-9 w-16 border px-2 text-center font-mono text-sm focus-visible:outline-2 focus-visible:outline-offset-2"
       />

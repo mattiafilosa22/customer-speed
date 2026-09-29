@@ -4,7 +4,7 @@ import { useLocale, useTranslations } from "next-intl";
 
 import { cn } from "@/lib/cn";
 import type { InsightMonthView, MonthDayRow } from "@/server/insight";
-import { ManualCell, type ManualField } from "@/components/insight/manual-cell";
+import { ManualCell, useDayDraft, type ManualField } from "@/components/insight/manual-cell";
 import { DerivedCell } from "@/components/insight/derived-cell";
 
 type Group = "welcome" | "outbound" | "inbound" | "total";
@@ -71,8 +71,9 @@ function ActivityRow({ row, canEdit, sourceLabel }: { row: MonthDayRow; canEdit:
   // label is shown on every row so the tint is never the only cue.
   const weekday = new Intl.DateTimeFormat(locale, { weekday: "short", timeZone: "UTC" }).format(utcDate(row.date));
   const rowTone = isSunday(row.date) ? "bg-insight-welcome-soft" : row.isArchived ? "bg-subtle" : "bg-panel";
+  const draft = useDayDraft(row);
   const manual = (field: ManualField, label: string) => (
-    <ManualCell row={row} field={field} label={label} editable={canEdit && !row.isArchived} />
+    <ManualCell draft={draft} field={field} label={label} editable={canEdit && !row.isArchived} />
   );
   const derived = (group: "welcome" | "outbound" | "inbound", metric: "appointments" | "sales") => {
     const channel = row[group];
