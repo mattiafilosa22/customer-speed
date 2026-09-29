@@ -42,11 +42,6 @@ describe("saveActivityDay", () => {
 
   it.each([
     ["welcome replies above messages", { welcomeSent: 3, welcomeReplies: 5 }, "welcomeReplies"],
-    [
-      "outbound replies above comments plus stories",
-      { outboundComments: 1, outboundStories: 1, outboundReplies: 5 },
-      "outboundReplies",
-    ],
     ["negative counters", { inboundReceived: -1 }, "inboundReceived"],
   ])("rejects %s", async (_label, overrides, field) => {
     const store = seedConfiguredTenant();

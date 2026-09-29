@@ -1245,7 +1245,6 @@
     },
     "errors": {
       "repliesExceedWelcome": "Le risposte non possono superare i welcome inviati.",
-      "repliesExceedOutbound": "Le risposte non possono superare commenti e storie.",
       "futureDay": "Non puoi modificare un giorno futuro.",
       "archivedDay": "I giorni di archivio sono in sola lettura.",
       "channelRequired": "Il canale è obbligatorio.",
