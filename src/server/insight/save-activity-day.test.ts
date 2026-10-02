@@ -58,6 +58,18 @@ describe("saveActivityDay", () => {
     expect(store.audits).toHaveLength(2);
   });
 
+  it("rolls back the counter write when recording its audit event fails", async () => {
+    const store = seedConfiguredTenant();
+    store.failNextAuditRecord();
+
+    await expect(saveActivityDay(store.deps("org-a", MID_SEPTEMBER), validCounters())).rejects.toThrow(
+      "simulated audit.record failure",
+    );
+
+    expect(store.chatActivityDays).toHaveLength(0);
+    expect(store.audits).toHaveLength(0);
+  });
+
   it.each([
     ["negative counters", { inboundReceived: -1 }, "inboundReceived"],
     ["decimal counters", { welcomeReplies: 1.5 }, "welcomeReplies"],

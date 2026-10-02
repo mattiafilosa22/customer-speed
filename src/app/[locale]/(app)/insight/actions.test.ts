@@ -79,6 +79,8 @@ describe("Insight actions", () => {
     );
 
     expect(state.status).toBe("success");
+    expect(mocks.getTenantFeatureFlags).toHaveBeenCalledWith("org_a");
+    expect(mocks.buildInsightDeps).toHaveBeenCalledWith(PRO);
     expect(mocks.saveActivityDay).toHaveBeenCalledWith(
       { kind: "insight" },
       expect.objectContaining({ date: "2026-09-09", welcomeSent: "3", welcomeReplies: "5" }),

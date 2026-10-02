@@ -19,17 +19,20 @@ export async function saveActivityDay(deps: InsightDeps, input: unknown): Promis
   }
 
   const { date, ...manualCounters } = counters;
-  await deps.prisma.chatActivityDay.upsert({
-    where: { organizationId_date: { organizationId: deps.actor.organizationId, date } },
-    create: { organizationId: deps.actor.organizationId, date, ...manualCounters },
-    update: manualCounters,
-  });
+  await deps.prisma.$transaction(async (transaction) => {
+    await transaction.chatActivityDay.upsert({
+      where: { organizationId_date: { organizationId: deps.actor.organizationId, date } },
+      create: { organizationId: deps.actor.organizationId, date, ...manualCounters },
+      update: manualCounters,
+      select: { id: true },
+    });
 
-  await deps.audit.record({
-    action: "insight.activityDay.save",
-    organizationId: deps.actor.organizationId,
-    actorId: deps.actor.userId,
-    entity: "ChatActivityDay",
-    entityId: requestedDay,
+    await deps.createTransactionAudit(transaction).record({
+      action: "insight.activityDay.save",
+      organizationId: deps.actor.organizationId,
+      actorId: deps.actor.userId,
+      entity: "ChatActivityDay",
+      entityId: requestedDay,
+    });
   });
 }

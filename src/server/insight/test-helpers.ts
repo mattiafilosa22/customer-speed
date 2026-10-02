@@ -162,6 +162,7 @@ export class InsightStore {
   private seq = 0;
   /** Task 11: rollback della transazione — vedi `failNextAppointmentCreate`. */
   private failAppointmentCreateOnce = false;
+  private failAuditRecordOnce = false;
 
   private nextId(prefix: string): string {
     this.seq += 1;
@@ -285,6 +286,20 @@ export class InsightStore {
     this.failAppointmentCreateOnce = true;
   }
 
+  /** Fa fallire una volta il prossimo audit, per verificare l'atomicità delle scritture. */
+  failNextAuditRecord(): void {
+    this.failAuditRecordOnce = true;
+  }
+
+  /** @internal consumato dal logger audit transazionale del fake. */
+  consumeFailNextAuditRecordIfSet(): boolean {
+    if (this.failAuditRecordOnce) {
+      this.failAuditRecordOnce = false;
+      return true;
+    }
+    return false;
+  }
+
   /** @internal consumato da `tenantClientFor`; non fa parte della API pubblica del test-helper. */
   consumeFailNextAppointmentCreateIfSet(): boolean {
     if (this.failAppointmentCreateOnce) {
@@ -311,6 +326,14 @@ export class InsightStore {
     return {
       prisma: this.tenantClient(organizationId),
       audit: { record: async (event) => void this.audits.push(event) },
+      createTransactionAudit: () => ({
+        record: async (event) => {
+          if (this.consumeFailNextAuditRecordIfSet()) {
+            throw new Error("simulated audit.record failure");
+          }
+          this.audits.push(event);
+        },
+      }),
       actor: { organizationId, userId: "user_test" },
       now,
     };
@@ -557,6 +580,7 @@ export function tenantClientFor(
         appointments: [...store.appointments],
         stageHistories: [...store.stageHistories],
         chatActivityDays: [...store.chatActivityDays],
+        audits: [...store.audits],
       };
       try {
         return await fn(client as unknown as TenantPrismaClient);
@@ -565,6 +589,7 @@ export function tenantClientFor(
         store.appointments = snapshot.appointments;
         store.stageHistories = snapshot.stageHistories;
         store.chatActivityDays = snapshot.chatActivityDays;
+        store.audits = snapshot.audits;
         throw err;
       }
     },
