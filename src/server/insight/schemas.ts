@@ -28,13 +28,9 @@ export const saveActivityDaySchema = z
     outboundStories: counter,
     outboundReplies: counter,
     inboundReceived: counter,
-  })
-  .refine((counters) => counters.welcomeReplies <= counters.welcomeSent, {
-    path: ["welcomeReplies"],
-    message: "insight.errors.repliesExceedWelcome",
   });
-  // No outbound replies cap: one story or comment can earn many replies,
-  // so "replies ≤ comments + stories" rejected perfectly valid days.
+// Welcome and outbound replies are independent counters: a reply can arrive
+// after a previous day's outreach, so they may exceed messages sent that day.
 
 export type SaveActivityDayInput = z.infer<typeof saveActivityDaySchema>;
 

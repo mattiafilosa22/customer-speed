@@ -162,6 +162,22 @@ describe("conversionRates", () => {
     expect(rates.welcomeSaleRate).toBeCloseTo(0.2);
   });
 
+  it("preserves welcome reply rates above 100% and treats zero sent as undefined", () => {
+    const aboveOne = conversionRates(sumColumns([
+      dayRow({
+        welcome: { sent: 2, replies: 5, appointments: 0, appointmentsFromInsight: 0, sales: 0, salesFromInsight: 0 },
+      }),
+    ]));
+    const zeroDenominator = conversionRates(sumColumns([
+      dayRow({
+        welcome: { sent: 0, replies: 5, appointments: 0, appointmentsFromInsight: 0, sales: 0, salesFromInsight: 0 },
+      }),
+    ]));
+
+    expect(aboveOne.welcomeReplyRate).toBe(2.5);
+    expect(zeroDenominator.welcomeReplyRate).toBeNull();
+  });
+
   it("computes the overall sale rate over all channel appointments", () => {
     const totals = sumColumns([
       dayRow({

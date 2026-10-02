@@ -1244,7 +1244,6 @@
       "close": "Chiudi"
     },
     "errors": {
-      "repliesExceedWelcome": "Le risposte non possono superare i welcome inviati.",
       "futureDay": "Non puoi modificare un giorno futuro.",
       "archivedDay": "I giorni di archivio sono in sola lettura.",
       "channelRequired": "Il canale è obbligatorio.",

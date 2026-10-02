@@ -99,7 +99,8 @@ A differenza delle sezioni sopra, **non ci sono Route Handler REST**: la pagina 
 saveActivityDayAction(prevState, formData)
   # upsert dei 6 contatori manuali del giorno indicato da `date` (YYYY-MM-DD).
   # Richiede insight.edit. Rifiuta giorni futuri e righe di archivio.
-  # Zod: interi ≥ 0, welcomeReplies ≤ welcomeSent, outboundReplies ≤ outboundComments + outboundStories.
+  # Zod: sei interi da 0 a 100000. Le risposte welcome e outbound sono
+  # contatori indipendenti e possono superare gli invii dello stesso giorno.
 
 createLeadFromCellAction(prevState, formData)
   # Crea lead + appuntamento in una transazione, attribuiti alla provenienza
