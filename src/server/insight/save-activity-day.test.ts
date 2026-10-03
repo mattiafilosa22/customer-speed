@@ -40,9 +40,41 @@ describe("saveActivityDay", () => {
     expect(rows[0]).toMatchObject({ welcomeSent: 42, isArchived: false });
   });
 
+  it("allows welcome replies to exceed welcome messages, including zero sent", async () => {
+    const store = seedConfiguredTenant();
+
+    await saveActivityDay(
+      store.deps("org-a", MID_SEPTEMBER),
+      validCounters({ welcomeSent: 3, welcomeReplies: 5 }),
+    );
+    await saveActivityDay(
+      store.deps("org-a", MID_SEPTEMBER),
+      validCounters({ welcomeSent: 0, welcomeReplies: 5 }),
+    );
+
+    const rows = store.chatActivityDays.filter((day) => day.organizationId === "org-a");
+    expect(rows).toHaveLength(1);
+    expect(rows[0]).toMatchObject({ welcomeSent: 0, welcomeReplies: 5 });
+    expect(store.audits).toHaveLength(2);
+  });
+
+  it("rolls back the counter write when recording its audit event fails", async () => {
+    const store = seedConfiguredTenant();
+    store.failNextAuditRecord();
+
+    await expect(saveActivityDay(store.deps("org-a", MID_SEPTEMBER), validCounters())).rejects.toThrow(
+      "simulated audit.record failure",
+    );
+
+    expect(store.chatActivityDays).toHaveLength(0);
+    expect(store.audits).toHaveLength(0);
+  });
+
   it.each([
-    ["welcome replies above messages", { welcomeSent: 3, welcomeReplies: 5 }, "welcomeReplies"],
     ["negative counters", { inboundReceived: -1 }, "inboundReceived"],
+    ["decimal counters", { welcomeReplies: 1.5 }, "welcomeReplies"],
+    ["non-numeric counters", { welcomeReplies: "not-a-number" }, "welcomeReplies"],
+    ["counters above the absolute limit", { welcomeReplies: 100_001 }, "welcomeReplies"],
   ])("rejects %s", async (_label, overrides, field) => {
     const store = seedConfiguredTenant();
 
@@ -79,10 +111,38 @@ describe("saveActivityDay", () => {
   it("writes into the caller's tenant only and records an audit event", async () => {
     const store = seedConfiguredTenant();
     store.addOrganization({ id: "org-b", insightSourceId: null });
+    store.chatActivityDays.push({
+      id: "org-b-existing-day",
+      organizationId: "org-b",
+      date: new Date("2026-09-09T00:00:00.000Z"),
+      welcomeSent: 7,
+      welcomeReplies: 9,
+      outboundComments: 0,
+      outboundStories: 0,
+      outboundReplies: 0,
+      inboundReceived: 0,
+      isArchived: false,
+      archivedOutboundMessages: null,
+      archivedWelcomeAppointments: null,
+      archivedWelcomeSales: null,
+      archivedOutboundAppointments: null,
+      archivedOutboundSales: null,
+      archivedInboundAppointments: null,
+      archivedInboundSales: null,
+      createdAt: MID_SEPTEMBER(),
+      updatedAt: MID_SEPTEMBER(),
+    });
 
-    await saveActivityDay(store.deps("org-a", MID_SEPTEMBER), validCounters());
+    await saveActivityDay(
+      store.deps("org-a", MID_SEPTEMBER),
+      { ...validCounters(), organizationId: "org-b" },
+    );
 
-    expect(store.chatActivityDays.every((day) => day.organizationId === "org-a")).toBe(true);
+    expect(store.chatActivityDays).toHaveLength(2);
+    expect(store.chatActivityDays.find((day) => day.organizationId === "org-b")).toMatchObject({
+      welcomeSent: 7,
+      welcomeReplies: 9,
+    });
     expect(store.audits).toContainEqual(
       expect.objectContaining({
         action: "insight.activityDay.save",

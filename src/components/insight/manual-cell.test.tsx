@@ -61,7 +61,7 @@ describe("ManualCell", () => {
   it("announces a save error, associated with the field via aria-describedby", async () => {
     mockedSave.mockResolvedValueOnce({
       status: "error",
-      fieldErrors: { welcomeSent: "insight.errors.repliesExceedWelcome" },
+      fieldErrors: { welcomeSent: "insight.errors.generic" },
     });
     renderIntl(
       <Day row={day("2026-09-05")} fields={[["welcomeSent", "Welcome inviati"]]} />,
@@ -93,16 +93,34 @@ describe("ManualCell", () => {
     expect(form.get("outboundReplies")).toBe("2");
   });
 
+  it("forwards welcome replies above sent messages, including zero sent", async () => {
+    mockedSave.mockResolvedValue({ status: "success" });
+    renderIntl(<Day row={day("2026-09-05")} fields={[["welcomeSent", "Inviati"], ["welcomeReplies", "Risposte"]]} />);
+
+    const sent = screen.getByRole("spinbutton", { name: /inviati/i });
+    fireEvent.change(sent, { target: { value: "0" } });
+    fireEvent.blur(sent);
+    const replies = screen.getByRole("spinbutton", { name: /risposte/i });
+    fireEvent.change(replies, { target: { value: "5" } });
+    fireEvent.blur(replies);
+
+    await waitFor(() => expect(mockedSave).toHaveBeenCalledTimes(1));
+    const form = mockedSave.mock.calls[0]![1];
+    expect(form.get("welcomeSent")).toBe("0");
+    expect(form.get("welcomeReplies")).toBe("5");
+    expect(screen.queryByRole("alert")).toBeNull();
+  });
+
   it("clears a sibling's error once the day saves successfully", async () => {
     mockedSave
-      .mockResolvedValueOnce({ status: "error", fieldErrors: { welcomeReplies: "insight.errors.repliesExceedWelcome" } })
+      .mockResolvedValueOnce({ status: "error", fieldErrors: { welcomeReplies: "insight.errors.generic" } })
       .mockResolvedValueOnce({ status: "success" });
     renderIntl(<Day row={day("2026-09-05")} fields={[["welcomeSent", "Inviati"], ["welcomeReplies", "Risposte"]]} />);
 
     const replies = screen.getByRole("spinbutton", { name: /risposte/i });
     fireEvent.change(replies, { target: { value: "1" } });
     fireEvent.blur(replies);
-    expect(await screen.findByRole("alert")).toHaveTextContent(/non possono superare/i);
+    expect(await screen.findByRole("alert")).toHaveTextContent(/non è stato possibile/i);
 
     const sent = screen.getByRole("spinbutton", { name: /inviati/i });
     fireEvent.change(sent, { target: { value: "4" } });

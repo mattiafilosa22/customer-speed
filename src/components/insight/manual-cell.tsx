@@ -29,12 +29,9 @@ function counters(row: MonthDayRow): Record<ManualField, number> {
 export type DayDraft = ReturnType<typeof useDayDraft>;
 
 /**
- * One draft per DAY, shared by all its manual cells. The server validates the
- * day as a whole (replies ≤ welcome sent), so
- * every save must carry what the user currently sees in the sibling cells —
- * not the server-rendered row, which is stale until revalidation lands. A
- * successful save clears the whole row's errors: fixing "sent" also resolves
- * (and persists) a "replies" value that was rejected a moment ago.
+ * One draft per DAY, shared by all its manual cells, so every save carries
+ * what the user currently sees in the sibling cells rather than the
+ * server-rendered row, which is stale until revalidation lands.
  */
 export function useDayDraft(row: MonthDayRow) {
   const [values, setValues] = useState(() => counters(row));

@@ -1,4 +1,4 @@
-import type { Prisma, PrismaClient } from "@/generated/prisma/client";
+import type { Prisma } from "@/generated/prisma/client";
 
 /**
  * AuditLog writer for security-sensitive events (auth, cross-tenant access,
@@ -24,7 +24,11 @@ export interface AuditLogger {
 }
 
 /** Minimal Prisma surface the writer needs (eases faking in tests). */
-type AuditCapableClient = Pick<PrismaClient, "auditLog">;
+export interface AuditCapableClient {
+  readonly auditLog: {
+    create(args: Prisma.AuditLogCreateArgs): Promise<unknown>;
+  };
+}
 
 /** Prisma-backed audit logger. Writes are best-effort but errors propagate. */
 export function createAuditLogger(client: AuditCapableClient): AuditLogger {

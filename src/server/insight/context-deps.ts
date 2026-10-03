@@ -10,14 +10,15 @@ import type { InsightDeps } from "@/server/insight/deps";
  *
  * Il client Prisma è quello TENANT-SCOPED (forza `organizationId`), e
  * l'identità dell'attore arriva dal contesto SERVER — mai dall'input client
- * (docs/00 §4, docs/06 §6.3). Gli audit passano dal client BASE perché
- * `AuditLog.organizationId` è valorizzato esplicitamente dall'attore (e
- * l'audit deve essere scrivibile anche fuori dal filtro tenant/soft-delete).
+ * (docs/00 §4, docs/06 §6.3). Gli audit ordinari usano il client BASE perché
+ * `AuditLog.organizationId` è valorizzato esplicitamente dall'attore; i use
+ * case atomici ricevono invece un logger costruito sul client transazionale.
  */
 export function buildInsightDeps(ctx: TenantContext): InsightDeps {
   return {
     prisma: getTenantPrisma(ctx),
     audit: createAuditLogger(prisma),
+    createTransactionAudit: createAuditLogger,
     actor: { organizationId: ctx.organizationId, userId: ctx.userId },
   };
 }

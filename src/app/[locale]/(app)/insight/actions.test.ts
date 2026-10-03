@@ -73,12 +73,17 @@ describe("Insight actions", () => {
     mocks.requireTenantContext.mockResolvedValue(PRO);
     mocks.getTenantFeatureFlags.mockResolvedValue({ insightStats: true });
 
-    const state = await saveActivityDayAction(IDLE, counterForm());
+    const state = await saveActivityDayAction(
+      IDLE,
+      counterForm({ welcomeSent: "3", welcomeReplies: "5", organizationId: "org_b" }),
+    );
 
     expect(state.status).toBe("success");
+    expect(mocks.getTenantFeatureFlags).toHaveBeenCalledWith("org_a");
+    expect(mocks.buildInsightDeps).toHaveBeenCalledWith(PRO);
     expect(mocks.saveActivityDay).toHaveBeenCalledWith(
       { kind: "insight" },
-      expect.objectContaining({ date: "2026-09-09", welcomeSent: "30" }),
+      expect.objectContaining({ date: "2026-09-09", welcomeSent: "3", welcomeReplies: "5" }),
     );
     expect(mocks.revalidatePath).toHaveBeenCalled();
   });
@@ -110,13 +115,13 @@ describe("Insight actions", () => {
     mocks.requireTenantContext.mockResolvedValue(PRO);
     mocks.getTenantFeatureFlags.mockResolvedValue({ insightStats: true });
     mocks.saveActivityDay.mockRejectedValue(
-      new ValidationError({ welcomeReplies: ["insight.errors.repliesExceedWelcome"] }),
+      new ValidationError({ date: ["insight.errors.futureDay"] }),
     );
 
     const state = await saveActivityDayAction(IDLE, counterForm());
     expect(state).toMatchObject({
       status: "error",
-      fieldErrors: { welcomeReplies: "insight.errors.repliesExceedWelcome" },
+      fieldErrors: { date: "insight.errors.futureDay" },
     });
   });
 
