@@ -1,5 +1,5 @@
 import type { TenantPrismaClient } from "@/lib/prisma-tenant";
-import type { AuditLogger } from "@/server/audit/audit-log";
+import type { AuditCapableClient, AuditLogger } from "@/server/audit/audit-log";
 
 /**
  * Dipendenze degli use case di Insight & Stats.
@@ -18,6 +18,11 @@ export interface InsightActor {
 export interface InsightDeps {
   readonly prisma: TenantPrismaClient;
   readonly audit: AuditLogger;
+  /**
+   * Binds audit writes to an interactive transaction client when a use case
+   * needs its domain write and audit event to commit or roll back together.
+   */
+  readonly createTransactionAudit: (client: AuditCapableClient) => AuditLogger;
   readonly actor: InsightActor;
   readonly now?: () => Date;
 }

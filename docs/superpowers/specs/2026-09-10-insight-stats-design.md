@@ -42,8 +42,9 @@ Rilevati leggendo il file, tutti da correggere in fase di import:
    ma nessuna formula in M. Settembre 2026 risulta `TOT M = 0`.
 3. **Off-by-one**: `N509` somma da `N477` invece che da `N478` — il tasso di
    settembre 2026 include un giorno di agosto.
-4. **Dati impossibili**: 24 giorni con risposte outbound > messaggi outbound,
-   5 giorni con risposte welcome > welcome inviati.
+4. **Rapporti diagnostici**: 24 giorni con risposte outbound > messaggi outbound,
+   5 giorni con risposte welcome > welcome inviati. Non rendono il dato invalido:
+   una risposta può riferirsi a un invio di un giorno precedente.
 5. **Testo in celle numeriche**: riga 430, colonne B–E contengono
    `miru | ha | dimenticato | ciao`.
 6. **Nessun collegamento coi lead**: appuntamenti e vendite sono contatori
@@ -310,10 +311,11 @@ caso. Serve anche a correggere un canale sbagliato.
 
 Zod su ogni confine, server-side.
 
-- Contatori manuali: interi ≥ 0, limite superiore ragionevole.
-- **Risposte ≤ messaggi inviati**: `welcomeReplies ≤ welcomeSent` e
-  `outboundReplies ≤ outboundComments + outboundStories`. È il controllo che nel
-  foglio manca e che genera 29 giorni incoerenti.
+- Contatori manuali: sei interi da 0 a 100000.
+- Le risposte welcome e outbound sono contatori indipendenti: possono superare
+  gli invii dello stesso giorno, anche quando questi sono zero. Eventuali
+  anomalie nello storico sono diagnostiche e non definiscono la validità del
+  salvataggio corrente.
 - Date: nessuna scrittura su giorni futuri, nessuna scrittura su righe archivio.
 - `chatChannel` obbligatorio se `sourceId == insightSourceId`.
 
@@ -344,7 +346,8 @@ Comportamento:
 - **Celle non numeriche scartate singolarmente**, non per riga: dei quattro
   testi della riga 430 non entra nulla, ma gli altri valori del giorno sì.
 - **Risposte > messaggi importate così come sono**, elencate nel report: il dato
-  storico non si inventa. La validazione stretta vale dal periodo vivo in poi.
+  storico non si inventa. Anche nel periodo vivo il rapporto resta diagnostico,
+  non è un vincolo di salvataggio.
 - **Idempotente**: upsert su `(organizationId, date)`. Seconda esecuzione =
   stessi valori.
 - **Rifiuta di scrivere su `date >= ACTIVATION_DATE`**, anche se il file
@@ -399,7 +402,8 @@ incrementa), vendita presa dall'ultimo passaggio a `WON`, somma dei due canali
 outbound, totale di riga, tassi con denominatore zero, unione righe vive +
 archivio, mese a cavallo del confine di attivazione.
 
-**Unit — endpoint e azioni**: validazione (compresa risposte ≤ messaggi),
+**Unit — endpoint e azioni**: validazione dei sei contatori nel range 0–100000 e
+risposte indipendenti dagli invii,
 capability mancante, flag spento, **isolamento tenant** (due organizzazioni con
 dati nello stesso giorno non si vedono), scrittura rifiutata su riga archivio e
 su giorno futuro, transazione lead+appuntamento che non lascia lead orfani.

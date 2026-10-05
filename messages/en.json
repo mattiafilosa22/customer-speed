@@ -1244,7 +1244,6 @@
       "close": "Close"
     },
     "errors": {
-      "repliesExceedWelcome": "Replies cannot exceed welcome messages sent.",
       "futureDay": "You cannot edit a future day.",
       "archivedDay": "Archived days are read-only.",
       "channelRequired": "Channel is required.",
