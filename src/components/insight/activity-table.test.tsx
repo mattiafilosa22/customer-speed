@@ -27,23 +27,23 @@ describe("ActivityTable", () => {
 
     expect(screen.getAllByRole("row")).toHaveLength(5);
     const dataRow = screen.getByRole("row", { name: /07/ });
-    expect(within(dataRow).getByRole("spinbutton", { name: /welcome inviati/i })).toHaveValue(67);
+    expect(within(dataRow).getByRole("textbox", { name: /welcome inviati/i })).toHaveValue("67");
     expect(within(dataRow).getByRole("button", { name: /appuntamenti welcome/i })).toHaveTextContent("–");
   });
 
   it("makes archived days explicitly read-only", () => {
     renderIntl(<ActivityTable view={view([day("2026-09-02", { isArchived: true })])} canEdit />);
     const row = screen.getByRole("row", { name: /02/ });
-    expect(within(row).queryByRole("spinbutton")).toBeNull();
+    expect(within(row).queryByRole("textbox")).toBeNull();
     expect(within(row).queryByRole("button")).toBeNull();
     expect(within(row).getAllByText(/archivio/i).length).toBeGreaterThan(0);
   });
 
   it("disables future manual cells and keeps non-editors read-only", () => {
     const { rerender } = renderIntl(<ActivityTable view={view([day("2026-09-30", { isFuture: true })])} canEdit />);
-    expect(screen.getByRole("spinbutton", { name: /welcome inviati/i })).toBeDisabled();
+    expect(screen.getByRole("textbox", { name: /welcome inviati/i })).toBeDisabled();
     rerender(<NextIntlClientProvider locale="it" messages={itMessages}><ActivityTable view={view([day("2026-09-07")])} canEdit={false} /></NextIntlClientProvider>);
-    expect(screen.queryByRole("spinbutton")).toBeNull();
+    expect(screen.queryByRole("textbox")).toBeNull();
     expect(screen.getByRole("button", { name: /appuntamenti welcome/i })).toBeInTheDocument();
   });
 

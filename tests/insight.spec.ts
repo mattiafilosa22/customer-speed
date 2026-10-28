@@ -110,6 +110,29 @@ test.describe("insight — cell-to-sale flow (Fabio, insightStats on)", () => {
     await page.reload();
     await expect(page.getByLabel(label).first()).toHaveValue("30");
   });
+
+  test("typing saves after a pause, shows the status and arrows move between cells", async ({ page }) => {
+    await page.goto("/insight");
+    const sent = page.getByLabel(new RegExp(`Welcome Inviati, ${today}|Welcome Sent, ${today}`)).first();
+    const replies = page.getByLabel(new RegExp(`Welcome Risposte, ${today}|Welcome Replies, ${today}`)).first();
+    const status = page.getByRole("row", { name: new RegExp(`^${today.slice(-2)}`) }).getByRole("status");
+
+    await sent.click();
+    // Replies above messages sent are legitimate (late replies), never an error.
+    await sent.pressSequentially("3");
+    await sent.press("ArrowRight");
+    await expect(replies).toBeFocused();
+    // Leaving the cell saved it; wait so the next edit starts from a clean state.
+    await expect(status).toHaveText(/^(Salvato|Saved)$/);
+    await replies.pressSequentially("41");
+    await expect(status).toHaveText(/Modifiche non salvate|Unsaved changes/);
+    // No blur, no Enter: the ~800 ms debounce alone persists it.
+    await expect(status).toHaveText(/^(Salvato|Saved)$/, { timeout: 10_000 });
+    await expect(replies).not.toHaveAttribute("aria-invalid", "true");
+
+    await page.reload();
+    await expect(page.getByLabel(new RegExp(`Welcome Risposte, ${today}|Welcome Replies, ${today}`)).first()).toHaveValue("41");
+  });
 });
 
 test.describe("insight — hidden for a tenant with the flag off", () => {
