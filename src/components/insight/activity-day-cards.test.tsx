@@ -31,9 +31,9 @@ describe("ActivityDayCards", () => {
 
   it("keeps live cells editable and archive cards read-only", () => {
     const { rerender } = renderCards();
-    expect(screen.getByRole("spinbutton", { name: /welcome inviati/i })).not.toBeDisabled();
+    expect(screen.getByRole("textbox", { name: /welcome inviati/i })).not.toBeDisabled();
     rerender(<NextIntlClientProvider locale="it" messages={itMessages}><ActivityDayCards view={view([day("2026-09-02", { isArchived: true })])} canEdit /></NextIntlClientProvider>);
-    expect(screen.queryByRole("spinbutton")).toBeNull();
+    expect(screen.queryByRole("textbox")).toBeNull();
     expect(screen.getAllByText(/archivio/i).length).toBeGreaterThan(0);
   });
 });

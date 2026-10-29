@@ -1173,6 +1173,13 @@
     "saved": "Activity saved.",
     "saving": "Saving…",
     "savedShort": "Saved",
+    "saveStatus": {
+      "unsaved": "Unsaved changes",
+      "saving": "Saving…",
+      "saved": "Saved",
+      "error": "Save failed",
+      "leaveWarning": "Some changes have not been saved. Leave anyway?"
+    },
     "unconfigured": {
       "title": "Configure Insight & Stats",
       "description": "Link a source in tenant features to get started."

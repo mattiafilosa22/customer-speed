@@ -31,6 +31,13 @@ Vantaggi: HTTPS automatico, deploy continuo da GitHub, preview per ogni PR, scal
 ### Protezione dell'accesso
 La riservatezza è garantita da: login obbligatorio + RBAC + isolamento tenant + HTTPS/HSTS + security headers + rate limiting (vedi `06`). Per ambienti di staging non ancora pubblici si può aggiungere la **Vercel Password Protection** (Deployment Protection) come barriera extra.
 
+### RLS su Supabase (API PostgREST pubblica)
+Supabase espone ogni tabella dello schema `public` via PostgREST con la chiave `anon` pubblica. L'app non usa quell'API (si connette con Prisma come owner delle tabelle, che bypassa la RLS), quindi **ogni tabella deve avere RLS abilitata** senza policy permissive per `anon`/`authenticated`:
+- ogni migrazione che fa `CREATE TABLE` deve includere `ALTER TABLE "<Tabella>" ENABLE ROW LEVEL SECURITY;` — lo verifica `src/lib/migrations-rls.test.ts`;
+- modello di riferimento: `20260630120000_enable_rls_public_tables` (tabelle iniziali) e `20261028120000_enable_rls_chat_activity_day` (RLS + revoca grant + policy `RESTRICTIVE` deny-all per `anon`/`authenticated`);
+- non usare `FORCE ROW LEVEL SECURITY` finché l'app non imposta il tenant via GUC (vedi nota in `src/lib/prisma-tenant.ts`): bloccherebbe anche l'owner;
+- dopo ogni rilascio controllare il Security Advisor di Supabase (`rls_disabled_in_public` deve essere vuoto).
+
 ## 7.4 CI/CD
 
 - **GitHub Actions**: lint + typecheck + `vitest` + (su PR) `playwright` sui flussi critici; build di verifica.

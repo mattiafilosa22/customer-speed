@@ -1173,6 +1173,13 @@
     "saved": "Attività salvata.",
     "saving": "Salvataggio…",
     "savedShort": "Salvato",
+    "saveStatus": {
+      "unsaved": "Modifiche non salvate",
+      "saving": "Salvataggio…",
+      "saved": "Salvato",
+      "error": "Salvataggio non riuscito",
+      "leaveWarning": "Alcune modifiche non sono state salvate. Uscire comunque?"
+    },
     "unconfigured": {
       "title": "Configura Insight & Stats",
       "description": "Collega una provenienza nelle funzionalità del tenant per iniziare."
