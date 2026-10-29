@@ -31,6 +31,28 @@ Vantaggi: HTTPS automatico, deploy continuo da GitHub, preview per ogni PR, scal
 ### Protezione dell'accesso
 La riservatezza è garantita da: login obbligatorio + RBAC + isolamento tenant + HTTPS/HSTS + security headers + rate limiting (vedi `06`). Per ambienti di staging non ancora pubblici si può aggiungere la **Vercel Password Protection** (Deployment Protection) come barriera extra.
 
+### RLS su Supabase (API PostgREST pubblica)
+Supabase espone ogni tabella dello schema `public` via PostgREST con la chiave `anon` pubblica. L'app non usa quell'API (si connette con Prisma come owner delle tabelle, che bypassa la RLS), quindi **ogni tabella deve avere RLS abilitata** senza policy permissive per `anon`/`authenticated`:
+- ogni migrazione che fa `CREATE TABLE` deve includere `ALTER TABLE "<Tabella>" ENABLE ROW LEVEL SECURITY;` — lo verifica `src/lib/migrations-rls.test.ts`;
+- modello di riferimento: `20260630120000_enable_rls_public_tables` (tabelle iniziali) e `20261028120000_enable_rls_chat_activity_day` (RLS + revoca grant + policy `RESTRICTIVE` deny-all per `anon`/`authenticated`);
+- non usare `FORCE ROW LEVEL SECURITY` finché l'app non imposta il tenant via GUC (vedi nota in `src/lib/prisma-tenant.ts`): bloccherebbe anche l'owner;
+- dopo ogni rilascio controllare il Security Advisor di Supabase (`rls_disabled_in_public` deve essere vuoto).
+
+### Rilascio DB automatizzato
+`vercel-build` esegue `pnpm db:release` (`scripts/release-db.ts`) prima di `next build`. La CI (job e2e) esegue lo stesso comando.
+1. **Preflight**, prima di toccare lo schema: l'utente di `DATABASE_URL` (lo stesso dell'app, anche via pooler) dev'essere owner di ogni tabella o avere `BYPASSRLS`, e deve leggere ogni tabella con `row_security = off`. Se fallisce, la build si ferma **senza applicare migrazioni** e resta online il deploy precedente.
+2. `prisma migrate deploy` (usa `DIRECT_URL` se presente).
+3. **Post-check**: l'app legge ancora tutto senza filtri RLS e **ogni** tabella di `public` ha la RLS attiva (equivalente al lint `rls_disabled_in_public` dell'Advisor).
+
+**Preview:** con `VERCEL_ENV=preview|development` migrazioni e controlli vengono saltati, così una preview non modifica mai il DB a cui punta. Impostare `ALLOW_PREVIEW_MIGRATIONS=true` nell'ambiente Preview di Vercel solo se le preview hanno un database dedicato.
+
+**Backup pre-rilascio:** il workflow `.github/workflows/db-backup.yml` parte su ogni PR verso `main` che tocca `prisma/migrations/` (e a mano da *Actions → Pre-release DB backup*). Fa il dump del DB di produzione, lo verifica, lo cifra (AES-256) e lo conserva come artifact per 14 giorni. Servono i secret `PROD_DATABASE_URL` (session pooler Supabase, porta 5432, utente `postgres`: i runner GitHub non hanno IPv6) e `BACKUP_PASSPHRASE`. Va reso **check obbligatorio** su `main` (branch protection), così non si fa merge senza backup.
+
+Ripristino:
+```bash
+gpg --decrypt pre-release-<data>.sql.gz.gpg | gunzip -c | psql "$TARGET_DATABASE_URL"
+```
+
 ## 7.4 CI/CD
 
 - **GitHub Actions**: lint + typecheck + `vitest` + (su PR) `playwright` sui flussi critici; build di verifica.

@@ -4,7 +4,7 @@ import { useLocale, useTranslations } from "next-intl";
 
 import { cn } from "@/lib/cn";
 import type { InsightMonthView, MonthDayRow } from "@/server/insight";
-import { ManualCell, useDayDraft, type ManualField } from "@/components/insight/manual-cell";
+import { ManualCell, SaveStatusText, useDayDraft, type ManualField } from "@/components/insight/manual-cell";
 import { DerivedCell } from "@/components/insight/derived-cell";
 
 type Group = "welcome" | "outbound" | "inbound" | "total";
@@ -91,11 +91,13 @@ function ActivityRow({ row, canEdit, sourceLabel }: { row: MonthDayRow; canEdit:
   };
 
   return (
-    <tr className={rowTone}>
+    <tr className={rowTone} data-insight-day>
       <th scope="row" className={cn(dateHeaderClass, rowTone)}>
+        {/* Secondary labels use --ink, not --muted: muted drops to ~3.4:1 on the Sunday tint. */}
         <span>{row.date.slice(-2)}</span>
-        <span className="ml-1.5 font-body text-xs text-muted">{weekday}</span>
-        {row.isArchived ? <span className="ml-2 whitespace-nowrap text-xs text-muted">◷ {t("archive.badge")}</span> : null}
+        <span className="ml-1.5 font-body text-xs text-ink">{weekday}</span>
+        {row.isArchived ? <span className="ml-2 whitespace-nowrap text-xs text-ink">◷ {t("archive.badge")}</span> : null}
+        {canEdit && !row.isArchived ? <SaveStatusText status={draft.status} /> : null}
       </th>
       <td className={cellAt(0)}>{manual("welcomeSent", `${t("groups.welcome")} ${t("columns.welcomeSent")}`)}</td>
       <td className={cellAt(1)}>{manual("welcomeReplies", `${t("groups.welcome")} ${t("columns.replies")}`)}</td>
@@ -149,7 +151,7 @@ export function ActivityTable({ view, canEdit, sourceLabel }: { view: InsightMon
   // (absolutely positioned): otherwise they escape the overflow clip and
   // stretch the page to the full, unscrolled table height.
   return (
-    <div className="relative max-h-[calc(100dvh-8rem)] overflow-auto rounded border border-line bg-panel shadow-sm">
+    <div data-insight-grid className="relative max-h-[calc(100dvh-8rem)] overflow-auto rounded border border-line bg-panel shadow-sm">
       <table className="w-full min-w-[1320px] border-separate border-spacing-0 font-body">
         <caption className="sr-only">{t("description")}</caption>
         <thead className="sticky top-0 z-20 text-xs uppercase tracking-wide text-ink">
