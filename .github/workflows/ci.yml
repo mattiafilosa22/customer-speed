@@ -104,8 +104,10 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Apply all migrations to the ephemeral DB
-        run: pnpm prisma migrate deploy
+      # Same release step as `vercel-build`: preflight → migrate deploy →
+      # post-checks (app role unaffected by RLS, RLS on every public table).
+      - name: Apply all migrations to the ephemeral DB (release checks included)
+        run: pnpm db:release
 
       - name: Seed the database
         run: pnpm prisma db seed

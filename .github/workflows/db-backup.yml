@@ -1,0 +1,89 @@
+name: Pre-release DB backup
+
+# Encrypted backup of the PRODUCTION database before a release that carries
+# migrations: runs on every PR into `main` that touches prisma/migrations (the
+# release PR from `develop`), and on demand right before merging.
+#
+# Vercel applies migrations at deploy time (`vercel-build` → scripts/release-db.ts),
+# so the backup must exist BEFORE the release PR is merged. Mark this check as
+# required on `main` (branch protection) to make that mandatory.
+#
+# Secrets (Settings → Secrets and variables → Actions):
+#   PROD_DATABASE_URL  Supabase SESSION pooler URL (…pooler.supabase.com:5432):
+#                      GitHub runners have no IPv6, so the direct db.*.supabase.co
+#                      host is unreachable. Use the table-owner user (`postgres`):
+#                      a role subject to RLS makes pg_dump fail on purpose.
+#   BACKUP_PASSPHRASE  Long random passphrase; keep a copy outside GitHub, without
+#                      it the backup cannot be decrypted.
+#
+# The dump holds personal data (GDPR): it is only stored AES-256 encrypted, as a
+# workflow artifact kept 14 days. Restore: see docs/07-deployment-hosting.md.
+
+on:
+  pull_request:
+    branches: [main]
+    paths: ["prisma/migrations/**"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: db-backup
+  cancel-in-progress: false
+
+jobs:
+  backup:
+    name: Encrypted production DB backup
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Check secrets
+        env:
+          PROD_DATABASE_URL: ${{ secrets.PROD_DATABASE_URL }}
+          BACKUP_PASSPHRASE: ${{ secrets.BACKUP_PASSPHRASE }}
+        run: |
+          if [ -z "$PROD_DATABASE_URL" ] || [ -z "$BACKUP_PASSPHRASE" ]; then
+            echo "::error::Set the PROD_DATABASE_URL and BACKUP_PASSPHRASE repository secrets: no backup, no release."
+            exit 1
+          fi
+
+      # Client tools from the official PostgreSQL apt repo (no Docker Hub pulls,
+      # no rate limits), at the server's major version: pg_dump refuses newer servers.
+      - name: Install a PostgreSQL client matching the server
+        env:
+          DATABASE_URL: ${{ secrets.PROD_DATABASE_URL }}
+        run: |
+          sudo apt-get install -y -qq postgresql-common >/dev/null
+          sudo /usr/share/postgresql-common/pgdg/apt.postgresql.org.sh -y >/dev/null
+          major="$(psql "${DATABASE_URL%%\?*}" -tAc "select current_setting('server_version_num')::int / 10000")"
+          sudo apt-get install -y -qq "postgresql-client-${major}" >/dev/null
+          echo "PG_BIN_DIR=/usr/lib/postgresql/${major}/bin" >> "$GITHUB_ENV"
+
+      - name: Dump the database
+        env:
+          DATABASE_URL: ${{ secrets.PROD_DATABASE_URL }}
+        run: bash scripts/backup-db.sh pre-release
+
+      - name: Encrypt and remove the plaintext dump
+        env:
+          BACKUP_PASSPHRASE: ${{ secrets.BACKUP_PASSPHRASE }}
+        run: |
+          shopt -s nullglob
+          dumps=(backups/*.sql.gz)
+          [ "${#dumps[@]}" -eq 1 ] || { echo "::error::Expected exactly one dump, found ${#dumps[@]}"; exit 1; }
+          printf '%s' "$BACKUP_PASSPHRASE" | gpg --batch --yes --pinentry-mode loopback --passphrase-fd 0 \
+            --symmetric --cipher-algo AES256 --output "${dumps[0]}.gpg" "${dumps[0]}"
+          rm -f "${dumps[0]}"
+          ls -lh backups/
+
+      - name: Upload encrypted backup
+        uses: actions/upload-artifact@v4
+        with:
+          name: db-backup-${{ github.run_id }}
+          path: backups/*.sql.gz.gpg
+          if-no-files-found: error
+          retention-days: 14

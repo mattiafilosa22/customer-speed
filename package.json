@@ -10,7 +10,7 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "vercel-build": "prisma migrate deploy && next build",
+    "vercel-build": "tsx scripts/release-db.ts && next build",
     "start": "next start",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
@@ -21,6 +21,7 @@
     "test:e2e": "playwright test",
     "db:migrate": "prisma migrate dev",
     "db:deploy": "prisma migrate deploy",
+    "db:release": "tsx scripts/release-db.ts",
     "db:seed": "prisma db seed",
     "db:provision": "tsx scripts/provision-tenant-owner.ts",
     "db:backfill-loss-reasons": "tsx scripts/backfill-loss-reasons.ts",
