@@ -46,12 +46,23 @@ Supabase espone ogni tabella dello schema `public` via PostgREST con la chiave `
 
 **Preview:** con `VERCEL_ENV=preview|development` migrazioni e controlli vengono saltati, così una preview non modifica mai il DB a cui punta. Impostare `ALLOW_PREVIEW_MIGRATIONS=true` nell'ambiente Preview di Vercel solo se le preview hanno un database dedicato.
 
-**Backup pre-rilascio:** il workflow `.github/workflows/db-backup.yml` parte su ogni PR verso `main` che tocca `prisma/migrations/` (e a mano da *Actions → Pre-release DB backup*). Fa il dump del DB di produzione, lo verifica, lo cifra (AES-256) e lo conserva come artifact per 14 giorni. Servono i secret `PROD_DATABASE_URL` (session pooler Supabase, porta 5432, utente `postgres`: i runner GitHub non hanno IPv6) e `BACKUP_PASSPHRASE`. Va reso **check obbligatorio** su `main` (branch protection), così non si fa merge senza backup.
+**Backup pre-rilascio (fail-closed):** il workflow `.github/workflows/db-backup.yml` parte su ogni PR verso `main` o `develop` che tocca `prisma/migrations/` (e a mano da *Actions → Pre-release DB backup*):
+1. `scripts/backup-db.sh`: in **un solo snapshot** `pg_dump --format=custom --schema=public` + manifest (`scripts/db-backup/manifest.sql`: righe e hash del contenuto per tabella, flag RLS, owner, policy, GRANT, migrazioni, nomi dei ruoli) → pacchetto cifrato `gpg` AES-256 + `.sha256` accanto al file;
+2. `scripts/verify-db-backup.sh`: checksum → decifratura → Postgres usa-e-getta senza rete (`postgres:<major della sorgente>`) → stub `NOLOGIN` dei ruoli (Supabase: `anon`, `authenticated`, `service_role`, …; non si usa `pg_dumpall --roles-only`) → `pg_restore --exit-on-error --single-transaction` → confronto col manifest → test sintetico (`scripts/db-backup/synthetic-test.sql`: RLS su ogni tabella, `anon`/`authenticated` non leggono righe, migrazioni complete);
+3. upload come artifact (14 giorni) **solo se verificato**.
 
-Ripristino:
+Ogni fase ha un exit code proprio (10 checksum, 11 decifratura, 12 pacchetto, 13 restore, 14 manifest, 15 test sintetico, 16 versione immagine) e qualsiasi errore ferma il job. Servono i soli secret `PROD_DATABASE_URL` (session pooler Supabase, porta 5432, utente `postgres`: i runner GitHub non hanno IPv6) e `BACKUP_PASSPHRASE`; i valori derivati dall'URL (password, host) vengono mascherati e gli errori di connessione redatti. Va reso **check obbligatorio** su `main` e `develop` (branch protection), così non si fa merge senza un backup verificato.
+
+La pipeline stessa è provata su dati finti, senza secret, da `.github/workflows/db-backup-selftest.yml` (`pnpm db:backup:test`): percorso positivo, backup durante scritture concorrenti e casi negativi (checksum alterato, file corrotto, chiave sbagliata, cifrato contraffatto, restore fallito, manifest diverso, test sintetico fallito, credenziali errate, scansione dei segreti nei log).
+
+Ripristino (usare la stessa major del manifest):
 ```bash
-gpg --decrypt pre-release-<data>.sql.gz.gpg | gunzip -c | psql "$TARGET_DATABASE_URL"
+BACKUP_PASSPHRASE=... pnpm db:backup:verify backups/<nome>.backup.tar.gpg   # prova prima che sia integro
+gpg --decrypt backups/<nome>.backup.tar.gpg | tar -xf - db.dump manifest.txt
+pg_restore --list db.dump | grep -v -E '^[0-9]+; [0-9]+ [0-9]+ SCHEMA - public ' > restore.list
+pg_restore --exit-on-error --single-transaction --use-list=restore.list -d "$TARGET_DATABASE_URL" db.dump
 ```
+Lo schema `public` del database di destinazione va lasciato com'è (non ricrearlo): `pg_dump` non salva i permessi di default di `public` (es. `USAGE` a `PUBLIC`) e uno schema ricreato li perderebbe.
 
 ## 7.4 CI/CD
 
