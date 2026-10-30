@@ -1,0 +1,41 @@
+name: DB backup pipeline self-test
+
+# Proves scripts/backup-db.sh + scripts/verify-db-backup.sh on FAKE data, with
+# no secrets: Postgres in Docker, all migrations, seed and synthetic rows, then
+# the happy path and every negative case (altered checksum, corrupted file,
+# wrong key, forged ciphertext, failed restore, manifest mismatch, failed
+# synthetic test, bad credentials, secrets in logs). Each must exit non-zero at
+# its own stage (scripts/db-backup/test-roundtrip.sh).
+
+on:
+  pull_request:
+    paths:
+      - "scripts/backup-db.sh"
+      - "scripts/verify-db-backup.sh"
+      - "scripts/db-backup/**"
+      - "prisma/migrations/**"
+      - ".github/workflows/db-backup*.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  self-test:
+    name: Backup pipeline self-test (fake data)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      # prisma generate (postinstall) needs a value; never dialed in this job.
+      DATABASE_URL: postgresql://placeholder:placeholder@localhost:5432/placeholder
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Round trip + negative cases
+        run: pnpm db:backup:test
+
